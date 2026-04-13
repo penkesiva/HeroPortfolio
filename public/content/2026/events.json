@@ -1,0 +1,43 @@
+{
+  "tagline": "High school — goals in motion (from JSON).",
+  "events": [
+    {
+      "id": "26-json-1",
+      "heading1": "Upcoming competition season",
+      "heading2": "Team lead · regional circuit",
+      "heading3": "Spring 2026 focus",
+      "categories": ["competition", "leadership"],
+      "body": "Describe the event, your role, and the outcome you are aiming for. This row is loaded from public/content/2026/events.json.",
+      "images": [
+        "/placeholder-achievement.svg",
+        "/placeholder-achievement.svg"
+      ],
+      "videoUrl": "https://www.youtube.com/",
+      "links": [
+        { "label": "Placeholder results link", "href": "#" }
+      ]
+    },
+    {
+      "id": "26-json-2",
+      "heading1": "Leadership / club milestone",
+      "heading2": "Initiative you drive",
+      "category": "music",
+      "body": "Add a sentence about a club, initiative, or community project you lead or contribute to.",
+      "images": ["/placeholder-achievement.svg"]
+    },
+    {
+      "id": "26-json-3",
+      "heading1": "My new Stem project",
+      "heading2": "Sir EatAlot",
+      "category": "STEM",
+      "body": "Sir EatAlot is a project...",
+      "images": ["/public/content/2026/test-image.png"]
+    },
+    {
+      "id": "26-json-4",
+      "heading1": "Test1",
+      "heading2": "Sir EatAlot",
+      "category": "STEM"
+    }
+  ]
+}
