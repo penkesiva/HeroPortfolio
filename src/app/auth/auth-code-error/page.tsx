@@ -18,8 +18,8 @@ export default async function AuthCodeErrorPage({ searchParams }: Props) {
           Sign-in link didn&apos;t work
         </h1>
         <p className="mt-2 text-sm text-parchment-muted">
-          The magic link may have expired or already been used. Request a new
-          one from the login page.
+          The sign-in link may have expired or already been used. Try logging in
+          again with Google, email and password, or a new magic link.
         </p>
         {reason ? (
           <p className="mt-3 rounded-lg bg-dusk-850 px-3 py-2 font-mono text-[11px] text-red-300/90">
@@ -27,7 +27,7 @@ export default async function AuthCodeErrorPage({ searchParams }: Props) {
           </p>
         ) : null}
         <Link
-          href="/login"
+          href="/login?next=%2Ftimeline"
           className="mt-6 inline-flex rounded-full border border-umber-500/45 bg-umber-500/15 px-5 py-2.5 text-sm font-medium text-umber-300 transition hover:bg-umber-500/25"
         >
           Back to login

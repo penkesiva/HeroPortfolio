@@ -5,9 +5,7 @@ import { useState } from "react";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
-type Mode = "login" | "signup";
-
-export function MagicLinkAuthForm({ mode }: { mode: Mode }) {
+export function ForgotPasswordForm() {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "sent" | "error">(
     "idle",
@@ -33,15 +31,14 @@ export function MagicLinkAuthForm({ mode }: { mode: Mode }) {
     }
 
     setStatus("loading");
-    const redirectTo = `${window.location.origin}/auth/callback`;
+    const origin = window.location.origin;
+    const next = encodeURIComponent("/auth/reset-password");
+    const redirectTo = `${origin}/auth/callback?next=${next}`;
 
-    const { error } = await supabase.auth.signInWithOtp({
-      email: email.trim(),
-      options: {
-        emailRedirectTo: redirectTo,
-        shouldCreateUser: mode === "signup",
-      },
-    });
+    const { error } = await supabase.auth.resetPasswordForEmail(
+      email.trim(),
+      { redirectTo },
+    );
 
     if (error) {
       setStatus("error");
@@ -51,7 +48,7 @@ export function MagicLinkAuthForm({ mode }: { mode: Mode }) {
 
     setStatus("sent");
     setMessage(
-      "Check your inbox for a magic link. You can close this tab after you click it.",
+      "If an account exists for that email, you’ll receive a reset link shortly.",
     );
   }
 
@@ -60,16 +57,8 @@ export function MagicLinkAuthForm({ mode }: { mode: Mode }) {
       <div className="rounded-xl border border-dusk-700/80 bg-dusk-900/50 p-6 text-sm text-parchment-muted">
         <p className="font-medium text-parchment">Supabase env missing</p>
         <p className="mt-2">
-          Add{" "}
-          <code className="rounded bg-dusk-800 px-1 font-mono text-xs text-umber-300/90">
-            NEXT_PUBLIC_SUPABASE_URL
-          </code>{" "}
-          and{" "}
-          <code className="rounded bg-dusk-800 px-1 font-mono text-xs text-umber-300/90">
-            NEXT_PUBLIC_SUPABASE_ANON_KEY
-          </code>{" "}
-          to <code className="font-mono text-xs">.env.local</code>, then restart{" "}
-          <code className="font-mono text-xs">npm run dev</code>.
+          Add your Supabase URL and anon key to{" "}
+          <code className="font-mono text-xs">.env.local</code>.
         </p>
       </div>
     );
@@ -81,24 +70,23 @@ export function MagicLinkAuthForm({ mode }: { mode: Mode }) {
         HeroPortfolio.com
       </p>
       <h1 className="mt-3 text-center text-2xl font-semibold tracking-tight text-parchment">
-        {mode === "login" ? "Log in" : "Create account"}
+        Reset password
       </h1>
       <p className="mt-2 text-center text-sm text-parchment-muted">
-        {mode === "login"
-          ? "We’ll email you a magic link — no password."
-          : "Sign up with your email. We’ll send a magic link to verify it."}
+        Enter the email you use for HeroPortfolio. We’ll send a link to choose a
+        new password.
       </p>
 
       <form onSubmit={onSubmit} className="mt-8 space-y-4">
         <div>
           <label
-            htmlFor="auth-email"
+            htmlFor="reset-email"
             className="block text-xs font-semibold uppercase tracking-wide text-parchment-muted"
           >
             Email
           </label>
           <input
-            id="auth-email"
+            id="reset-email"
             name="email"
             type="email"
             autoComplete="email"
@@ -106,7 +94,7 @@ export function MagicLinkAuthForm({ mode }: { mode: Mode }) {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             disabled={status === "loading" || status === "sent"}
-            className="mt-1.5 w-full rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-2.5 text-sm text-parchment outline-none ring-umber-400/0 transition placeholder:text-parchment-muted/50 focus:border-umber-400/50 focus:ring-2 focus:ring-umber-400/40 disabled:opacity-60"
+            className="mt-1.5 w-full rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-2.5 text-sm text-parchment outline-none focus:border-umber-400/50 focus:ring-2 focus:ring-umber-400/40 disabled:opacity-60"
             placeholder="you@example.com"
           />
         </div>
@@ -118,10 +106,8 @@ export function MagicLinkAuthForm({ mode }: { mode: Mode }) {
           {status === "loading"
             ? "Sending…"
             : status === "sent"
-              ? "Link sent"
-              : mode === "login"
-                ? "Send magic link"
-                : "Send sign-up link"}
+              ? "Email sent"
+              : "Send reset link"}
         </button>
       </form>
 
@@ -136,36 +122,12 @@ export function MagicLinkAuthForm({ mode }: { mode: Mode }) {
         </p>
       ) : null}
 
-      <p className="mt-8 text-center text-sm text-parchment-muted">
-        {mode === "login" ? (
-          <>
-            New here?{" "}
-            <Link
-              href="/signup"
-              className="font-medium text-umber-300 underline decoration-umber-500/40 underline-offset-2 hover:text-umber-200"
-            >
-              Create an account
-            </Link>
-          </>
-        ) : (
-          <>
-            Already have an account?{" "}
-            <Link
-              href="/login"
-              className="font-medium text-umber-300 underline decoration-umber-500/40 underline-offset-2 hover:text-umber-200"
-            >
-              Log in
-            </Link>
-          </>
-        )}
-      </p>
-
-      <p className="mt-6 text-center">
+      <p className="mt-8 text-center text-sm">
         <Link
-          href="/"
-          className="text-xs text-parchment-muted transition hover:text-parchment"
+          href="/login?next=%2Ftimeline"
+          className="font-medium text-umber-300 underline decoration-umber-500/40 underline-offset-2 hover:text-umber-200"
         >
-          ← Back to portfolio
+          ← Back to log in
         </Link>
       </p>
     </div>

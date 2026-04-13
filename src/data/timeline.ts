@@ -148,10 +148,10 @@ export type SiteIntro = {
 };
 
 export const siteIntro: SiteIntro = {
-  name: "Samarth Iyer",
+  name: "Student Name",
   heroLead: "I'm",
   role: "Student · Portfolio",
   bio: "I build projects across academics, arts, and competitions — this timeline tracks milestones year by year. Add your story in `public/content/<year>/events.json` or keep defaults in this file.",
   photoSrc: "/placeholder-achievement.svg",
-  photoAlt: "Samarth Iyer",
+  photoAlt: "Student Name",
 };
