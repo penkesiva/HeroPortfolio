@@ -151,7 +151,7 @@ export const siteIntro: SiteIntro = {
   name: "Student Name",
   heroLead: "I'm",
   role: "Student · Portfolio",
-  bio: "I build projects across academics, arts, and competitions — this timeline tracks milestones year by year. Add your story in `public/content/<year>/events.json` or keep defaults in this file.",
+  bio: "I build projects across academics, arts, and competitions — this timeline tracks milestones year by year. Override the hero photo and tagline in public/content/profile.json, or edit public/content/<year>/events.json for yearly entries.",
   photoSrc: "/placeholder-achievement.svg",
   photoAlt: "Student Name",
 };

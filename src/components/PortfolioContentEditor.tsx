@@ -8,8 +8,8 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type { Achievement, YearBlock } from "@/data/timeline";
-import { clearDraftTimeline } from "@/lib/draftTimeline";
+import type { Achievement, SiteIntro, YearBlock } from "@/data/timeline";
+import type { DraftProfileFields } from "@/lib/draftProfileIntro";
 
 type PortfolioContentEditorProps = {
   open: boolean;
@@ -17,6 +17,10 @@ type PortfolioContentEditorProps = {
   timeline: YearBlock[];
   serverTimeline: YearBlock[];
   onApplyTimeline: (next: YearBlock[]) => void;
+  intro: SiteIntro;
+  onApplyIntro: (patch: Partial<DraftProfileFields>) => void;
+  onPersistDrafts: () => void;
+  onDiscardDrafts: () => void;
 };
 
 function sortYearsDesc(t: YearBlock[]): YearBlock[] {
@@ -59,10 +63,15 @@ export function PortfolioContentEditor({
   timeline,
   serverTimeline,
   onApplyTimeline,
+  intro,
+  onApplyIntro,
+  onPersistDrafts,
+  onDiscardDrafts,
 }: PortfolioContentEditorProps) {
   const [saveAck, setSaveAck] = useState(false);
 
   const years = useMemo(() => sortYearsDesc(timeline), [timeline]);
+  const [section, setSection] = useState<"hero" | "year">("hero");
   const [yearIndex, setYearIndex] = useState(0);
   useEffect(() => {
     startTransition(() => {
@@ -72,6 +81,12 @@ export function PortfolioContentEditor({
 
   const block = years[yearIndex] ?? years[0];
   const year = block?.year ?? new Date().getFullYear();
+  const heroFields: DraftProfileFields = {
+    heroLead: intro.heroLead ?? "",
+    role: intro.role,
+    bio: intro.bio,
+    photoSrc: intro.photoSrc,
+  };
 
   const achievements = block?.achievements ?? [];
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -205,6 +220,65 @@ export function PortfolioContentEditor({
     URL.revokeObjectURL(a.href);
   };
 
+  const onPickHeroPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    e.target.value = "";
+    if (!f) return;
+    if (f.size > MAX_IMAGE_BYTES) {
+      window.alert(
+        `Image too large (over ${Math.round(MAX_IMAGE_BYTES / 1024 / 1024)}MB). Compress or use a path under public/ instead.`,
+      );
+      return;
+    }
+    try {
+      onApplyIntro({ photoSrc: await readFileAsDataUrl(f) });
+    } catch {
+      window.alert("Could not read that image.");
+    }
+  };
+
+  const exportProfileJson = () => {
+    const payload = {
+      heroLead: heroFields.heroLead.trim() === "" ? undefined : heroFields.heroLead,
+      role: heroFields.role,
+      bio: heroFields.bio,
+      photoSrc: heroFields.photoSrc,
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {
+      type: "application/json",
+    });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "profile.json";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+
+  const importProfileJson = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(String(reader.result)) as Record<
+          string,
+          unknown
+        >;
+        const role = typeof data.role === "string" ? data.role : intro.role;
+        const bio = typeof data.bio === "string" ? data.bio : intro.bio;
+        const photoSrc =
+          typeof data.photoSrc === "string" ? data.photoSrc : intro.photoSrc;
+        let heroLead = heroFields.heroLead;
+        if ("heroLead" in data) {
+          heroLead =
+            typeof data.heroLead === "string" ? data.heroLead : "";
+        }
+        onApplyIntro({ role, bio, photoSrc, heroLead });
+      } catch {
+        window.alert("Could not parse profile JSON.");
+      }
+    };
+    reader.readAsText(file);
+  };
+
   const importYearJson = (file: File) => {
     const reader = new FileReader();
     reader.onload = () => {
@@ -265,7 +339,8 @@ export function PortfolioContentEditor({
     reader.readAsText(file);
   };
 
-  if (!open || !block) return null;
+  if (!open) return null;
+  if (section === "year" && !block) return null;
 
   return (
     <div
@@ -297,22 +372,28 @@ export function PortfolioContentEditor({
 
         <div className="flex-1 overflow-y-auto px-4 py-4">
           <p className="mb-4 text-xs leading-relaxed text-parchment-muted">
-            Edits save <strong className="font-medium text-parchment/90">automatically</strong> in this
-            browser (local storage) as you type. Use{" "}
-            <strong className="font-medium text-parchment/90">Save draft</strong> below if you want a
-            visible confirmation. Export{" "}
-            <code className="text-umber-300/90">events.json</code> for GitHub. Spotify / SoundCloud /
-            YouTube links embed when supported.
+            Hero and year edits save <strong className="font-medium text-parchment/90">automatically</strong>{" "}
+            in this browser (local storage). Use <strong className="font-medium text-parchment/90">Save draft</strong>{" "}
+            to re-write storage with a confirmation. Export <code className="text-umber-300/90">profile.json</code>{" "}
+            or <code className="text-umber-300/90">events.json</code> for GitHub. Display name comes from your account.
           </p>
 
           <label className="block text-xs font-semibold uppercase tracking-wide text-parchment-muted">
-            Year
+            Section
           </label>
           <select
-            value={yearIndex}
-            onChange={(e) => setYearIndex(Number(e.target.value))}
+            value={section === "hero" ? "hero" : String(yearIndex)}
+            onChange={(e) => {
+              const v = e.target.value;
+              if (v === "hero") setSection("hero");
+              else {
+                setSection("year");
+                setYearIndex(Number(v));
+              }
+            }}
             className="mt-1 w-full rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-2 text-sm text-parchment"
           >
+            <option value="hero">Hero</option>
             {years.map((y, i) => (
               <option key={y.year} value={i}>
                 {y.year}
@@ -320,62 +401,154 @@ export function PortfolioContentEditor({
             ))}
           </select>
 
-          <label className="mt-4 block text-xs font-semibold uppercase tracking-wide text-parchment-muted">
-            Year tagline
-          </label>
-          <textarea
-            value={block.tagline}
-            onChange={(e) => setTagline(e.target.value)}
-            rows={2}
-            className="mt-1 w-full resize-y rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-2 text-sm text-parchment placeholder:text-parchment-muted/50"
-          />
-
-          <div className="mt-4 flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={addEvent}
-              className="rounded-full border border-umber-500/45 bg-umber-500/15 px-3 py-1.5 text-xs font-medium text-umber-300"
-            >
-              + Add event
-            </button>
-            <button
-              type="button"
-              onClick={exportYearJson}
-              className="rounded-full border border-dusk-600 bg-dusk-850 px-3 py-1.5 text-xs font-medium text-parchment-muted"
-            >
-              Export JSON
-            </button>
-            <label className="cursor-pointer rounded-full border border-dusk-600 bg-dusk-850 px-3 py-1.5 text-xs font-medium text-parchment-muted hover:text-parchment">
-              Import JSON
-              <input
-                type="file"
-                accept="application/json,.json"
-                className="hidden"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  e.target.value = "";
-                  if (f) importYearJson(f);
-                }}
+          {section === "hero" ? (
+            <div className="mt-4 space-y-3 border-t border-dusk-700/60 pt-4">
+              <p className="text-[11px] text-parchment-muted">
+                Name uses your signed-in profile. Photo can be a path under{" "}
+                <code className="text-umber-300/90">public/</code> or an uploaded image (stored in this browser only until you export).
+              </p>
+              <Field label="Lead line (e.g. I'm)">
+                <input
+                  value={heroFields.heroLead}
+                  onChange={(e) => onApplyIntro({ heroLead: e.target.value })}
+                  placeholder="Leave empty to hide"
+                  className="w-full rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-2 text-sm text-parchment placeholder:text-parchment-muted/40"
+                />
+              </Field>
+              <Field label="Role / subtitle">
+                <input
+                  value={heroFields.role}
+                  onChange={(e) => onApplyIntro({ role: e.target.value })}
+                  className="w-full rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-2 text-sm text-parchment"
+                />
+              </Field>
+              <Field label="Bio">
+                <textarea
+                  value={heroFields.bio}
+                  onChange={(e) => onApplyIntro({ bio: e.target.value })}
+                  rows={4}
+                  className="w-full resize-y rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-2 text-sm text-parchment"
+                />
+              </Field>
+              <Field label="Photo URL (path under public/ or https://)">
+                <input
+                  value={
+                    heroFields.photoSrc.startsWith("data:")
+                      ? ""
+                      : heroFields.photoSrc
+                  }
+                  placeholder={
+                    heroFields.photoSrc.startsWith("data:")
+                      ? "(uploaded image — export profile.json or enter a path to replace)"
+                      : "/content/profile.jpg"
+                  }
+                  onChange={(e) => onApplyIntro({ photoSrc: e.target.value })}
+                  className="w-full rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-2 text-sm text-parchment placeholder:text-parchment-muted/50"
+                />
+              </Field>
+              {heroFields.photoSrc.startsWith("data:") ? (
+                <button
+                  type="button"
+                  onClick={() =>
+                    onApplyIntro({ photoSrc: "/placeholder-achievement.svg" })
+                  }
+                  className="text-xs text-umber-300 hover:text-umber-200"
+                >
+                  Remove upload — use placeholder path
+                </button>
+              ) : null}
+              <Field label="Photo (upload)">
+                <label className="mt-1 block cursor-pointer rounded-lg border border-dashed border-dusk-600 px-3 py-2 text-center text-xs text-parchment-muted hover:border-umber-500/40 hover:text-parchment">
+                  Replace with image file
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={onPickHeroPhoto}
+                  />
+                </label>
+              </Field>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={exportProfileJson}
+                  className="rounded-full border border-dusk-600 bg-dusk-850 px-3 py-1.5 text-xs font-medium text-parchment-muted"
+                >
+                  Export profile.json
+                </button>
+                <label className="cursor-pointer rounded-full border border-dusk-600 bg-dusk-850 px-3 py-1.5 text-xs font-medium text-parchment-muted hover:text-parchment">
+                  Import profile.json
+                  <input
+                    type="file"
+                    accept="application/json,.json"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      e.target.value = "";
+                      if (f) importProfileJson(f);
+                    }}
+                  />
+                </label>
+              </div>
+            </div>
+          ) : (
+            <>
+              <label className="mt-4 block text-xs font-semibold uppercase tracking-wide text-parchment-muted">
+                Year tagline
+              </label>
+              <textarea
+                value={block.tagline}
+                onChange={(e) => setTagline(e.target.value)}
+                rows={2}
+                className="mt-1 w-full resize-y rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-2 text-sm text-parchment placeholder:text-parchment-muted/50"
               />
-            </label>
-          </div>
 
-          <label className="mt-4 block text-xs font-semibold uppercase tracking-wide text-parchment-muted">
-            Event
-          </label>
-          <select
-            value={selectedId ?? ""}
-            onChange={(e) => setSelectedId(e.target.value || null)}
-            className="mt-1 w-full rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-2 text-sm text-parchment"
-          >
-            {achievements.map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.title || a.id}
-              </option>
-            ))}
-          </select>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={addEvent}
+                  className="rounded-full border border-umber-500/45 bg-umber-500/15 px-3 py-1.5 text-xs font-medium text-umber-300"
+                >
+                  + Add event
+                </button>
+                <button
+                  type="button"
+                  onClick={exportYearJson}
+                  className="rounded-full border border-dusk-600 bg-dusk-850 px-3 py-1.5 text-xs font-medium text-parchment-muted"
+                >
+                  Export JSON
+                </button>
+                <label className="cursor-pointer rounded-full border border-dusk-600 bg-dusk-850 px-3 py-1.5 text-xs font-medium text-parchment-muted hover:text-parchment">
+                  Import JSON
+                  <input
+                    type="file"
+                    accept="application/json,.json"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      e.target.value = "";
+                      if (f) importYearJson(f);
+                    }}
+                  />
+                </label>
+              </div>
 
-          {selected ? (
+              <label className="mt-4 block text-xs font-semibold uppercase tracking-wide text-parchment-muted">
+                Event
+              </label>
+              <select
+                value={selectedId ?? ""}
+                onChange={(e) => setSelectedId(e.target.value || null)}
+                className="mt-1 w-full rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-2 text-sm text-parchment"
+              >
+                {achievements.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.title || a.id}
+                  </option>
+                ))}
+              </select>
+
+              {selected ? (
             <div className="mt-4 space-y-3 border-t border-dusk-700/60 pt-4">
               <button
                 type="button"
@@ -567,13 +740,15 @@ export function PortfolioContentEditor({
               </div>
             </div>
           ) : null}
+            </>
+          )}
         </div>
 
         <div className="border-t border-dusk-700/80 p-4 space-y-3">
           <button
             type="button"
             onClick={() => {
-              onApplyTimeline(timeline);
+              onPersistDrafts();
               setSaveAck(true);
               window.setTimeout(() => setSaveAck(false), 2200);
             }}
@@ -593,8 +768,7 @@ export function PortfolioContentEditor({
           <button
             type="button"
             onClick={() => {
-              clearDraftTimeline();
-              onApplyTimeline(serverTimeline);
+              onDiscardDrafts();
               onClose();
             }}
             className="w-full rounded-lg border border-dusk-600 bg-dusk-850 py-2 text-xs font-medium text-parchment-muted hover:text-parchment"

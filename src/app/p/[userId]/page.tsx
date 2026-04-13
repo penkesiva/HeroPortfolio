@@ -8,6 +8,7 @@ import {
   type SiteIntro,
 } from "@/data/timeline";
 import { isPublicProfileUserId } from "@/lib/auth/profileId";
+import { loadProfileIntroOverrides } from "@/lib/loadProfileIntro";
 import { mergeTimelineWithPublicContent } from "@/lib/loadYearEvents";
 
 type Props = { params: Promise<{ userId: string }> };
@@ -31,8 +32,10 @@ export default async function PublicProfilePage({ params }: Props) {
   }
 
   const mergedTimeline = mergeTimelineWithPublicContent(timeline);
+  const profile = loadProfileIntroOverrides();
   const genericIntro: SiteIntro = {
     ...siteIntro,
+    ...profile,
     name: "Student portfolio",
     heroLead: undefined,
     role: "Shared on HeroPortfolio.com",

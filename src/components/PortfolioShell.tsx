@@ -12,13 +12,25 @@ import {
 } from "react";
 import { PortfolioContentEditor } from "@/components/PortfolioContentEditor";
 import { TypewriterName } from "@/components/TypewriterName";
-import { loadDraftTimeline, saveDraftTimeline } from "@/lib/draftTimeline";
+import {
+  clearDraftProfileIntro,
+  introFromDraftFields,
+  loadDraftProfileIntro,
+  saveDraftProfileIntro,
+  serverIntroToDraftFields,
+} from "@/lib/draftProfileIntro";
+import {
+  clearDraftTimeline,
+  loadDraftTimeline,
+  saveDraftTimeline,
+} from "@/lib/draftTimeline";
 import {
   musicUrlToEmbedSrc,
   videoUrlToEmbedSrc,
   withVideoAutoplay,
 } from "@/lib/embedUrls";
 import type { Achievement, SiteIntro, YearBlock } from "@/data/timeline";
+import type { DraftProfileFields } from "@/lib/draftProfileIntro";
 
 function categorySlugsForAchievement(a: Achievement): string[] {
   return a.categories ?? [];
@@ -566,11 +578,13 @@ type PortfolioShellProps = {
 
 export function PortfolioShell({
   timeline: serverTimeline,
-  siteIntro,
+  siteIntro: serverIntro,
   publicView = false,
 }: PortfolioShellProps) {
   const [timeline, setTimeline] = useState(serverTimeline);
   const [draftHydrated, setDraftHydrated] = useState(false);
+  const [intro, setIntro] = useState(serverIntro);
+  const [introDraftHydrated, setIntroDraftHydrated] = useState(false);
 
   useEffect(() => {
     if (publicView) return;
@@ -582,12 +596,23 @@ export function PortfolioShell({
   }, [publicView]);
 
   useEffect(() => {
+    if (publicView) return;
+    const d = loadDraftProfileIntro();
+    startTransition(() => {
+      if (d) setIntro(introFromDraftFields(serverIntro, d));
+      setIntroDraftHydrated(true);
+    });
+  }, [publicView]);
+
+  useEffect(() => {
     if (!publicView) return;
     startTransition(() => {
       setTimeline(serverTimeline);
       setDraftHydrated(true);
+      setIntro(serverIntro);
+      setIntroDraftHydrated(true);
     });
-  }, [publicView, serverTimeline]);
+  }, [publicView, serverTimeline, serverIntro]);
 
   useEffect(() => {
     if (publicView) return;
@@ -595,6 +620,13 @@ export function PortfolioShell({
     if (loadDraftTimeline()) return;
     startTransition(() => setTimeline(serverTimeline));
   }, [publicView, serverTimeline, draftHydrated]);
+
+  useEffect(() => {
+    if (publicView) return;
+    if (!introDraftHydrated) return;
+    if (loadDraftProfileIntro()) return;
+    startTransition(() => setIntro(serverIntro));
+  }, [publicView, serverIntro, introDraftHydrated]);
 
   const applyTimeline = useCallback(
     (next: YearBlock[]) => {
@@ -604,6 +636,33 @@ export function PortfolioShell({
     },
     [publicView],
   );
+
+  const applyIntro = useCallback(
+    (patch: Partial<DraftProfileFields>) => {
+      if (publicView) return;
+      setIntro((prev) => {
+        const fields = serverIntroToDraftFields(prev);
+        const next = { ...fields, ...patch };
+        saveDraftProfileIntro(next);
+        return introFromDraftFields(serverIntro, next);
+      });
+    },
+    [publicView, serverIntro],
+  );
+
+  const persistDrafts = useCallback(() => {
+    if (publicView) return;
+    saveDraftTimeline(timeline);
+    saveDraftProfileIntro(serverIntroToDraftFields(intro));
+  }, [publicView, timeline, intro]);
+
+  const discardDrafts = useCallback(() => {
+    if (publicView) return;
+    clearDraftTimeline();
+    clearDraftProfileIntro();
+    setTimeline(serverTimeline);
+    setIntro(serverIntro);
+  }, [publicView, serverTimeline, serverIntro]);
 
   const [editorOpen, setEditorOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
@@ -780,7 +839,8 @@ export function PortfolioShell({
     return () => observer.disconnect();
   }, [visibleBlocks]);
 
-  const photoAlt = siteIntro.photoAlt ?? siteIntro.name;
+  const photoAlt = intro.photoAlt ?? intro.name;
+  const photoIsDataUrl = intro.photoSrc.startsWith("data:");
 
   return (
     <div className="flex min-h-screen flex-col text-parchment">
@@ -805,13 +865,13 @@ export function PortfolioShell({
               variants={heroItem}
               className="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl lg:text-[2.75rem] lg:leading-tight"
             >
-              {siteIntro.heroLead ? (
+              {intro.heroLead ? (
                 <span className="block text-parchment-muted">
-                  {siteIntro.heroLead}
+                  {intro.heroLead}
                 </span>
               ) : null}
               <TypewriterName
-                text={siteIntro.name}
+                text={intro.name}
                 className="block min-h-[1.15em] text-parchment"
               />
             </motion.h1>
@@ -819,13 +879,13 @@ export function PortfolioShell({
               variants={heroItem}
               className="mt-2 text-sm text-umber-300/90"
             >
-              {siteIntro.role}
+              {intro.role}
             </motion.p>
             <motion.p
               variants={heroItem}
               className="mt-5 max-w-xl text-sm leading-relaxed text-parchment-muted sm:text-[15px]"
             >
-              {siteIntro.bio}
+              {intro.bio}
             </motion.p>
             <motion.div
               variants={heroItem}
@@ -851,12 +911,13 @@ export function PortfolioShell({
           >
             <div className="relative aspect-[4/5] w-full max-w-[320px] overflow-hidden rounded-3xl border border-dusk-700/90 bg-dusk-900/50 shadow-[0_28px_80px_rgba(0,0,0,0.45)] sm:max-w-[380px]">
               <Image
-                src={siteIntro.photoSrc}
+                src={intro.photoSrc}
                 alt={photoAlt}
                 fill
                 className="object-cover"
                 sizes="(max-width: 1024px) 72vw, 380px"
                 priority
+                unoptimized={photoIsDataUrl}
               />
               <span className="pointer-events-none absolute inset-0 bg-gradient-to-t from-dusk-950/50 via-transparent to-transparent" />
             </div>
@@ -1195,6 +1256,10 @@ export function PortfolioShell({
             timeline={timeline}
             serverTimeline={serverTimeline}
             onApplyTimeline={applyTimeline}
+            intro={intro}
+            onApplyIntro={applyIntro}
+            onPersistDrafts={persistDrafts}
+            onDiscardDrafts={discardDrafts}
           />
         </>
       ) : null}
@@ -1223,7 +1288,11 @@ export function PortfolioShell({
             <code className="rounded bg-dusk-800 px-1.5 py-0.5 font-mono text-[11px] text-umber-300/90">
               {"public/content/<year>/events.json"}
             </code>
-            ; year order and defaults live in{" "}
+            ; hero copy and photo export to{" "}
+            <code className="rounded bg-dusk-800 px-1.5 py-0.5 font-mono text-[11px] text-umber-300/90">
+              profile.json
+            </code>
+            . Year order and defaults live in{" "}
             <code className="rounded bg-dusk-800 px-1.5 py-0.5 font-mono text-[11px] text-umber-300/90">
               src/data/timeline.ts
             </code>

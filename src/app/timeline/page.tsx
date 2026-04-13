@@ -9,6 +9,7 @@ import {
   type SiteIntro,
 } from "@/data/timeline";
 import { displayNameFromUser } from "@/lib/auth/displayName";
+import { loadProfileIntroOverrides } from "@/lib/loadProfileIntro";
 import { mergeTimelineWithPublicContent } from "@/lib/loadYearEvents";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -34,13 +35,20 @@ export default async function TimelinePage() {
   }
 
   const name = displayNameFromUser(user);
+  const profile = loadProfileIntroOverrides();
   const studentIntro: SiteIntro = {
     ...siteIntro,
+    ...profile,
     name,
-    heroLead: "I'm",
-    role: "Student · Your portfolio timeline",
-    bio: "Add your milestones, media, and links below. Use Content editor (draft) to shape your story year by year.",
     photoAlt: name,
+    role:
+      profile.role ??
+      "Student · Your portfolio timeline",
+    bio:
+      profile.bio ??
+      "Add your milestones, media, and links below. Use the floating Edit content button to shape your story year by year, or edit the JSON under public/content/<year>/events.json.",
+    heroLead:
+      profile.heroLead !== undefined ? profile.heroLead : siteIntro.heroLead,
   };
 
   const mergedTimeline = mergeTimelineWithPublicContent(timeline);
