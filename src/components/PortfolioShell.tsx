@@ -11,6 +11,7 @@ import {
   useState,
 } from "react";
 import { PortfolioContentEditor } from "@/components/PortfolioContentEditor";
+import { TypewriterName } from "@/components/TypewriterName";
 import { loadDraftTimeline, saveDraftTimeline } from "@/lib/draftTimeline";
 import {
   musicUrlToEmbedSrc,
@@ -28,10 +29,15 @@ function achievementMatchesCategory(a: Achievement, slug: string): boolean {
 }
 
 function humanizeCategorySlug(slug: string): string {
+  if (slug.toLowerCase() === "stem") return "STEM";
   return slug
     .split(/[-_/]+/)
     .filter(Boolean)
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .map((w) =>
+      w.toLowerCase() === "stem"
+        ? "STEM"
+        : w.charAt(0).toUpperCase() + w.slice(1).toLowerCase(),
+    )
     .join(" ");
 }
 
@@ -47,14 +53,96 @@ function collectCategorySlugs(timeline: YearBlock[]): string[] {
   return [...set].sort((a, b) => a.localeCompare(b));
 }
 
-function filterYearBlock(block: YearBlock, slug: string | null): YearBlock {
-  if (!slug) return block;
-  return {
-    ...block,
-    achievements: block.achievements.filter((a) =>
-      achievementMatchesCategory(a, slug),
-    ),
-  };
+/** Flatten achievements, optionally only those matching a category slug. */
+function collectAchievements(
+  blocks: YearBlock[],
+  categorySlug: string | null,
+): Achievement[] {
+  const out: Achievement[] = [];
+  for (const b of blocks) {
+    for (const a of b.achievements) {
+      if (
+        categorySlug === null ||
+        achievementMatchesCategory(a, categorySlug)
+      ) {
+        out.push(a);
+      }
+    }
+  }
+  return out;
+}
+
+const MEDIA_FILTER_KEYS = ["photos", "videos", "audios"] as const;
+type MediaFilterKey = (typeof MEDIA_FILTER_KEYS)[number];
+
+function isMediaFilterKey(s: string): s is MediaFilterKey {
+  return (MEDIA_FILTER_KEYS as readonly string[]).includes(s);
+}
+
+function achievementHasMediaType(
+  a: Achievement,
+  key: MediaFilterKey,
+): boolean {
+  switch (key) {
+    case "photos":
+      return Boolean(
+        a.imageSrc?.trim() || (a.images && a.images.length > 0),
+      );
+    case "videos":
+      return Boolean(a.videoUrl?.trim());
+    case "audios":
+      return Boolean(a.musicUrl?.trim());
+    default:
+      return false;
+  }
+}
+
+function countMediaInAchievements(achievements: Achievement[]): {
+  photos: number;
+  videos: number;
+  audios: number;
+} {
+  let photos = 0;
+  let videos = 0;
+  let audios = 0;
+  for (const a of achievements) {
+    if (achievementHasMediaType(a, "photos")) photos += 1;
+    if (achievementHasMediaType(a, "videos")) videos += 1;
+    if (achievementHasMediaType(a, "audios")) audios += 1;
+  }
+  return { photos, videos, audios };
+}
+
+function mediaFilterPhrase(key: MediaFilterKey): string {
+  switch (key) {
+    case "photos":
+      return "with photos";
+    case "videos":
+      return "with video";
+    case "audios":
+      return "with audio";
+    default:
+      return "";
+  }
+}
+
+function filterYearBlockCategoryAndMedia(
+  block: YearBlock,
+  categorySlug: string | null,
+  mediaKey: MediaFilterKey | null,
+): YearBlock {
+  let achievements = block.achievements;
+  if (categorySlug) {
+    achievements = achievements.filter((a) =>
+      achievementMatchesCategory(a, categorySlug),
+    );
+  }
+  if (mediaKey) {
+    achievements = achievements.filter((a) =>
+      achievementHasMediaType(a, mediaKey),
+    );
+  }
+  return { ...block, achievements };
 }
 
 function isDataUrl(src: string): boolean {
@@ -472,33 +560,50 @@ function VideoLightbox({
 type PortfolioShellProps = {
   timeline: YearBlock[];
   siteIntro: SiteIntro;
+  /** Read-only shared view: no local draft, no editor, no saving */
+  publicView?: boolean;
 };
 
 export function PortfolioShell({
   timeline: serverTimeline,
   siteIntro,
+  publicView = false,
 }: PortfolioShellProps) {
   const [timeline, setTimeline] = useState(serverTimeline);
   const [draftHydrated, setDraftHydrated] = useState(false);
 
   useEffect(() => {
+    if (publicView) return;
     const d = loadDraftTimeline();
     startTransition(() => {
       if (d?.length) setTimeline(d);
       setDraftHydrated(true);
     });
-  }, []);
+  }, [publicView]);
 
   useEffect(() => {
+    if (!publicView) return;
+    startTransition(() => {
+      setTimeline(serverTimeline);
+      setDraftHydrated(true);
+    });
+  }, [publicView, serverTimeline]);
+
+  useEffect(() => {
+    if (publicView) return;
     if (!draftHydrated) return;
     if (loadDraftTimeline()) return;
     startTransition(() => setTimeline(serverTimeline));
-  }, [serverTimeline, draftHydrated]);
+  }, [publicView, serverTimeline, draftHydrated]);
 
-  const applyTimeline = useCallback((next: YearBlock[]) => {
-    setTimeline(next);
-    saveDraftTimeline(next);
-  }, []);
+  const applyTimeline = useCallback(
+    (next: YearBlock[]) => {
+      if (publicView) return;
+      setTimeline(next);
+      saveDraftTimeline(next);
+    },
+    [publicView],
+  );
 
   const [editorOpen, setEditorOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
@@ -510,6 +615,7 @@ export function PortfolioShell({
 
   /** Floating editor: `?edit=1`, or local dev, or NEXT_PUBLIC_CONTENT_EDITOR=true */
   const showContentEditor = useMemo(() => {
+    if (publicView) return false;
     const flag = process.env.NEXT_PUBLIC_CONTENT_EDITOR;
     return (
       editMode ||
@@ -517,7 +623,7 @@ export function PortfolioShell({
       flag === "1" ||
       process.env.NODE_ENV === "development"
     );
-  }, [editMode]);
+  }, [editMode, publicView]);
 
   const sorted = useMemo(
     () => [...timeline].sort((a, b) => b.year - a.year),
@@ -529,23 +635,34 @@ export function PortfolioShell({
   );
 
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
+  const [mediaFilter, setMediaFilter] = useState<MediaFilterKey | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
-    const raw = params.get("category");
-    if (!raw) return;
-    const slug = raw.trim().toLowerCase();
-    if (allCategorySlugs.includes(slug)) {
-      startTransition(() => setCategoryFilter(slug));
+    const rawCat = params.get("category");
+    if (rawCat) {
+      const slug = rawCat.trim().toLowerCase();
+      if (allCategorySlugs.includes(slug)) {
+        startTransition(() => setCategoryFilter(slug));
+      }
+    }
+    const rawMedia = params.get("media");
+    if (rawMedia) {
+      const m = rawMedia.trim().toLowerCase();
+      if (isMediaFilterKey(m)) {
+        startTransition(() => setMediaFilter(m));
+      }
     }
   }, [allCategorySlugs]);
 
   const visibleBlocks = useMemo(() => {
     return sorted
-      .map((b) => filterYearBlock(b, categoryFilter))
+      .map((b) =>
+        filterYearBlockCategoryAndMedia(b, categoryFilter, mediaFilter),
+      )
       .filter((b) => b.achievements.length > 0);
-  }, [sorted, categoryFilter]);
+  }, [sorted, categoryFilter, mediaFilter]);
 
   const [selectedYear, setSelectedYear] = useState(
     sorted[0]?.year ?? 2026,
@@ -559,6 +676,31 @@ export function PortfolioShell({
       }
     });
   }, [visibleBlocks, selectedYear]);
+
+  const achievementsHeaderContext = useMemo(() => {
+    const totalAll = collectAchievements(sorted, null).length;
+    const matchingCount = visibleBlocks.reduce(
+      (n, b) => n + b.achievements.length,
+      0,
+    );
+    const inCategoryCount = categoryFilter
+      ? collectAchievements(sorted, categoryFilter).length
+      : totalAll;
+    return {
+      totalAll,
+      matchingCount,
+      inCategoryCount,
+      categoryLabel: categoryFilter
+        ? humanizeCategorySlug(categoryFilter)
+        : null,
+    };
+  }, [sorted, categoryFilter, visibleBlocks]);
+
+  const mediaCountsForCapsules = useMemo(() => {
+    return countMediaInAchievements(
+      collectAchievements(sorted, categoryFilter),
+    );
+  }, [sorted, categoryFilter]);
 
   const setCategoryAndUrl = useCallback(
     (slug: string | null) => {
@@ -575,6 +717,19 @@ export function PortfolioShell({
     },
     [],
   );
+
+  const setMediaAndUrl = useCallback((key: MediaFilterKey | null) => {
+    setMediaFilter(key);
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    if (key) url.searchParams.set("media", key);
+    else url.searchParams.delete("media");
+    window.history.replaceState(
+      null,
+      "",
+      `${url.pathname}${url.search}${url.hash}`,
+    );
+  }, []);
 
   const [videoLightbox, setVideoLightbox] =
     useState<VideoLightboxState | null>(null);
@@ -655,7 +810,10 @@ export function PortfolioShell({
                   {siteIntro.heroLead}
                 </span>
               ) : null}
-              <span className="block text-parchment">{siteIntro.name}</span>
+              <TypewriterName
+                text={siteIntro.name}
+                className="block min-h-[1.15em] text-parchment"
+              />
             </motion.h1>
             <motion.p
               variants={heroItem}
@@ -682,15 +840,6 @@ export function PortfolioShell({
                   ↓
                 </span>
               </a>
-              {showContentEditor ? (
-                <a
-                  href="?edit=1"
-                  className="inline-flex items-center gap-2 rounded-full border border-dusk-600 bg-dusk-850/80 px-5 py-2.5 text-sm font-medium text-parchment-muted transition hover:border-dusk-600 hover:text-parchment"
-                >
-                  Content editor
-                  <span className="text-[10px] font-normal opacity-70">(draft)</span>
-                </a>
-              ) : null}
             </motion.div>
           </motion.div>
 
@@ -777,31 +926,93 @@ export function PortfolioShell({
               Achievements
             </p>
             <motion.div
-              key={selectedYear}
+              key={`${categoryFilter ?? "all"}-${mediaFilter ?? "all"}`}
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.35, ease: easeOutExpo }}
             >
-              <h2 className="mt-2 text-3xl font-semibold tabular-nums tracking-tight">
-                {selectedYear}
-              </h2>
-              <p className="mt-2 max-w-2xl text-sm text-parchment-muted">
-                {categoryFilter ? (
-                  <span>
-                    Showing{" "}
+              <div className="mt-3 max-w-2xl text-sm leading-relaxed text-parchment-muted">
+                {achievementsHeaderContext.totalAll === 0 ? (
+                  <p>No events recorded across your timeline yet.</p>
+                ) : !categoryFilter && !mediaFilter ? (
+                  <p>
+                    A total of{" "}
+                    <span className="font-semibold text-parchment tabular-nums">
+                      {achievementsHeaderContext.totalAll}
+                    </span>{" "}
+                    event
+                    {achievementsHeaderContext.totalAll !== 1 ? "s" : ""}{" "}
+                    recorded across all years.
+                  </p>
+                ) : categoryFilter && !mediaFilter ? (
+                  achievementsHeaderContext.inCategoryCount === 0 ? (
+                    <p>
+                      No events in{" "}
+                      <span className="font-medium text-umber-300/95">
+                        {achievementsHeaderContext.categoryLabel}
+                      </span>{" "}
+                      across your timeline.
+                    </p>
+                  ) : (
+                    <p>
+                      Showing{" "}
+                      <span className="font-semibold text-parchment tabular-nums">
+                        {achievementsHeaderContext.inCategoryCount}
+                      </span>{" "}
+                      event
+                      {achievementsHeaderContext.inCategoryCount !== 1
+                        ? "s"
+                        : ""}{" "}
+                      in{" "}
+                      <span className="font-medium text-umber-300/95">
+                        {achievementsHeaderContext.categoryLabel}
+                      </span>
+                      .
+                    </p>
+                  )
+                ) : !categoryFilter && mediaFilter ? (
+                  achievementsHeaderContext.matchingCount === 0 ? (
+                    <p>
+                      No events {mediaFilterPhrase(mediaFilter)} across your
+                      timeline.
+                    </p>
+                  ) : (
+                    <p>
+                      Showing{" "}
+                      <span className="font-semibold text-parchment tabular-nums">
+                        {achievementsHeaderContext.matchingCount}
+                      </span>{" "}
+                      event
+                      {achievementsHeaderContext.matchingCount !== 1
+                        ? "s"
+                        : ""}{" "}
+                      {mediaFilterPhrase(mediaFilter)} across all years.
+                    </p>
+                  )
+                ) : achievementsHeaderContext.matchingCount === 0 ? (
+                  <p>
+                    No events in{" "}
                     <span className="font-medium text-umber-300/95">
-                      {humanizeCategorySlug(categoryFilter)}
-                    </span>
-                    .{" "}
-                  </span>
-                ) : null}
-                {
-                  visibleBlocks.find((y) => y.year === selectedYear)
-                    ?.tagline ??
-                  sorted.find((y) => y.year === selectedYear)?.tagline ??
-                  "Scroll to explore each year."
-                }
-              </p>
+                      {achievementsHeaderContext.categoryLabel}
+                    </span>{" "}
+                    {mediaFilterPhrase(mediaFilter!)}.
+                  </p>
+                ) : (
+                  <p>
+                    Showing{" "}
+                    <span className="font-semibold text-parchment tabular-nums">
+                      {achievementsHeaderContext.matchingCount}
+                    </span>{" "}
+                    event
+                    {achievementsHeaderContext.matchingCount !== 1 ? "s" : ""}{" "}
+                    in{" "}
+                    <span className="font-medium text-umber-300/95">
+                      {achievementsHeaderContext.categoryLabel}
+                    </span>{" "}
+                    {mediaFilterPhrase(mediaFilter!)}.
+                  </p>
+                )}
+              </div>
             </motion.div>
 
             {allCategorySlugs.length > 0 ? (
@@ -842,18 +1053,89 @@ export function PortfolioShell({
                 </div>
               </div>
             ) : null}
+
+            {achievementsHeaderContext.totalAll > 0 ? (
+              <div
+                className="mt-6 flex flex-col gap-2 pb-2"
+                role="group"
+                aria-label="Filter by media type"
+              >
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-parchment-muted">
+                  Media
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setMediaAndUrl(null)}
+                    className={`rounded-full border px-3.5 py-1.5 text-sm font-medium transition ${
+                      mediaFilter === null
+                        ? "border-umber-400/60 bg-umber-500/15 text-parchment"
+                        : "border-dusk-600 bg-dusk-850 text-parchment-muted hover:border-dusk-600 hover:text-parchment"
+                    }`}
+                  >
+                    All
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMediaAndUrl("photos")}
+                    className={`rounded-full border px-3.5 py-1.5 text-sm font-medium transition ${
+                      mediaFilter === "photos"
+                        ? "border-umber-400/60 bg-umber-500/15 text-parchment"
+                        : "border-dusk-600 bg-dusk-850 text-parchment-muted hover:border-dusk-600 hover:text-parchment"
+                    }`}
+                  >
+                    Photos{" "}
+                    <span className="tabular-nums opacity-80">
+                      {mediaCountsForCapsules.photos}
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMediaAndUrl("videos")}
+                    className={`rounded-full border px-3.5 py-1.5 text-sm font-medium transition ${
+                      mediaFilter === "videos"
+                        ? "border-umber-400/60 bg-umber-500/15 text-parchment"
+                        : "border-dusk-600 bg-dusk-850 text-parchment-muted hover:border-dusk-600 hover:text-parchment"
+                    }`}
+                  >
+                    Videos{" "}
+                    <span className="tabular-nums opacity-80">
+                      {mediaCountsForCapsules.videos}
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMediaAndUrl("audios")}
+                    className={`rounded-full border px-3.5 py-1.5 text-sm font-medium transition ${
+                      mediaFilter === "audios"
+                        ? "border-umber-400/60 bg-umber-500/15 text-parchment"
+                        : "border-dusk-600 bg-dusk-850 text-parchment-muted hover:border-dusk-600 hover:text-parchment"
+                    }`}
+                  >
+                    Audios{" "}
+                    <span className="tabular-nums opacity-80">
+                      {mediaCountsForCapsules.audios}
+                    </span>
+                  </button>
+                </div>
+              </div>
+            ) : null}
           </div>
 
           <div className="flex flex-col gap-20 lg:gap-24">
-            {visibleBlocks.length === 0 ? (
+            {visibleBlocks.length === 0 &&
+            achievementsHeaderContext.totalAll > 0 ? (
               <p className="rounded-2xl border border-dusk-700/80 bg-dusk-900/40 px-5 py-8 text-center text-sm text-parchment-muted">
-                No achievements match this category.{" "}
+                No achievements match these filters.{" "}
                 <button
                   type="button"
-                  onClick={() => setCategoryAndUrl(null)}
+                  onClick={() => {
+                    setCategoryAndUrl(null);
+                    setMediaAndUrl(null);
+                  }}
                   className="font-medium text-umber-300 underline decoration-umber-500/50 underline-offset-2 hover:text-umber-200"
                 >
-                  Show all
+                  Clear filters
                 </button>
               </p>
             ) : null}
@@ -918,54 +1200,79 @@ export function PortfolioShell({
       ) : null}
 
       <footer className="border-t border-dusk-700/70 bg-dusk-900/30 py-6 text-center text-xs text-parchment-muted">
-        Built for static deploy (Vercel + GitHub). Add events under{" "}
-        <code className="rounded bg-dusk-800 px-1.5 py-0.5 font-mono text-[11px] text-umber-300/90">
-          {"public/content/<year>/events.json"}
-        </code>
-        ; year order and defaults live in{" "}
-        <code className="rounded bg-dusk-800 px-1.5 py-0.5 font-mono text-[11px] text-umber-300/90">
-          src/data/timeline.ts
-        </code>
-        . Optional{" "}
-        <code className="rounded bg-dusk-800 px-1.5 py-0.5 font-mono text-[11px] text-umber-300/90">
-          categories
-        </code>{" "}
-        /{" "}
-        <code className="rounded bg-dusk-800 px-1.5 py-0.5 font-mono text-[11px] text-umber-300/90">
-          category
-        </code>{" "}
-        in JSON filter the timeline (
-        <code className="rounded bg-dusk-800 px-1.5 py-0.5 font-mono text-[11px] text-umber-300/90">
-          ?category=music
-        </code>
-        ). Draft editor: on in{" "}
-        <code className="rounded bg-dusk-800 px-1.5 py-0.5 font-mono text-[11px] text-umber-300/90">
-          npm run dev
-        </code>{" "}
-        automatically; production uses{" "}
-        <code className="rounded bg-dusk-800 px-1.5 py-0.5 font-mono text-[11px] text-umber-300/90">
-          ?edit=1
-        </code>{" "}
-        or{" "}
-        <code className="rounded bg-dusk-800 px-1.5 py-0.5 font-mono text-[11px] text-umber-300/90">
-          NEXT_PUBLIC_CONTENT_EDITOR=true
-        </code>
-        . Saves in this browser; export JSON for Git.
-        <span className="mt-4 block">
-          <Link
-            href="/login"
-            className="font-medium text-umber-300/90 underline decoration-umber-500/40 underline-offset-2 hover:text-umber-200"
-          >
-            Log in
-          </Link>
-          <span className="mx-2 text-dusk-600">·</span>
-          <Link
-            href="/signup"
-            className="font-medium text-umber-300/90 underline decoration-umber-500/40 underline-offset-2 hover:text-umber-200"
-          >
-            Sign up
-          </Link>
-        </span>
+        {publicView ? (
+          <p>
+            Shared from{" "}
+            <Link
+              href="/"
+              className="font-medium text-umber-300/90 underline decoration-umber-500/40 underline-offset-2 hover:text-umber-200"
+            >
+              HeroPortfolio.com
+            </Link>
+            <span className="mx-2 text-dusk-600">·</span>
+            <Link
+              href="/signup"
+              className="font-medium text-umber-300/90 underline decoration-umber-500/40 underline-offset-2 hover:text-umber-200"
+            >
+              Create your portfolio
+            </Link>
+          </p>
+        ) : (
+          <>
+            Built for static deploy (Vercel + GitHub). Add events under{" "}
+            <code className="rounded bg-dusk-800 px-1.5 py-0.5 font-mono text-[11px] text-umber-300/90">
+              {"public/content/<year>/events.json"}
+            </code>
+            ; year order and defaults live in{" "}
+            <code className="rounded bg-dusk-800 px-1.5 py-0.5 font-mono text-[11px] text-umber-300/90">
+              src/data/timeline.ts
+            </code>
+            . Optional{" "}
+            <code className="rounded bg-dusk-800 px-1.5 py-0.5 font-mono text-[11px] text-umber-300/90">
+              categories
+            </code>{" "}
+            /{" "}
+            <code className="rounded bg-dusk-800 px-1.5 py-0.5 font-mono text-[11px] text-umber-300/90">
+              category
+            </code>{" "}
+            in JSON filter the timeline (
+            <code className="rounded bg-dusk-800 px-1.5 py-0.5 font-mono text-[11px] text-umber-300/90">
+              ?category=music
+            </code>
+            ,{" "}
+            <code className="rounded bg-dusk-800 px-1.5 py-0.5 font-mono text-[11px] text-umber-300/90">
+              ?media=photos
+            </code>
+            ). Draft editor: on in{" "}
+            <code className="rounded bg-dusk-800 px-1.5 py-0.5 font-mono text-[11px] text-umber-300/90">
+              npm run dev
+            </code>{" "}
+            automatically; production uses{" "}
+            <code className="rounded bg-dusk-800 px-1.5 py-0.5 font-mono text-[11px] text-umber-300/90">
+              ?edit=1
+            </code>{" "}
+            or{" "}
+            <code className="rounded bg-dusk-800 px-1.5 py-0.5 font-mono text-[11px] text-umber-300/90">
+              NEXT_PUBLIC_CONTENT_EDITOR=true
+            </code>
+            . Saves in this browser; export JSON for Git.
+            <span className="mt-4 block">
+              <Link
+                href="/login"
+                className="font-medium text-umber-300/90 underline decoration-umber-500/40 underline-offset-2 hover:text-umber-200"
+              >
+                Log in
+              </Link>
+              <span className="mx-2 text-dusk-600">·</span>
+              <Link
+                href="/signup"
+                className="font-medium text-umber-300/90 underline decoration-umber-500/40 underline-offset-2 hover:text-umber-200"
+              >
+                Sign up
+              </Link>
+            </span>
+          </>
+        )}
       </footer>
     </div>
   );

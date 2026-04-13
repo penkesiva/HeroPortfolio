@@ -152,10 +152,36 @@ export function AuthForm({
       window.location.href = redirectAfterAuth;
       return;
     }
-    setPwStatus("idle");
-    setPwMessage(
-      "Check your inbox to confirm your email if required, then sign in.",
-    );
+
+    // Supabase often omits `session` in the signUp response even when the user
+    // is logged in (or when email confirmation is off). Pick up the session from
+    // the client, then try an explicit sign-in before showing "check your email".
+    const { data: sessionWrap } = await supabase.auth.getSession();
+    if (sessionWrap.session) {
+      window.location.href = redirectAfterAuth;
+      return;
+    }
+
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    });
+    if (!signInError) {
+      window.location.href = redirectAfterAuth;
+      return;
+    }
+
+    setPwStatus("error");
+    const msg = signInError.message.toLowerCase();
+    if (msg.includes("confirm") || msg.includes("verified") || msg.includes("not confirmed")) {
+      setPwMessage(
+        "Check your inbox to confirm your email. After you confirm, you’ll be able to sign in.",
+      );
+    } else {
+      setPwMessage(
+        "Account may be created. Check your email to confirm if required, then sign in.",
+      );
+    }
   }
 
   async function onMagicSubmit(e: React.FormEvent) {

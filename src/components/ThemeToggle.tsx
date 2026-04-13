@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { startTransition, useCallback, useEffect, useState } from "react";
 import {
   applyTheme,
@@ -30,6 +31,7 @@ function MoonIcon({ className }: { className?: string }) {
 }
 
 export function ThemeToggle() {
+  const pathname = usePathname();
   const [theme, setTheme] = useState<ThemeChoice>("dark");
   const [mounted, setMounted] = useState(false);
 
@@ -47,6 +49,10 @@ export function ThemeToggle() {
   }, []);
 
   const isDark = theme === "dark";
+
+  if (pathname === "/timeline") {
+    return null;
+  }
 
   return (
     <button

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { CopyPublicProfileLink } from "@/components/CopyPublicProfileLink";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -11,12 +12,16 @@ export const metadata: Metadata = {
 
 export default async function HomePage() {
   let signedIn = false;
+  let signedInUserId: string | null = null;
   if (isSupabaseConfigured()) {
     const supabase = await createServerSupabaseClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    signedIn = Boolean(user);
+    if (user) {
+      signedIn = true;
+      signedInUserId = user.id;
+    }
   }
 
   return (
@@ -27,14 +32,17 @@ export default async function HomePage() {
             HeroPortfolio.com
           </span>
           <nav className="flex items-center gap-2 sm:gap-3">
-            {signedIn ? (
-              <Link
-                href="/timeline"
-                className="rounded-full border border-umber-500/45 bg-umber-500/15 px-4 py-2 text-sm font-medium text-umber-200 transition hover:bg-umber-500/25"
-              >
-                Your timeline
-              </Link>
-            ) : (
+            {signedIn && signedInUserId ? (
+              <>
+                <CopyPublicProfileLink userId={signedInUserId} />
+                <Link
+                  href="/timeline"
+                  className="rounded-full border border-umber-500/45 bg-umber-500/15 px-4 py-2 text-sm font-medium text-umber-200 transition hover:bg-umber-500/25"
+                >
+                  Your timeline
+                </Link>
+              </>
+            ) : !signedIn ? (
               <>
                 <Link
                   href="/login"
@@ -49,7 +57,7 @@ export default async function HomePage() {
                   Sign up
                 </Link>
               </>
-            )}
+            ) : null}
           </nav>
         </div>
       </header>

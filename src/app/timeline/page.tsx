@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { PortfolioShell } from "@/components/PortfolioShell";
-import { SignOutButton } from "@/components/SignOutButton";
+import { TimelineAccountMenu } from "@/components/TimelineAccountMenu";
 import {
   siteIntro,
   timeline,
@@ -55,13 +55,7 @@ export default async function TimelinePage() {
           >
             HeroPortfolio.com
           </Link>
-          <div className="flex items-center gap-3">
-            <span className="hidden text-xs text-parchment-muted sm:inline">
-              Signed in as{" "}
-              <span className="font-medium text-parchment">{name}</span>
-            </span>
-            <SignOutButton />
-          </div>
+          <TimelineAccountMenu userId={user.id} displayName={name} />
         </div>
       </header>
       <PortfolioShell timeline={mergedTimeline} siteIntro={studentIntro} />
