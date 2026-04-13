@@ -63,7 +63,18 @@ export default async function TimelinePage() {
           >
             HeroPortfolio.com
           </Link>
-          <TimelineAccountMenu userId={user.id} displayName={name} />
+          <div className="flex items-center gap-3 sm:gap-4">
+            <Link
+              href="/pricing"
+              className="flex items-center gap-2 rounded-full border border-umber-500/35 bg-umber-500/10 px-3 py-1.5 text-sm transition hover:border-umber-400/50 hover:bg-umber-500/18"
+            >
+              <span className="font-medium text-umber-200">Plans</span>
+              <span className="rounded-full bg-umber-500/25 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-umber-200">
+                Pro
+              </span>
+            </Link>
+            <TimelineAccountMenu userId={user.id} displayName={name} />
+          </div>
         </div>
       </header>
       <PortfolioShell timeline={mergedTimeline} siteIntro={studentIntro} />

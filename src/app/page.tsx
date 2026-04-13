@@ -31,7 +31,13 @@ export default async function HomePage() {
           <span className="text-sm font-semibold tracking-tight text-parchment">
             HeroPortfolio.com
           </span>
-          <nav className="flex items-center gap-2 sm:gap-3">
+          <nav className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
+            <Link
+              href="/pricing"
+              className="rounded-full px-3 py-2 text-sm font-medium text-umber-300/95 transition hover:text-umber-200 sm:px-4"
+            >
+              Plans &amp; Pro
+            </Link>
             {signedIn && signedInUserId ? (
               <>
                 <CopyPublicProfileLink userId={signedInUserId} />

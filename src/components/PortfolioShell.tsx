@@ -1283,49 +1283,31 @@ export function PortfolioShell({
             </Link>
           </p>
         ) : (
-          <>
-            Built for static deploy (Vercel + GitHub). Add events under{" "}
-            <code className="rounded bg-dusk-800 px-1.5 py-0.5 font-mono text-[11px] text-umber-300/90">
-              {"public/content/<year>/events.json"}
-            </code>
-            ; hero copy and photo export to{" "}
-            <code className="rounded bg-dusk-800 px-1.5 py-0.5 font-mono text-[11px] text-umber-300/90">
-              profile.json
-            </code>
-            . Year order and defaults live in{" "}
-            <code className="rounded bg-dusk-800 px-1.5 py-0.5 font-mono text-[11px] text-umber-300/90">
-              src/data/timeline.ts
-            </code>
-            . Optional{" "}
-            <code className="rounded bg-dusk-800 px-1.5 py-0.5 font-mono text-[11px] text-umber-300/90">
-              categories
-            </code>{" "}
-            /{" "}
-            <code className="rounded bg-dusk-800 px-1.5 py-0.5 font-mono text-[11px] text-umber-300/90">
-              category
-            </code>{" "}
-            in JSON filter the timeline (
-            <code className="rounded bg-dusk-800 px-1.5 py-0.5 font-mono text-[11px] text-umber-300/90">
-              ?category=music
-            </code>
-            ,{" "}
-            <code className="rounded bg-dusk-800 px-1.5 py-0.5 font-mono text-[11px] text-umber-300/90">
-              ?media=photos
-            </code>
-            ). Draft editor: on in{" "}
-            <code className="rounded bg-dusk-800 px-1.5 py-0.5 font-mono text-[11px] text-umber-300/90">
-              npm run dev
-            </code>{" "}
-            automatically; production uses{" "}
-            <code className="rounded bg-dusk-800 px-1.5 py-0.5 font-mono text-[11px] text-umber-300/90">
-              ?edit=1
-            </code>{" "}
-            or{" "}
-            <code className="rounded bg-dusk-800 px-1.5 py-0.5 font-mono text-[11px] text-umber-300/90">
-              NEXT_PUBLIC_CONTENT_EDITOR=true
-            </code>
-            . Saves in this browser; export JSON for Git.
-            <span className="mt-4 block">
+          <div className="mx-auto max-w-lg space-y-3">
+            <p className="leading-relaxed">
+              <span className="font-medium text-parchment/85">Edit content</span>{" "}
+              keeps hero and timeline in this browser; export from the panel to commit files to Git.
+            </p>
+            <p className="text-[11px] leading-relaxed text-parchment-muted/90">
+              URL filters:{" "}
+              <code className="rounded bg-dusk-800 px-1 py-0.5 font-mono text-umber-300/85">
+                ?category=music
+              </code>
+              ,{" "}
+              <code className="rounded bg-dusk-800 px-1 py-0.5 font-mono text-umber-300/85">
+                ?media=photos
+              </code>
+              . Production editor:{" "}
+              <code className="rounded bg-dusk-800 px-1 py-0.5 font-mono text-umber-300/85">
+                ?edit=1
+              </code>{" "}
+              or{" "}
+              <code className="rounded bg-dusk-800 px-1 py-0.5 font-mono text-umber-300/85">
+                NEXT_PUBLIC_CONTENT_EDITOR=true
+              </code>
+              .
+            </p>
+            <p>
               <Link
                 href="/login"
                 className="font-medium text-umber-300/90 underline decoration-umber-500/40 underline-offset-2 hover:text-umber-200"
@@ -1339,8 +1321,8 @@ export function PortfolioShell({
               >
                 Sign up
               </Link>
-            </span>
-          </>
+            </p>
+          </div>
         )}
       </footer>
     </div>

@@ -53,7 +53,13 @@ export default async function PublicProfilePage({ params }: Props) {
           >
             HeroPortfolio.com
           </Link>
-          <div className="flex items-center gap-2 text-xs text-parchment-muted">
+          <div className="flex flex-wrap items-center justify-end gap-2 text-xs text-parchment-muted sm:gap-3">
+            <Link
+              href="/pricing"
+              className="rounded-full px-2 py-1.5 font-medium text-umber-300/95 hover:text-umber-200 sm:px-3"
+            >
+              Plans &amp; Pro
+            </Link>
             <Link
               href="/signup"
               className="rounded-full border border-umber-500/35 bg-umber-500/10 px-3 py-1.5 font-medium text-umber-200 transition hover:bg-umber-500/20"
