@@ -3,11 +3,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { DotLottieReact } from "@lottiefiles/dotlottie-react";
 import {
   startTransition,
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { PortfolioContentEditor } from "@/components/PortfolioContentEditor";
@@ -595,6 +597,11 @@ export function PortfolioShell({
   const [intro, setIntro] = useState(serverIntro);
   const [introDraftHydrated, setIntroDraftHydrated] = useState(false);
 
+  // Track the last successfully saved state so Discard always reverts to the
+  // most recent save — not to the stale page-load snapshot.
+  const lastSavedTimeline = useRef<YearBlock[]>(serverTimeline);
+  const lastSavedIntro = useRef(serverIntro);
+
   useEffect(() => {
     if (publicView) return;
     const d = loadDraftTimeline();
@@ -669,21 +676,40 @@ export function PortfolioShell({
   );
 
   const handleAddYear = useCallback(
-    (year: number) => {
+    (fromYear: number) => {
       if (publicView) return;
-      const next = [...timeline, { year, tagline: "", achievements: [] }].sort(
-        (a, b) => b.year - a.year,
+      const currentYear = new Date().getFullYear();
+      const yearsToAdd = Array.from(
+        { length: Math.max(currentYear - fromYear + 1, 1) },
+        (_, i) => fromYear + i,
       );
+      let next = [...timeline];
+      for (const y of yearsToAdd) {
+        if (!next.some((b) => b.year === y)) {
+          next = [...next, { year: y, tagline: "", achievements: [] }];
+        }
+      }
+      next = next.sort((a, b) => b.year - a.year);
       applyTimeline(next);
+      // Persist scaffolded year blocks to DB immediately so:
+      //  1. Page reloads see real server data (not empty) and don't wipe the draft.
+      //  2. Discard reverts to this scaffolded state, not to an empty timeline.
+      if (userId) {
+        lastSavedTimeline.current = next;
+        void saveTimelineAction(next).catch(() => {});
+      }
       setEditorOpen(true);
     },
-    [publicView, timeline, applyTimeline],
+    [publicView, timeline, applyTimeline, userId],
   );
 
   const persistDrafts = useCallback(() => {
     if (publicView) return;
     saveDraftTimeline(timeline);
     saveDraftProfileIntro(serverIntroToDraftFields(intro));
+    // Snapshot what we're saving so Discard can revert to it later
+    lastSavedTimeline.current = timeline;
+    lastSavedIntro.current = intro;
     // Also persist to DB when the user is authenticated
     if (userId) {
       void saveTimelineAction(timeline).catch(() => {});
@@ -700,9 +726,10 @@ export function PortfolioShell({
     if (publicView) return;
     clearDraftTimeline();
     clearDraftProfileIntro();
-    setTimeline(serverTimeline);
-    setIntro(serverIntro);
-  }, [publicView, serverTimeline, serverIntro]);
+    // Revert to the most recent saved state, not to the stale page-load snapshot
+    setTimeline(lastSavedTimeline.current);
+    setIntro(lastSavedIntro.current);
+  }, [publicView]);
 
   const [editorOpen, setEditorOpen] = useState(false);
 
@@ -741,12 +768,22 @@ export function PortfolioShell({
   }, [allCategorySlugs]);
 
   const visibleBlocks = useMemo(() => {
-    return sorted
-      .map((b) =>
+    if (publicView) {
+      // Public visitors only see years that have at least one matching achievement
+      return sorted
+        .map((b) => filterYearBlockCategoryAndMedia(b, categoryFilter, mediaFilter))
+        .filter((b) => b.achievements.length > 0);
+    }
+    // Owners always see all their year blocks so empty ones show a "log first event" card.
+    // When filters are active, achievements within each year are filtered but the year
+    // itself remains visible so the owner can see which years have no matches.
+    if (categoryFilter || mediaFilter) {
+      return sorted.map((b) =>
         filterYearBlockCategoryAndMedia(b, categoryFilter, mediaFilter),
-      )
-      .filter((b) => b.achievements.length > 0);
-  }, [sorted, categoryFilter, mediaFilter]);
+      );
+    }
+    return sorted;
+  }, [sorted, categoryFilter, mediaFilter, publicView]);
 
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
@@ -969,7 +1006,7 @@ export function PortfolioShell({
         id="timeline-start"
         className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 px-4 py-10 sm:px-6 lg:flex-row lg:gap-12 lg:px-8"
       >
-        {achievementsHeaderContext.totalAll > 0 && (
+        {sorted.length > 0 && (
         <motion.aside
           initial={{ opacity: 0, x: -16 }}
           whileInView={{ opacity: 1, x: 0 }}
@@ -1228,14 +1265,15 @@ export function PortfolioShell({
           )}
 
           <div className="flex flex-col gap-20 lg:gap-24">
-            {achievementsHeaderContext.totalAll === 0 && !publicView ? (
+            {sorted.length === 0 && !publicView ? (
               <TimelineEmptyState
                 onAddYear={handleAddYear}
                 onOpenEditor={() => setEditorOpen(true)}
               />
             ) : null}
-            {visibleBlocks.length === 0 &&
-            achievementsHeaderContext.totalAll > 0 ? (
+            {(categoryFilter || mediaFilter) &&
+            achievementsHeaderContext.totalAll > 0 &&
+            visibleBlocks.every((b) => b.achievements.length === 0) ? (
               <p className="rounded-2xl border border-dusk-700/80 bg-dusk-900/40 px-5 py-8 text-center text-sm text-parchment-muted">
                 No achievements match these filters.{" "}
                 <button
@@ -1250,7 +1288,13 @@ export function PortfolioShell({
                 </button>
               </p>
             ) : null}
-            {visibleBlocks.map((block) => (
+            {visibleBlocks.map((block) => {
+              // Determine if the year truly has no events vs. events hidden by a filter
+              const originalBlock = sorted.find((b) => b.year === block.year);
+              const yearHasAnyEvents = (originalBlock?.achievements.length ?? 0) > 0;
+              const isEmptyYear = block.achievements.length === 0;
+
+              return (
               <section
                 key={block.year}
                 id={yearSectionId(block.year)}
@@ -1267,24 +1311,58 @@ export function PortfolioShell({
                   >
                     {block.year}
                   </h2>
-                  <p className="mt-2 max-w-2xl text-sm text-parchment-muted lg:text-[15px]">
-                    {block.tagline}
-                  </p>
+                  {block.tagline ? (
+                    <p className="mt-2 max-w-2xl text-sm text-parchment-muted lg:text-[15px]">
+                      {block.tagline}
+                    </p>
+                  ) : null}
                 </div>
 
-                <div className="mt-6 grid gap-6 sm:gap-8">
-                  {block.achievements.map((a, i) => (
-                    <AchievementCard
-                      key={a.id}
-                      achievement={a}
-                      year={block.year}
-                      delay={0.04 + i * 0.06}
-                      onPlayVideo={openVideo}
+                {isEmptyYear && !publicView && !yearHasAnyEvents ? (
+                  // Empty year — owner sees a "log first event" placeholder
+                  <button
+                    type="button"
+                    onClick={() => setEditorOpen(true)}
+                    className="group flex w-full flex-col items-center rounded-2xl border border-dashed border-dusk-600/70 bg-dusk-900/30 py-10 text-center transition hover:border-umber-500/50 hover:bg-dusk-900/50"
+                  >
+                    <DotLottieReact
+                      src={
+                        block.year % 2 === 0
+                          ? "/animations/cat_playing_idle.lottie"
+                          : "/animations/loader_cat_idle.lottie"
+                      }
+                      autoplay
+                      loop
+                      className="h-32 w-32 opacity-75 transition group-hover:opacity-100"
                     />
-                  ))}
-                </div>
+                    <span className="mt-4 block text-sm font-medium text-parchment-muted group-hover:text-parchment">
+                      Nothing logged for {block.year} yet
+                    </span>
+                    <span className="mt-1 block text-xs text-parchment-muted/50">
+                      Click to open the editor and add your first event.
+                    </span>
+                  </button>
+                ) : isEmptyYear && !publicView && yearHasAnyEvents ? (
+                  // Year has events but none match the active filter
+                  <p className="text-sm text-parchment-muted/60">
+                    No events match the active filter for {block.year}.
+                  </p>
+                ) : (
+                  <div className="mt-6 grid gap-6 sm:gap-8">
+                    {block.achievements.map((a, i) => (
+                      <AchievementCard
+                        key={a.id}
+                        achievement={a}
+                        year={block.year}
+                        delay={0.04 + i * 0.06}
+                        onPlayVideo={openVideo}
+                      />
+                    ))}
+                  </div>
+                )}
               </section>
-            ))}
+              );
+            })}
           </div>
         </main>
       </div>

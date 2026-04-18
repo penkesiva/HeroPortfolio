@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { DotLottieReact } from "@lottiefiles/dotlottie-react";
 import type { Achievement, SiteIntro, YearBlock } from "@/data/timeline";
 import type { DraftProfileFields } from "@/lib/draftProfileIntro";
 import { UpgradeModal } from "@/components/UpgradeModal";
@@ -47,13 +48,6 @@ function addYearBlock(timeline: YearBlock[], year: number): YearBlock[] {
   );
 }
 
-function gradeLabel(year: number): string {
-  const currentYear = new Date().getFullYear();
-  const grade = 12 - (currentYear - year);
-  if (grade >= 6 && grade <= 8) return `Grade ${grade}`;
-  if (grade >= 9 && grade <= 12) return `Grade ${grade}`;
-  return "";
-}
 
 function newEmptyAchievement(): Achievement {
   return {
@@ -563,14 +557,11 @@ export function PortfolioContentEditor({
             className="mt-1 w-full rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-2 text-sm text-parchment"
           >
             <option value="hero">Hero / Profile</option>
-            {years.map((y, i) => {
-              const gl = gradeLabel(y.year);
-              return (
-                <option key={`${i}-${y.year}`} value={i}>
-                  {y.year}{gl ? `  ·  ${gl}` : ""}
-                </option>
-              );
-            })}
+            {years.map((y, i) => (
+              <option key={`${i}-${y.year}`} value={i}>
+                {y.year}
+              </option>
+            ))}
           </select>
 
           {/* Add school year */}
@@ -656,43 +647,39 @@ export function PortfolioContentEditor({
                   className="w-full resize-y rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-2 text-sm text-parchment"
                 />
               </Field>
-              <Field label="Photo URL (path under public/ or https://)">
-                <input
-                  value={
-                    heroFields.photoSrc.startsWith("data:")
-                      ? ""
-                      : heroFields.photoSrc
-                  }
-                  placeholder={
-                    heroFields.photoSrc.startsWith("data:")
-                      ? "(uploaded image — export profile.json or enter a path to replace)"
-                      : "/content/profile.jpg"
-                  }
-                  onChange={(e) => onApplyIntro({ photoSrc: e.target.value })}
-                  className="w-full rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-2 text-sm text-parchment placeholder:text-parchment-muted/50"
-                />
-              </Field>
-              {heroFields.photoSrc.startsWith("data:") ? (
-                <button
-                  type="button"
-                  onClick={() =>
-                    onApplyIntro({ photoSrc: "/placeholder-achievement.svg" })
-                  }
-                  className="text-xs text-umber-300 hover:text-umber-200"
-                >
-                  Remove upload — use placeholder path
-                </button>
-              ) : null}
-              <Field label="Photo (upload)">
-                <label className="mt-1 block cursor-pointer rounded-lg border border-dashed border-dusk-600 px-3 py-2 text-center text-xs text-parchment-muted hover:border-umber-500/40 hover:text-parchment">
-                  Replace with image file
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={onPickHeroPhoto}
+              <Field label="Profile photo">
+                <div className="mt-1 flex items-center gap-3">
+                  {/* Preview */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={heroFields.photoSrc || "/avatar-placeholder.svg"}
+                    alt="Profile preview"
+                    className="h-14 w-14 shrink-0 rounded-xl object-cover border border-dusk-600"
                   />
-                </label>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="cursor-pointer rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-1.5 text-center text-xs text-parchment-muted hover:border-umber-500/40 hover:text-parchment">
+                      Upload new photo
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={onPickHeroPhoto}
+                      />
+                    </label>
+                    {heroFields.photoSrc &&
+                      heroFields.photoSrc !== "/avatar-placeholder.svg" ? (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          onApplyIntro({ photoSrc: "/avatar-placeholder.svg" })
+                        }
+                        className="rounded-lg border border-red-900/40 bg-red-950/20 px-3 py-1.5 text-xs text-red-400 hover:text-red-300"
+                      >
+                        Remove photo
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
               </Field>
               <div className="flex flex-wrap gap-2">
                 <button
@@ -819,7 +806,14 @@ export function PortfolioContentEditor({
                     disabled={linkLoading || !linkUrl.trim()}
                     className="shrink-0 rounded-lg border border-umber-500/40 bg-umber-500/20 px-3 py-1.5 text-xs font-medium text-umber-200 disabled:opacity-50"
                   >
-                    {linkLoading ? "…" : "Fill"}
+                    {linkLoading ? (
+                      <DotLottieReact
+                        src="/animations/loading.lottie"
+                        autoplay
+                        loop
+                        className="h-4 w-4"
+                      />
+                    ) : "Fill"}
                   </button>
                 </div>
                 {linkError && (
@@ -1032,9 +1026,18 @@ export function PortfolioContentEditor({
                 setSaveAck(true);
                 window.setTimeout(() => setSaveAck(false), 2200);
               }}
-              className="flex-1 rounded-lg border border-umber-500/50 bg-umber-500/20 py-2 text-sm font-medium text-umber-200 transition hover:bg-umber-500/30"
+              className="relative flex-1 overflow-hidden rounded-lg border border-umber-500/50 bg-umber-500/20 py-2 text-sm font-medium text-umber-200 transition hover:bg-umber-500/30"
             >
-              {saveAck ? "Saved ✓" : "Save"}
+              {saveAck ? (
+                <span className="flex items-center justify-center gap-1.5">
+                  <DotLottieReact
+                    src="/animations/saved_confetti.lottie"
+                    autoplay
+                    className="h-5 w-5 shrink-0"
+                  />
+                  Saved ✓
+                </span>
+              ) : "Save"}
             </button>
           </div>
         </div>

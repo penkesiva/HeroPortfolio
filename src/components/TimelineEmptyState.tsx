@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { DotLottieReact } from "@lottiefiles/dotlottie-react";
+import type { DotLottie } from "@lottiefiles/dotlottie-react";
 
 interface TimelineEmptyStateProps {
   onAddYear: (year: number) => void;
@@ -44,6 +45,10 @@ export function TimelineEmptyState({
 }: TimelineEmptyStateProps) {
   const [currentGrade, setCurrentGrade] = useState(9);
   const [selectedYear, setSelectedYear] = useState(CURRENT_YEAR);
+  const [launched, setLaunched] = useState(false);
+  // Keep latest callbacks in a ref so the animation complete handler always
+  // sees the current selectedYear without needing to re-register the listener.
+  const afterLaunchRef = useRef<() => void>(() => {});
 
   // Show enough years to reach back to ~grade 5 (elementary), capped at 12 years
   const yearOptions = useMemo(() => {
@@ -53,31 +58,53 @@ export function TimelineEmptyState({
 
   const handleGradeChange = (grade: number) => {
     setCurrentGrade(grade);
-    // If the currently selected year falls outside the new options, reset to current year
     const count = Math.min(Math.max(grade - 4, 4), 12);
     const oldest = CURRENT_YEAR - count;
     if (selectedYear < oldest) setSelectedYear(CURRENT_YEAR);
   };
 
   const handleStart = () => {
-    onAddYear(selectedYear);
-    onOpenEditor();
+    // Snapshot what to do after the rocket finishes
+    afterLaunchRef.current = () => {
+      onAddYear(selectedYear);
+      onOpenEditor();
+    };
+    setLaunched(true);
+  };
+
+  const onRocketLoad = (instance: DotLottie | null) => {
+    if (!instance) return;
+    instance.setLoop(false);
+    instance.play();
+    // Fire the transition exactly when the animation ends — no hardcoded timeout
+    instance.addEventListener("complete", () => {
+      afterLaunchRef.current();
+    });
   };
 
   return (
     <div className="flex flex-col items-center px-6 py-14 text-center">
-      <DotLottieReact
-        src="/animations/trophy.lottie"
-        loop
-        autoplay
-        className="h-40 w-40"
-      />
+      {launched ? (
+        <DotLottieReact
+          src="/animations/rocket_launch.lottie"
+          autoplay
+          className="h-40 w-40"
+          dotLottieRefCallback={onRocketLoad}
+        />
+      ) : (
+        <DotLottieReact
+          src="/animations/trophy.lottie"
+          loop
+          autoplay
+          className="h-40 w-40"
+        />
+      )}
 
       <h2 className="mt-5 text-2xl font-semibold tracking-tight text-parchment">
         Start logging your story
       </h2>
       <p className="mt-2 max-w-xs text-sm leading-relaxed text-parchment-muted">
-        Tell us where you are in school so we can label your years correctly.
+        Tell us where you are in school, then pick your earliest year. We will set up every year from there to today.
       </p>
 
       <div className="mt-8 w-full max-w-xs space-y-4 text-left">
@@ -100,7 +127,7 @@ export function TimelineEmptyState({
 
         <div>
           <label className="block text-xs font-semibold uppercase tracking-wide text-parchment-muted">
-            Which year to start logging?
+            Start from which year?
           </label>
           <select
             value={selectedYear}
@@ -118,12 +145,19 @@ export function TimelineEmptyState({
           </select>
         </div>
 
+        {selectedYear < CURRENT_YEAR && (
+          <p className="text-xs text-parchment-muted/55">
+            Creates years {selectedYear} through {CURRENT_YEAR}
+          </p>
+        )}
+
         <button
           type="button"
           onClick={handleStart}
-          className="w-full rounded-xl border border-umber-500/50 bg-umber-500/20 py-3 text-sm font-semibold text-umber-100 transition hover:bg-umber-500/30"
+          disabled={launched}
+          className="w-full rounded-xl border border-umber-500/50 bg-umber-500/20 py-3 text-sm font-semibold text-umber-100 transition hover:bg-umber-500/30 disabled:opacity-60"
         >
-          Let&apos;s go
+          {launched ? "Launching…" : "Let's go"}
         </button>
       </div>
 

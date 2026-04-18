@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { DotLottieReact } from "@lottiefiles/dotlottie-react";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
@@ -356,13 +357,19 @@ export function AuthForm({
           <button
             type="submit"
             disabled={pwStatus === "loading"}
-            className="w-full rounded-xl border border-umber-500/50 bg-umber-500/20 py-3 text-sm font-semibold text-umber-100 transition hover:bg-umber-500/30 disabled:cursor-not-allowed disabled:opacity-50"
+            className="relative w-full rounded-xl border border-umber-500/50 bg-umber-500/20 py-3 text-sm font-semibold text-umber-100 transition hover:bg-umber-500/30 disabled:cursor-not-allowed disabled:opacity-70"
           >
-            {pwStatus === "loading"
-              ? "Please wait…"
-              : mode === "login"
-                ? "Sign in"
-                : "Create account"}
+            {pwStatus === "loading" ? (
+              <span className="flex items-center justify-center gap-2">
+                <DotLottieReact
+                  src="/animations/sandy_loading.lottie"
+                  autoplay
+                  loop
+                  className="h-5 w-5"
+                />
+                Please wait
+              </span>
+            ) : mode === "login" ? "Sign in" : "Create account"}
           </button>
         </form>
 
@@ -409,15 +416,23 @@ export function AuthForm({
             <button
               type="submit"
               disabled={magicStatus === "loading" || magicStatus === "sent"}
-              className="w-full rounded-xl border border-dusk-500 bg-dusk-850 py-3 text-sm font-medium text-parchment transition hover:bg-dusk-800 disabled:cursor-not-allowed disabled:opacity-50"
+              className="w-full rounded-xl border border-dusk-500 bg-dusk-850 py-3 text-sm font-medium text-parchment transition hover:bg-dusk-800 disabled:cursor-not-allowed disabled:opacity-70"
             >
-              {magicStatus === "loading"
-                ? "Sending…"
-                : magicStatus === "sent"
-                  ? "Link sent"
-                  : mode === "login"
-                    ? "Send magic link"
-                    : "Send sign-up link"}
+              {magicStatus === "loading" ? (
+                <span className="flex items-center justify-center gap-2">
+                  <DotLottieReact
+                    src="/animations/sandy_loading.lottie"
+                    autoplay
+                    loop
+                    className="h-5 w-5"
+                  />
+                  Sending
+                </span>
+              ) : magicStatus === "sent"
+                ? "Link sent ✓"
+                : mode === "login"
+                  ? "Send magic link"
+                  : "Send sign-up link"}
             </button>
             {magicMessage ? (
               <p

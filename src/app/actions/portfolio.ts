@@ -18,10 +18,7 @@ export async function saveTimelineAction(
 
   if (!user) redirect("/login?next=/timeline");
 
-  // Strip year blocks that have no real events so empty shells never reach the DB.
-  const blocksToPersist = yearBlocks.filter((b) => b.achievements.length > 0);
-
-  return saveUserTimeline(supabase, user.id, blocksToPersist);
+  return saveUserTimeline(supabase, user.id, yearBlocks);
 }
 
 export async function saveProfileAction(
@@ -36,11 +33,17 @@ export async function saveProfileAction(
 
   if (!user) redirect("/login?next=/timeline");
 
+  // Treat the default placeholder as "no photo set" so the DB stays clean
+  const photoUrl =
+    intro.photoSrc && intro.photoSrc !== "/avatar-placeholder.svg"
+      ? intro.photoSrc
+      : null;
+
   await upsertProfile(supabase, user.id, {
     hero_lead: intro.heroLead ?? null,
     role: intro.role,
     bio: intro.bio,
-    photo_url: intro.photoSrc,
+    photo_url: photoUrl,
   });
 
   return { error: null };
