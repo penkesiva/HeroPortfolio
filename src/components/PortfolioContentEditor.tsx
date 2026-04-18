@@ -62,16 +62,40 @@ function newEmptyAchievement(): Achievement {
   };
 }
 
-function readFileAsDataUrl(file: File): Promise<string> {
+/**
+ * Resize an image file using a canvas and re-encode as JPEG.
+ * Keeps the longest side at most `maxDim` pixels and compresses to `quality`.
+ * Typical result: a 3MB phone photo → ~150 KB data URL, well under the
+ * 1 MB Next.js Server Action body limit even with several images.
+ */
+function resizeAndEncodeImage(
+  file: File,
+  maxDim = 1200,
+  quality = 0.82,
+): Promise<string> {
   return new Promise((resolve, reject) => {
-    const r = new FileReader();
-    r.onload = () => resolve(String(r.result ?? ""));
-    r.onerror = () => reject(r.error);
-    r.readAsDataURL(file);
+    const objectUrl = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+      const w = Math.round(img.width * scale);
+      const h = Math.round(img.height * scale);
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) { reject(new Error("Canvas not supported")); return; }
+      ctx.drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL("image/jpeg", quality));
+    };
+    img.onerror = () => { URL.revokeObjectURL(objectUrl); reject(new Error("Could not load image")); };
+    img.src = objectUrl;
   });
 }
 
-const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
+// Max raw file size accepted before resize (protects browser memory from absurdly large files)
+const MAX_IMAGE_BYTES = 15 * 1024 * 1024;
 
 export function PortfolioContentEditor({
   open,
@@ -269,13 +293,11 @@ export function PortfolioContentEditor({
     const urls: string[] = [...(selected.images ?? (selected.imageSrc ? [selected.imageSrc] : []))];
     for (const f of files) {
       if (f.size > MAX_IMAGE_BYTES) {
-        window.alert(
-          `Skipped "${f.name}" (over ${Math.round(MAX_IMAGE_BYTES / 1024 / 1024)}MB). Compress or add a link instead.`,
-        );
+        window.alert(`"${f.name}" is too large (over ${Math.round(MAX_IMAGE_BYTES / 1024 / 1024)} MB). Please use a smaller file.`);
         continue;
       }
       try {
-        urls.push(await readFileAsDataUrl(f));
+        urls.push(await resizeAndEncodeImage(f));
       } catch {
         window.alert(`Could not read "${f.name}".`);
       }
@@ -321,13 +343,11 @@ export function PortfolioContentEditor({
     e.target.value = "";
     if (!f) return;
     if (f.size > MAX_IMAGE_BYTES) {
-      window.alert(
-        `Image too large (over ${Math.round(MAX_IMAGE_BYTES / 1024 / 1024)}MB). Compress or use a path under public/ instead.`,
-      );
+      window.alert(`Image too large (over ${Math.round(MAX_IMAGE_BYTES / 1024 / 1024)} MB). Please use a smaller file.`);
       return;
     }
     try {
-      onApplyIntro({ photoSrc: await readFileAsDataUrl(f) });
+      onApplyIntro({ photoSrc: await resizeAndEncodeImage(f, 800) });
     } catch {
       window.alert("Could not read that image.");
     }
@@ -872,6 +892,26 @@ export function PortfolioContentEditor({
           )}
         </div>
 
+        {/* Save overlay — dims the whole panel and plays confetti centered */}
+        <AnimatePresence>
+          {saveAck && (
+            <motion.div
+              className="pointer-events-none absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 rounded-none bg-dusk-950/70 backdrop-blur-sm"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
+            >
+              <DotLottieReact
+                src="/animations/saved_confetti.lottie"
+                autoplay
+                className="h-48 w-48"
+              />
+              <p className="text-base font-semibold text-parchment">Saved ✓</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <div className="border-t border-dusk-700/80 px-4 py-3">
           {saveError && (
             <p className="mb-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-400">
@@ -907,26 +947,7 @@ export function PortfolioContentEditor({
               }}
               className="relative flex-1 overflow-hidden rounded-lg border border-umber-500/50 bg-umber-500/20 py-2 text-sm font-medium text-umber-200 transition hover:bg-umber-500/30 disabled:opacity-60"
             >
-              {saving ? (
-                <span className="flex items-center justify-center gap-1.5">
-                  <DotLottieReact
-                    src="/animations/loading.lottie"
-                    autoplay
-                    loop
-                    className="h-4 w-4 shrink-0"
-                  />
-                  Saving…
-                </span>
-              ) : saveAck ? (
-                <span className="flex items-center justify-center gap-1.5">
-                  <DotLottieReact
-                    src="/animations/saved_confetti.lottie"
-                    autoplay
-                    className="h-5 w-5 shrink-0"
-                  />
-                  Saved ✓
-                </span>
-              ) : "Save"}
+              {saving ? "Saving…" : "Save"}
             </button>
           </div>
         </div>
