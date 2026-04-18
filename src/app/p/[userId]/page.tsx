@@ -1,28 +1,38 @@
+import crypto from "node:crypto";
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PublicPortfolioClient } from "@/components/PublicPortfolioClient";
-import {
-  siteIntro,
-  timeline,
-  type SiteIntro,
-} from "@/data/timeline";
 import { isPublicProfileUserId } from "@/lib/auth/profileId";
-import { loadProfileIntroOverrides } from "@/lib/loadProfileIntro";
-import { mergeTimelineWithPublicContent } from "@/lib/loadYearEvents";
+import {
+  getProfile,
+  getUserTimeline,
+  dbProfileToSiteIntro,
+  recordProfileView,
+} from "@/lib/db/portfolio";
+import { isSupabaseConfigured } from "@/lib/supabase/env";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 type Props = { params: Promise<{ userId: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { userId } = await params;
-  if (!isPublicProfileUserId(userId)) {
+  if (!isPublicProfileUserId(userId) || !isSupabaseConfigured()) {
     return { title: "Portfolio" };
   }
-  return {
-    title: "Student portfolio",
-    description:
-      "Public HeroPortfolio timeline — achievements and milestones shared by link.",
-  };
+
+  try {
+    const supabase = await createServerSupabaseClient();
+    const profile = await getProfile(supabase, userId);
+    const name = profile?.display_name ?? "Student";
+    return {
+      title: `${name}'s portfolio`,
+      description: `${name}'s achievement timeline on HeroPortfolio.com`,
+    };
+  } catch {
+    return { title: "Student portfolio" };
+  }
 }
 
 export default async function PublicProfilePage({ params }: Props) {
@@ -31,17 +41,32 @@ export default async function PublicProfilePage({ params }: Props) {
     notFound();
   }
 
-  const mergedTimeline = mergeTimelineWithPublicContent(timeline);
-  const profile = loadProfileIntroOverrides();
-  const genericIntro: SiteIntro = {
-    ...siteIntro,
-    ...profile,
-    name: "Student portfolio",
-    heroLead: undefined,
-    role: "Shared on HeroPortfolio.com",
-    bio: "This page opens for anyone with the link. The timeline shows the site’s published content; students build their story in the private editor after signing in.",
-    photoAlt: "Student portfolio",
-  };
+  if (!isSupabaseConfigured()) {
+    notFound();
+  }
+
+  const supabase = await createServerSupabaseClient();
+
+  const [profile, dbTimeline] = await Promise.all([
+    getProfile(supabase, userId),
+    getUserTimeline(supabase, userId),
+  ]);
+
+  // Record anonymized view in background (best-effort)
+  try {
+    const headersList = await headers();
+    const ip =
+      headersList.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+      headersList.get("x-real-ip") ??
+      "unknown";
+    const ipHash = crypto.createHash("sha256").update(ip).digest("hex");
+    const referrer = headersList.get("referer") ?? undefined;
+    void recordProfileView(supabase, userId, ipHash, referrer);
+  } catch {
+    // Non-fatal
+  }
+
+  const genericIntro = await dbProfileToSiteIntro(supabase, profile, "Student portfolio");
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -64,7 +89,7 @@ export default async function PublicProfilePage({ params }: Props) {
               href="/signup"
               className="rounded-full border border-umber-500/35 bg-umber-500/10 px-3 py-1.5 font-medium text-umber-200 transition hover:bg-umber-500/20"
             >
-              Sign up
+              Sign up free
             </Link>
             <Link
               href="/login?next=%2Ftimeline"
@@ -77,8 +102,9 @@ export default async function PublicProfilePage({ params }: Props) {
       </header>
       <PublicPortfolioClient
         profileUserId={userId}
-        serverTimeline={mergedTimeline}
+        serverTimeline={dbTimeline}
         genericIntro={genericIntro}
+        isPro={profile?.plan === "pro"}
       />
     </div>
   );

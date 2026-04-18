@@ -244,14 +244,11 @@ export function AuthForm({
   }
 
   return (
-    <div className="rounded-2xl border border-dusk-700/80 bg-dusk-900/60 p-8 shadow-xl backdrop-blur-sm">
-      <p className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-umber-400">
-        HeroPortfolio.com
-      </p>
-      <h1 className="mt-3 text-center text-2xl font-semibold tracking-tight text-parchment">
+    <div>
+      <h1 className="text-3xl font-semibold tracking-tight text-parchment">
         {mode === "login" ? "Log in" : "Create account"}
       </h1>
-      <p className="mt-2 text-center text-sm text-parchment-muted">
+      <p className="mt-2 text-sm text-parchment-muted">
         {mode === "login"
           ? "Use Google, email and password, or a magic link."
           : "Sign up with Google, email and password, or a magic link."}
@@ -262,7 +259,7 @@ export function AuthForm({
           type="button"
           onClick={() => void onGoogle()}
           disabled={oauthLoading || pwStatus === "loading"}
-          className="flex w-full items-center justify-center gap-2 rounded-lg border border-dusk-500 bg-dusk-850 py-2.5 text-sm font-medium text-parchment transition hover:bg-dusk-800 disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex w-full items-center justify-center gap-2.5 rounded-xl border border-dusk-500 bg-dusk-850 py-3 text-sm font-medium text-parchment transition hover:bg-dusk-800 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <GoogleIcon className="h-5 w-5 text-parchment" />
           {oauthLoading ? "Redirecting…" : "Continue with Google"}
@@ -296,7 +293,7 @@ export function AuthForm({
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={pwStatus === "loading"}
-              className="mt-1.5 w-full rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-2.5 text-sm text-parchment outline-none ring-umber-400/0 transition placeholder:text-parchment-muted/50 focus:border-umber-400/50 focus:ring-2 focus:ring-umber-400/40 disabled:opacity-60"
+              className="mt-1.5 w-full rounded-xl border border-dusk-600 bg-dusk-850 px-4 py-3 text-sm text-parchment outline-none transition placeholder:text-parchment-muted/40 focus:border-umber-400/50 focus:ring-2 focus:ring-umber-400/30 disabled:opacity-60"
               placeholder="you@example.com"
             />
           </div>
@@ -318,7 +315,7 @@ export function AuthForm({
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={pwStatus === "loading"}
-              className="mt-1.5 w-full rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-2.5 text-sm text-parchment outline-none ring-umber-400/0 transition placeholder:text-parchment-muted/50 focus:border-umber-400/50 focus:ring-2 focus:ring-umber-400/40 disabled:opacity-60"
+              className="mt-1.5 w-full rounded-xl border border-dusk-600 bg-dusk-850 px-4 py-3 text-sm text-parchment outline-none transition placeholder:text-parchment-muted/40 focus:border-umber-400/50 focus:ring-2 focus:ring-umber-400/30 disabled:opacity-60"
               placeholder="••••••••"
               minLength={6}
             />
@@ -340,7 +337,7 @@ export function AuthForm({
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
                 disabled={pwStatus === "loading"}
-                className="mt-1.5 w-full rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-2.5 text-sm text-parchment outline-none ring-umber-400/0 transition placeholder:text-parchment-muted/50 focus:border-umber-400/50 focus:ring-2 focus:ring-umber-400/40 disabled:opacity-60"
+                className="mt-1.5 w-full rounded-xl border border-dusk-600 bg-dusk-850 px-4 py-3 text-sm text-parchment outline-none transition placeholder:text-parchment-muted/40 focus:border-umber-400/50 focus:ring-2 focus:ring-umber-400/30 disabled:opacity-60"
                 placeholder="••••••••"
                 minLength={6}
               />
@@ -359,7 +356,7 @@ export function AuthForm({
           <button
             type="submit"
             disabled={pwStatus === "loading"}
-            className="w-full rounded-lg border border-umber-500/50 bg-umber-500/20 py-2.5 text-sm font-medium text-umber-200 transition hover:bg-umber-500/30 disabled:cursor-not-allowed disabled:opacity-50"
+            className="w-full rounded-xl border border-umber-500/50 bg-umber-500/20 py-3 text-sm font-semibold text-umber-100 transition hover:bg-umber-500/30 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {pwStatus === "loading"
               ? "Please wait…"
@@ -406,13 +403,13 @@ export function AuthForm({
               value={magicEmail}
               onChange={(e) => setMagicEmail(e.target.value)}
               disabled={magicStatus === "loading" || magicStatus === "sent"}
-              className="w-full rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-2.5 text-sm text-parchment outline-none focus:border-umber-400/50 focus:ring-2 focus:ring-umber-400/40 disabled:opacity-60"
+              className="w-full rounded-xl border border-dusk-600 bg-dusk-850 px-4 py-3 text-sm text-parchment outline-none focus:border-umber-400/50 focus:ring-2 focus:ring-umber-400/30 disabled:opacity-60"
               placeholder="you@example.com"
             />
             <button
               type="submit"
               disabled={magicStatus === "loading" || magicStatus === "sent"}
-              className="w-full rounded-lg border border-dusk-500 bg-dusk-850 py-2 text-sm font-medium text-parchment transition hover:bg-dusk-800 disabled:cursor-not-allowed disabled:opacity-50"
+              className="w-full rounded-xl border border-dusk-500 bg-dusk-850 py-3 text-sm font-medium text-parchment transition hover:bg-dusk-800 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {magicStatus === "loading"
                 ? "Sending…"
@@ -438,7 +435,7 @@ export function AuthForm({
         ) : null}
       </div>
 
-      <p className="mt-8 text-center text-sm text-parchment-muted">
+      <p className="mt-8 text-sm text-parchment-muted">
         {mode === "login" ? (
           <>
             New here?{" "}
@@ -460,15 +457,6 @@ export function AuthForm({
             </Link>
           </>
         )}
-      </p>
-
-      <p className="mt-6 text-center">
-        <Link
-          href="/"
-          className="text-xs text-parchment-muted transition hover:text-parchment"
-        >
-          ← Back to HeroPortfolio
-        </Link>
       </p>
     </div>
   );

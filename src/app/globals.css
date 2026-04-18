@@ -80,3 +80,30 @@ html[data-theme="light"] ::selection {
   background: var(--umber-500);
   color: #fff;
 }
+
+/* ── Auth page animations ─────────────────────────────────── */
+@keyframes cape-wave {
+  0%   { transform: skewX(-4deg) rotate(-2deg) scaleX(0.97); }
+  50%  { transform: skewX(5deg)  rotate(2deg)  scaleX(1.03); }
+  100% { transform: skewX(-4deg) rotate(-2deg) scaleX(0.97); }
+}
+
+@keyframes auth-float {
+  0%, 100% { transform: translateY(0px)   rotate(-3deg); }
+  50%       { transform: translateY(-12px) rotate(-1deg); }
+}
+
+@keyframes auth-float-slow {
+  0%, 100% { transform: translateY(0px)   rotate(4deg); }
+  50%       { transform: translateY(-16px) rotate(6deg); }
+}
+
+@keyframes auth-sparkle {
+  0%, 100% { opacity: 0.9; transform: scale(1);   }
+  50%       { opacity: 0.2; transform: scale(0.5); }
+}
+
+@keyframes auth-glow-pulse {
+  0%, 100% { opacity: 0.35; }
+  50%       { opacity: 0.6; }
+}

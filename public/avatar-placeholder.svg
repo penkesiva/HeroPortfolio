@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" width="400" height="500" role="img" aria-label="Profile photo placeholder">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1c1714"/>
+      <stop offset="60%" stop-color="#261e19"/>
+      <stop offset="100%" stop-color="#2e2420"/>
+    </linearGradient>
+    <linearGradient id="body" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#4a3728"/>
+      <stop offset="100%" stop-color="#3a2b1e"/>
+    </linearGradient>
+    <linearGradient id="head" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#5c4433"/>
+      <stop offset="100%" stop-color="#4a3728"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="40%" r="55%">
+      <stop offset="0%" stop-color="#7a5c3e" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#1c1714" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="fade" x1="0%" y1="60%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1c1714" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#1c1714" stop-opacity="0.72"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="400" height="500" fill="url(#bg)"/>
+
+  <!-- Subtle centre glow -->
+  <rect width="400" height="500" fill="url(#glow)"/>
+
+  <!-- Subtle dot-grid texture -->
+  <pattern id="dots" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+    <circle cx="10" cy="10" r="1" fill="#8b6f47" fill-opacity="0.07"/>
+  </pattern>
+  <rect width="400" height="500" fill="url(#dots)"/>
+
+  <!-- Shoulders / body (large ellipse, bottom-anchored) -->
+  <ellipse cx="200" cy="530" rx="175" ry="150" fill="url(#body)"/>
+
+  <!-- Neck -->
+  <rect x="173" y="258" width="54" height="54" rx="10" fill="url(#head)"/>
+
+  <!-- Head -->
+  <circle cx="200" cy="200" r="88" fill="url(#head)"/>
+
+  <!-- Vignette fade at bottom -->
+  <rect width="400" height="500" fill="url(#fade)"/>
+
+  <!-- Hint text -->
+  <text x="200" y="460" text-anchor="middle" fill="#8b6f47" fill-opacity="0.65"
+        font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="500"
+        letter-spacing="0.04em">
+    Add your photo
+  </text>
+</svg>

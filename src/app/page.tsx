@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CopyPublicProfileLink } from "@/components/CopyPublicProfileLink";
+import { redirect } from "next/navigation";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -11,17 +11,12 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  let signedIn = false;
-  let signedInUserId: string | null = null;
   if (isSupabaseConfigured()) {
     const supabase = await createServerSupabaseClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (user) {
-      signedIn = true;
-      signedInUserId = user.id;
-    }
+    if (user) redirect("/timeline");
   }
 
   return (
@@ -38,32 +33,18 @@ export default async function HomePage() {
             >
               Plans &amp; Pro
             </Link>
-            {signedIn && signedInUserId ? (
-              <>
-                <CopyPublicProfileLink userId={signedInUserId} />
-                <Link
-                  href="/timeline"
-                  className="rounded-full border border-umber-500/45 bg-umber-500/15 px-4 py-2 text-sm font-medium text-umber-200 transition hover:bg-umber-500/25"
-                >
-                  Your timeline
-                </Link>
-              </>
-            ) : !signedIn ? (
-              <>
-                <Link
-                  href="/login"
-                  className="rounded-full px-3 py-2 text-sm font-medium text-parchment-muted transition hover:text-parchment sm:px-4"
-                >
-                  Log in
-                </Link>
-                <Link
-                  href="/signup"
-                  className="rounded-full border border-umber-500/45 bg-umber-500/15 px-4 py-2 text-sm font-medium text-umber-200 transition hover:bg-umber-500/25"
-                >
-                  Sign up
-                </Link>
-              </>
-            ) : null}
+            <Link
+              href="/login"
+              className="rounded-full px-3 py-2 text-sm font-medium text-parchment-muted transition hover:text-parchment sm:px-4"
+            >
+              Log in
+            </Link>
+            <Link
+              href="/signup"
+              className="rounded-full border border-umber-500/45 bg-umber-500/15 px-4 py-2 text-sm font-medium text-umber-200 transition hover:bg-umber-500/25"
+            >
+              Sign up
+            </Link>
           </nav>
         </div>
       </header>
@@ -83,35 +64,19 @@ export default async function HomePage() {
         </p>
 
         <div className="mt-10 flex flex-wrap items-center gap-3">
-          {signedIn ? (
-            <Link
-              href="/timeline"
-              className="inline-flex items-center justify-center rounded-full border border-umber-500/50 bg-umber-500/20 px-6 py-3 text-sm font-medium text-umber-100 transition hover:bg-umber-500/30"
-            >
-              Open your timeline
-            </Link>
-          ) : (
-            <>
-              <Link
-                href="/signup"
-                className="inline-flex items-center justify-center rounded-full border border-umber-500/50 bg-umber-500/20 px-6 py-3 text-sm font-medium text-umber-100 transition hover:bg-umber-500/30"
-              >
-                Sign up free
-              </Link>
-              <Link
-                href="/login"
-                className="inline-flex items-center justify-center rounded-full border border-dusk-600 bg-dusk-850/80 px-6 py-3 text-sm font-medium text-parchment transition hover:border-dusk-500"
-              >
-                Log in
-              </Link>
-            </>
-          )}
+          <Link
+            href="/signup"
+            className="inline-flex items-center justify-center rounded-full border border-umber-500/50 bg-umber-500/20 px-6 py-3 text-sm font-medium text-umber-100 transition hover:bg-umber-500/30"
+          >
+            Sign up free
+          </Link>
+          <Link
+            href="/login"
+            className="inline-flex items-center justify-center rounded-full border border-dusk-600 bg-dusk-850/80 px-6 py-3 text-sm font-medium text-parchment transition hover:border-dusk-500"
+          >
+            Log in
+          </Link>
         </div>
-
-        <p className="mt-12 text-xs text-parchment-muted/80">
-          Public landing page · After you sign in, you&apos;ll build your
-          portfolio on your private timeline.
-        </p>
       </main>
     </div>
   );

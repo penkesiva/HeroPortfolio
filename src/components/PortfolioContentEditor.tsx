@@ -5,11 +5,14 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import type { Achievement, SiteIntro, YearBlock } from "@/data/timeline";
 import type { DraftProfileFields } from "@/lib/draftProfileIntro";
+import { UpgradeModal } from "@/components/UpgradeModal";
 
 type PortfolioContentEditorProps = {
   open: boolean;
@@ -21,6 +24,8 @@ type PortfolioContentEditorProps = {
   onApplyIntro: (patch: Partial<DraftProfileFields>) => void;
   onPersistDrafts: () => void;
   onDiscardDrafts: () => void;
+  onAddYear?: (year: number) => void;
+  plan?: "free" | "pro";
 };
 
 function sortYearsDesc(t: YearBlock[]): YearBlock[] {
@@ -33,6 +38,21 @@ function replaceYear(
   patch: Partial<YearBlock>,
 ): YearBlock[] {
   return timeline.map((b) => (b.year === year ? { ...b, ...patch } : b));
+}
+
+function addYearBlock(timeline: YearBlock[], year: number): YearBlock[] {
+  if (timeline.some((b) => b.year === year)) return timeline;
+  return [...timeline, { year, tagline: "", achievements: [] }].sort(
+    (a, b) => b.year - a.year,
+  );
+}
+
+function gradeLabel(year: number): string {
+  const currentYear = new Date().getFullYear();
+  const grade = 12 - (currentYear - year);
+  if (grade >= 6 && grade <= 8) return `Grade ${grade}`;
+  if (grade >= 9 && grade <= 12) return `Grade ${grade}`;
+  return "";
 }
 
 function newEmptyAchievement(): Achievement {
@@ -67,8 +87,56 @@ export function PortfolioContentEditor({
   onApplyIntro,
   onPersistDrafts,
   onDiscardDrafts,
+  onAddYear,
+  plan = "free",
 }: PortfolioContentEditorProps) {
   const [saveAck, setSaveAck] = useState(false);
+  const [addingYear, setAddingYear] = useState(false);
+  const [newYearValue, setNewYearValue] = useState(new Date().getFullYear());
+  const [linkUrl, setLinkUrl] = useState("");
+  const [linkLoading, setLinkLoading] = useState(false);
+  const [linkError, setLinkError] = useState<string | null>(null);
+  const [upgradeModal, setUpgradeModal] = useState<{ open: boolean; feature: string; description?: string }>({
+    open: false,
+    feature: "",
+  });
+  const [exportLoading, setExportLoading] = useState(false);
+
+  // ─── Resize handle ────────────────────────────────────────────────────────
+  const MIN_WIDTH = 340;
+  const [panelWidth, setPanelWidth] = useState<number | null>(null);
+  const isDragging = useRef(false);
+  const dragStartX = useRef(0);
+  const dragStartWidth = useRef(0);
+  const panelRef = useRef<HTMLElement>(null);
+
+  const onDragStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    isDragging.current = true;
+    dragStartX.current = e.clientX;
+    dragStartWidth.current = panelRef.current?.offsetWidth ?? 560;
+    document.body.style.cursor = "ew-resize";
+    document.body.style.userSelect = "none";
+
+    function onMove(ev: MouseEvent) {
+      if (!isDragging.current) return;
+      const delta = dragStartX.current - ev.clientX; // drag left = wider
+      const maxWidth = Math.floor(window.innerWidth * 0.5);
+      const next = Math.min(maxWidth, Math.max(MIN_WIDTH, dragStartWidth.current + delta));
+      setPanelWidth(next);
+    }
+
+    function onUp() {
+      isDragging.current = false;
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+      document.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseup", onUp);
+    }
+
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup", onUp);
+  }, []);
 
   const years = useMemo(() => sortYearsDesc(timeline), [timeline]);
   const [section, setSection] = useState<"hero" | "year">("hero");
@@ -78,6 +146,13 @@ export function PortfolioContentEditor({
       setYearIndex((i) => Math.min(i, Math.max(0, years.length - 1)));
     });
   }, [years.length]);
+
+  // Auto-revert to "hero" if all year blocks are gone to prevent a null crash
+  useEffect(() => {
+    if (section === "year" && years.length === 0) {
+      startTransition(() => setSection("hero"));
+    }
+  }, [section, years.length]);
 
   const block = years[yearIndex] ?? years[0];
   const year = block?.year ?? new Date().getFullYear();
@@ -129,9 +204,50 @@ export function PortfolioContentEditor({
     setSelectedId(na.id);
   };
 
+  const summarizeLink = async () => {
+    if (!linkUrl.trim() || !selected) return;
+    setLinkLoading(true);
+    setLinkError(null);
+    try {
+      const res = await fetch("/api/summarize-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: linkUrl.trim() }),
+      });
+      const data = (await res.json()) as {
+        heading1?: string;
+        heading2?: string;
+        body?: string;
+        error?: string;
+        upgradeRequired?: boolean;
+      };
+      if (!res.ok || data.error) {
+        setLinkError(data.error ?? "Failed to summarize link.");
+        return;
+      }
+      patchAchievement(selected.id, {
+        title: data.heading1 ?? selected.title,
+        heading2: data.heading2 || selected.heading2,
+        body: data.body ?? selected.body,
+        description: data.body ?? selected.description,
+        links: [
+          ...(selected.links ?? []),
+          { label: "Source link", href: linkUrl.trim() },
+        ],
+      });
+      setLinkUrl("");
+    } catch {
+      setLinkError("Network error. Check your connection.");
+    } finally {
+      setLinkLoading(false);
+    }
+  };
+
   const removeEvent = (id: string) => {
     const next = achievements.filter((a) => a.id !== id);
-    fixReplaceYear(next.length ? next : [newEmptyAchievement()]);
+    fixReplaceYear(next);
+    // Clear selection if the deleted event was selected
+    if (selectedId === id) setSelectedId(next[0]?.id ?? null);
   };
 
   const onPickImages = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -339,45 +455,98 @@ export function PortfolioContentEditor({
     reader.readAsText(file);
   };
 
-  if (!open) return null;
-  if (section === "year" && !block) return null;
+  const triggerExport = async (format: "json" | "csv" | "pdf") => {
+    if ((format === "pdf" || format === "csv") && plan === "free") {
+      setUpgradeModal({
+        open: true,
+        feature: format === "pdf" ? "PDF Achievement Book export" : "CSV export",
+        description:
+          format === "pdf"
+            ? "Create a beautiful printable PDF of your entire portfolio — cover page, year sections, and all achievements. Upgrade to Pro to unlock it."
+            : "Export your portfolio to a spreadsheet for college applications and scholarship forms.",
+      });
+      return;
+    }
+    setExportLoading(true);
+    try {
+      const res = await fetch(`/api/export?format=${format}`);
+      if (!res.ok) {
+        const d = (await res.json()) as { error?: string };
+        window.alert(d.error ?? "Export failed.");
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `heroportfolio.${format}`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      window.alert("Export failed. Try again.");
+    } finally {
+      setExportLoading(false);
+    }
+  };
 
   return (
+    <AnimatePresence>
+    {open && (
     <div
       className="fixed inset-0 z-[90] flex justify-end"
       role="presentation"
     >
-      <button
+      <motion.button
         type="button"
         aria-label="Close editor"
         className="absolute inset-0 bg-dusk-950/70 backdrop-blur-sm"
         onClick={onClose}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
       />
-      <aside
-        className="relative z-10 flex h-full w-full max-w-md flex-col border-l border-dusk-700/90 bg-dusk-900 shadow-2xl"
+      <motion.aside
+        ref={panelRef}
+        style={panelWidth ? { maxWidth: `${panelWidth}px` } : undefined}
+        className="relative z-10 flex h-full w-full flex-col border-l border-dusk-700/90 bg-dusk-900 shadow-2xl sm:max-w-[min(40vw,560px)]"
         role="dialog"
         aria-modal="true"
         aria-label="Content editor"
+        initial={{ x: "100%" }}
+        animate={{ x: 0 }}
+        exit={{ x: "100%" }}
+        transition={{ type: "spring", damping: 30, stiffness: 300, mass: 0.8 }}
       >
+        {/* Drag handle — left edge */}
+        <div
+          role="separator"
+          aria-label="Drag to resize editor panel"
+          aria-orientation="vertical"
+          onMouseDown={onDragStart}
+          onDoubleClick={() => setPanelWidth(null)}
+          title="Drag to resize · Double-click to reset"
+          className="group absolute left-0 top-0 z-20 hidden h-full w-3 -translate-x-full cursor-ew-resize select-none items-center justify-center sm:flex"
+        >
+          {/* Visual pill — brighter on hover */}
+          <div className="h-10 w-1 rounded-full bg-dusk-600/60 transition-colors duration-150 group-hover:bg-umber-400/70" />
+        </div>
+
         <div className="flex items-center justify-between border-b border-dusk-700/80 px-4 py-3">
           <h2 className="text-sm font-semibold text-parchment">Edit content</h2>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg border border-dusk-600 px-2 py-1 text-xs text-parchment-muted hover:text-parchment"
+            aria-label="Close editor"
+            className="flex size-7 items-center justify-center rounded-lg border border-dusk-600 text-parchment-muted transition hover:border-dusk-500 hover:text-parchment"
           >
-            Close
+            <svg viewBox="0 0 20 20" fill="currentColor" className="size-4" aria-hidden>
+              <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+            </svg>
           </button>
         </div>
 
         <div className="flex-1 overflow-y-auto px-4 py-4">
-          <p className="mb-4 text-xs leading-relaxed text-parchment-muted">
-            Hero and year edits save <strong className="font-medium text-parchment/90">automatically</strong>{" "}
-            in this browser (local storage). Use <strong className="font-medium text-parchment/90">Save draft</strong>{" "}
-            to re-write storage with a confirmation. Export <code className="text-umber-300/90">profile.json</code>{" "}
-            or <code className="text-umber-300/90">events.json</code> for GitHub. Display name comes from your account.
-          </p>
-
           <label className="block text-xs font-semibold uppercase tracking-wide text-parchment-muted">
             Section
           </label>
@@ -393,19 +562,76 @@ export function PortfolioContentEditor({
             }}
             className="mt-1 w-full rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-2 text-sm text-parchment"
           >
-            <option value="hero">Hero</option>
-            {years.map((y, i) => (
-              <option key={y.year} value={i}>
-                {y.year}
-              </option>
-            ))}
+            <option value="hero">Hero / Profile</option>
+            {years.map((y, i) => {
+              const gl = gradeLabel(y.year);
+              return (
+                <option key={`${i}-${y.year}`} value={i}>
+                  {y.year}{gl ? `  ·  ${gl}` : ""}
+                </option>
+              );
+            })}
           </select>
+
+          {/* Add school year */}
+          <div className="mt-2">
+            {!addingYear ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setAddingYear(true);
+                  setNewYearValue(new Date().getFullYear());
+                }}
+                className="text-xs font-medium text-umber-300/80 underline decoration-umber-500/40 underline-offset-2 hover:text-umber-200"
+              >
+                + Add school year
+              </button>
+            ) : (
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min={2000}
+                  max={new Date().getFullYear() + 2}
+                  value={newYearValue}
+                  onChange={(e) => setNewYearValue(Number(e.target.value))}
+                  className="w-24 rounded-lg border border-dusk-600 bg-dusk-850 px-2 py-1.5 text-sm text-parchment focus:border-umber-400/50 focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = addYearBlock(timeline, newYearValue);
+                    onApplyTimeline(next);
+                    if (onAddYear) onAddYear(newYearValue);
+                    const idx = sortYearsDesc(next).findIndex(
+                      (b) => b.year === newYearValue,
+                    );
+                    if (idx >= 0) {
+                      startTransition(() => {
+                        setSection("year");
+                        setYearIndex(idx);
+                      });
+                    }
+                    setAddingYear(false);
+                  }}
+                  className="rounded-lg border border-umber-500/40 bg-umber-500/15 px-3 py-1.5 text-xs font-medium text-umber-200 transition hover:bg-umber-500/25"
+                >
+                  Add
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAddingYear(false)}
+                  className="text-xs text-parchment-muted transition hover:text-parchment"
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
+          </div>
 
           {section === "hero" ? (
             <div className="mt-4 space-y-3 border-t border-dusk-700/60 pt-4">
               <p className="text-[11px] text-parchment-muted">
-                Name uses your signed-in profile. Photo can be a path under{" "}
-                <code className="text-umber-300/90">public/</code> or an uploaded image (stored in this browser only until you export).
+                Your name comes from your account. Changes here save to the cloud automatically.
               </p>
               <Field label="Lead line (e.g. I'm)">
                 <input
@@ -536,17 +762,23 @@ export function PortfolioContentEditor({
               <label className="mt-4 block text-xs font-semibold uppercase tracking-wide text-parchment-muted">
                 Event
               </label>
-              <select
-                value={selectedId ?? ""}
-                onChange={(e) => setSelectedId(e.target.value || null)}
-                className="mt-1 w-full rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-2 text-sm text-parchment"
-              >
-                {achievements.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.title || a.id}
-                  </option>
-                ))}
-              </select>
+              {achievements.length === 0 ? (
+                <p className="mt-2 rounded-lg border border-dashed border-dusk-600 px-3 py-4 text-center text-xs text-parchment-muted/60">
+                  No events yet. Click &quot;+ Add event&quot; above to log your first one.
+                </p>
+              ) : (
+                <select
+                  value={selectedId ?? ""}
+                  onChange={(e) => setSelectedId(e.target.value || null)}
+                  className="mt-1 w-full rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-2 text-sm text-parchment"
+                >
+                  {achievements.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.title || a.id}
+                    </option>
+                  ))}
+                </select>
+              )}
 
               {selected ? (
             <div className="mt-4 space-y-3 border-t border-dusk-700/60 pt-4">
@@ -557,6 +789,43 @@ export function PortfolioContentEditor({
               >
                 Delete this event
               </button>
+
+              {/* AI Link Summarizer */}
+              <div className="rounded-xl border border-umber-500/30 bg-umber-500/8 p-3">
+                <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-umber-300">
+                  Smart import — paste a news link
+                </p>
+                <p className="mb-2 text-[11px] leading-relaxed text-parchment-muted">
+                  Paste an article or competition results URL and AI will auto-fill the title, subtitle, and description.
+                  {plan === "free" && " (3 uses/month free)"}
+                </p>
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    value={linkUrl}
+                    onChange={(e) => setLinkUrl(e.target.value)}
+                    placeholder="https://news-article.com/…"
+                    className="min-w-0 flex-1 rounded-lg border border-dusk-600 bg-dusk-850 px-2 py-1.5 text-xs text-parchment placeholder:text-parchment-muted/40"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        void summarizeLink();
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => void summarizeLink()}
+                    disabled={linkLoading || !linkUrl.trim()}
+                    className="shrink-0 rounded-lg border border-umber-500/40 bg-umber-500/20 px-3 py-1.5 text-xs font-medium text-umber-200 disabled:opacity-50"
+                  >
+                    {linkLoading ? "…" : "Fill"}
+                  </button>
+                </div>
+                {linkError && (
+                  <p className="mt-1.5 text-[11px] text-red-400">{linkError}</p>
+                )}
+              </div>
 
               <Field label="Heading 1 (title)">
                 <input
@@ -744,40 +1013,42 @@ export function PortfolioContentEditor({
           )}
         </div>
 
-        <div className="border-t border-dusk-700/80 p-4 space-y-3">
-          <button
-            type="button"
-            onClick={() => {
-              onPersistDrafts();
-              setSaveAck(true);
-              window.setTimeout(() => setSaveAck(false), 2200);
-            }}
-            className="w-full rounded-lg border border-umber-500/50 bg-umber-500/20 py-2.5 text-sm font-medium text-umber-200 transition hover:bg-umber-500/30"
-          >
-            Save draft
-          </button>
-          {saveAck ? (
-            <p className="text-center text-xs font-medium text-umber-300" role="status">
-              Saved in this browser.
-            </p>
-          ) : (
-            <p className="text-center text-[11px] text-parchment-muted/90">
-              Auto-saves while you edit; this button re-writes storage and confirms.
-            </p>
-          )}
-          <button
-            type="button"
-            onClick={() => {
-              onDiscardDrafts();
-              onClose();
-            }}
-            className="w-full rounded-lg border border-dusk-600 bg-dusk-850 py-2 text-xs font-medium text-parchment-muted hover:text-parchment"
-          >
-            Discard draft &amp; reload from site
-          </button>
+        <div className="border-t border-dusk-700/80 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                onDiscardDrafts();
+                onClose();
+              }}
+              className="flex-1 rounded-lg border border-dusk-600 bg-dusk-850 py-2 text-sm font-medium text-parchment-muted transition hover:border-dusk-500 hover:text-parchment"
+            >
+              Discard
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                onPersistDrafts();
+                setSaveAck(true);
+                window.setTimeout(() => setSaveAck(false), 2200);
+              }}
+              className="flex-1 rounded-lg border border-umber-500/50 bg-umber-500/20 py-2 text-sm font-medium text-umber-200 transition hover:bg-umber-500/30"
+            >
+              {saveAck ? "Saved ✓" : "Save"}
+            </button>
+          </div>
         </div>
-      </aside>
+      </motion.aside>
+
+      <UpgradeModal
+        open={upgradeModal.open}
+        onClose={() => setUpgradeModal((u) => ({ ...u, open: false }))}
+        featureName={upgradeModal.feature}
+        description={upgradeModal.description}
+      />
     </div>
+    )}
+    </AnimatePresence>
   );
 }
 

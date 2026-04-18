@@ -10,12 +10,14 @@ type Props = {
   profileUserId: string;
   serverTimeline: YearBlock[];
   genericIntro: SiteIntro;
+  isPro?: boolean;
 };
 
 export function PublicPortfolioClient({
   profileUserId,
   serverTimeline,
   genericIntro,
+  isPro = false,
 }: Props) {
   const [intro, setIntro] = useState<SiteIntro>(genericIntro);
 
@@ -41,6 +43,7 @@ export function PublicPortfolioClient({
       timeline={serverTimeline}
       siteIntro={intro}
       publicView
+      plan={isPro ? "pro" : "free"}
     />
   );
 }

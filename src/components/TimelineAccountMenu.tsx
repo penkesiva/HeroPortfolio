@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
 } from "react";
+import Link from "next/link";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import {
   applyTheme,
@@ -94,18 +95,40 @@ function SignOutIcon({ className }: { className?: string }) {
   );
 }
 
+function DownloadIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.75}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="7 10 12 15 17 10" />
+      <line x1="12" y1="15" x2="12" y2="3" />
+    </svg>
+  );
+}
+
 type Props = {
   userId: string;
   displayName: string;
+  plan?: "free" | "pro";
 };
 
-export function TimelineAccountMenu({ userId, displayName }: Props) {
+export function TimelineAccountMenu({ userId, displayName, plan = "free" }: Props) {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [copyError, setCopyError] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [theme, setTheme] = useState<ThemeChoice>("dark");
   const [themeMounted, setThemeMounted] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
   const menuId = useId();
 
@@ -172,84 +195,223 @@ export function TimelineAccountMenu({ userId, displayName }: Props) {
     window.location.href = "/";
   }
 
+  async function downloadExport(format: "json" | "csv" | "pdf") {
+    if ((format === "pdf" || format === "csv") && plan === "free") {
+      close();
+      setUpgradeOpen(true);
+      return;
+    }
+    close();
+    setExportLoading(true);
+    try {
+      const res = await fetch(`/api/export?format=${format}`);
+      if (!res.ok) {
+        const d = (await res.json()) as { error?: string };
+        window.alert(d.error ?? "Export failed.");
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `heroportfolio.${format}`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      window.alert("Export failed. Check your connection.");
+    } finally {
+      setExportLoading(false);
+    }
+  }
+
   const isDark = theme === "dark";
 
   return (
-    <div className="relative" ref={wrapRef}>
-      <button
-        type="button"
-        aria-expanded={open}
-        aria-haspopup="menu"
-        aria-controls={menuId}
-        aria-label="Account menu"
-        onClick={() => setOpen((o) => !o)}
-        className="flex size-10 shrink-0 items-center justify-center rounded-full border border-dusk-600 bg-dusk-850/90 text-parchment-muted shadow-sm transition hover:border-umber-400/55 hover:bg-dusk-800 hover:text-umber-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-umber-400/70"
-        title="Account menu"
-      >
-        <UserAvatarIcon className="size-[22px] text-umber-300/95" />
-      </button>
-
-      {open ? (
-        <div
-          id={menuId}
-          role="menu"
-          aria-label="Account"
-          className="absolute right-0 top-[calc(100%+0.5rem)] z-[100] w-max max-w-[min(18rem,calc(100vw-1.5rem))] rounded-xl border border-dusk-600/90 bg-dusk-900/95 py-2 shadow-[0_16px_48px_rgba(0,0,0,0.45)] backdrop-blur-md"
+    <>
+      <div className="relative" ref={wrapRef}>
+        <button
+          type="button"
+          aria-expanded={open}
+          aria-haspopup="menu"
+          aria-controls={menuId}
+          aria-label="Account menu"
+          onClick={() => setOpen((o) => !o)}
+          className="flex size-10 shrink-0 items-center justify-center rounded-full border border-dusk-600 bg-dusk-850/90 text-parchment-muted shadow-sm transition hover:border-umber-400/55 hover:bg-dusk-800 hover:text-umber-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-umber-400/70"
+          title="Account menu"
         >
-          <div className="border-b border-dusk-700/80 px-3 py-2.5">
-            <p className="max-w-[min(16rem,calc(100vw-2rem))] truncate text-sm font-medium text-parchment">
-              Hi, {displayName}
+          <UserAvatarIcon className="size-[22px] text-umber-300/95" />
+        </button>
+
+        {open ? (
+          <div
+            id={menuId}
+            role="menu"
+            aria-label="Account"
+            className="absolute right-0 top-[calc(100%+0.5rem)] z-[100] w-max max-w-[min(18rem,calc(100vw-1.5rem))] rounded-xl border border-dusk-600/90 bg-dusk-900/95 py-2 shadow-[0_16px_48px_rgba(0,0,0,0.45)] backdrop-blur-md"
+          >
+            {/* Name + plan badge */}
+            <div className="border-b border-dusk-700/80 px-3 py-2.5">
+              <div className="flex items-center gap-2">
+                <p className="max-w-[min(13rem,calc(100vw-2rem))] truncate text-sm font-medium text-parchment">
+                  Hi, {displayName}
+                </p>
+                {plan === "pro" && (
+                  <span className="rounded-full bg-umber-500/30 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-umber-200">
+                    Pro
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Export section */}
+            <div className="border-b border-dusk-700/60 px-3 py-2.5">
+              <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-parchment-muted/60">
+                Export portfolio
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => void downloadExport("json")}
+                  disabled={exportLoading}
+                  className="rounded-full border border-dusk-600 bg-dusk-850 px-2.5 py-1 text-xs font-medium text-parchment-muted transition hover:text-parchment disabled:opacity-50"
+                >
+                  JSON
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => void downloadExport("csv")}
+                  disabled={exportLoading}
+                  className={`flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition disabled:opacity-50 ${
+                    plan === "pro"
+                      ? "border-dusk-600 bg-dusk-850 text-parchment-muted hover:text-parchment"
+                      : "border-umber-500/35 bg-umber-500/10 text-umber-300 hover:bg-umber-500/18"
+                  }`}
+                >
+                  CSV
+                  {plan === "free" && (
+                    <span className="rounded-full bg-umber-500/25 px-1 text-[9px] font-bold uppercase tracking-wide text-umber-200">
+                      Pro
+                    </span>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => void downloadExport("pdf")}
+                  disabled={exportLoading}
+                  className={`flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition disabled:opacity-50 ${
+                    plan === "pro"
+                      ? "border-dusk-600 bg-dusk-850 text-parchment-muted hover:text-parchment"
+                      : "border-umber-500/35 bg-umber-500/10 text-umber-300 hover:bg-umber-500/18"
+                  }`}
+                >
+                  PDF Book
+                  {plan === "free" && (
+                    <span className="rounded-full bg-umber-500/25 px-1 text-[9px] font-bold uppercase tracking-wide text-umber-200">
+                      Pro
+                    </span>
+                  )}
+                </button>
+              </div>
+              {exportLoading && (
+                <p className="mt-1.5 text-[11px] text-parchment-muted/60">Preparing export…</p>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="py-1">
+              <button
+                type="button"
+                role="menuitem"
+                onClick={toggleTheme}
+                className="flex w-max max-w-full items-center gap-2.5 whitespace-nowrap px-3 py-2.5 text-left text-sm text-parchment transition hover:bg-dusk-850/90"
+                aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
+              >
+                {!themeMounted ? (
+                  <SunIcon className="size-4 shrink-0 text-umber-300" />
+                ) : isDark ? (
+                  <SunIcon className="size-4 shrink-0 text-umber-300" />
+                ) : (
+                  <MoonIcon className="size-4 shrink-0 text-parchment-muted" />
+                )}
+                <span>
+                  {!themeMounted ? "Theme" : isDark ? "Light mode" : "Dark mode"}
+                </span>
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => void copyProfileUrl()}
+                className="flex w-max max-w-full items-center gap-2.5 whitespace-nowrap px-3 py-2.5 text-left text-sm text-parchment transition hover:bg-dusk-850/90"
+              >
+                <LinkShareIcon className="size-4 shrink-0 text-umber-300" />
+                <span>
+                  {copied ? "Copied!" : copyError ? "Copy failed" : "Copy share link"}
+                </span>
+              </button>
+              <div className="border-t border-dusk-700/60 mt-1 pt-1">
+                <button
+                  type="button"
+                  role="menuitem"
+                  disabled={signingOut}
+                  onClick={() => void onSignOut()}
+                  className="flex w-max max-w-full items-center gap-2.5 whitespace-nowrap px-3 py-2.5 text-left text-sm text-parchment-muted transition hover:bg-dusk-850/90 hover:text-parchment disabled:opacity-50"
+                >
+                  <SignOutIcon className="size-4 shrink-0 text-umber-300/80" />
+                  <span>{signingOut ? "Signing out…" : "Sign out"}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
+      </div>
+
+      {/* Upgrade modal when free user clicks a Pro export */}
+      {upgradeOpen && (
+        <div
+          className="fixed inset-0 z-[200] flex items-center justify-center px-4"
+          role="dialog"
+          aria-modal="true"
+        >
+          <button
+            type="button"
+            aria-label="Close"
+            className="absolute inset-0 bg-dusk-950/80 backdrop-blur-sm"
+            onClick={() => setUpgradeOpen(false)}
+          />
+          <div className="relative z-10 w-full max-w-sm rounded-2xl border border-umber-500/40 bg-gradient-to-b from-dusk-900 to-dusk-950 p-8 shadow-2xl">
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-umber-500/20 text-xl">
+              ⭐
+            </div>
+            <h2 className="text-lg font-semibold text-parchment">
+              PDF &amp; CSV export is a Pro feature
+            </h2>
+            <p className="mt-2 text-sm leading-relaxed text-parchment-muted">
+              Upgrade to Pro to export your portfolio as a beautiful PDF Achievement Book or a CSV spreadsheet — perfect for college applications.
+            </p>
+            <div className="mt-6 flex flex-col gap-3">
+              <Link
+                href="/pricing"
+                className="block w-full rounded-full border border-umber-500/50 bg-umber-500/25 py-3 text-center text-sm font-semibold text-umber-100 transition hover:bg-umber-500/35"
+              >
+                Upgrade to Pro
+              </Link>
+              <button
+                type="button"
+                onClick={() => setUpgradeOpen(false)}
+                className="w-full rounded-full border border-dusk-600 py-2.5 text-sm font-medium text-parchment-muted hover:text-parchment"
+              >
+                Maybe later
+              </button>
+            </div>
+            <p className="mt-4 text-center text-[11px] text-parchment-muted/70">
+              Basic stays free forever · JSON export is always free
             </p>
           </div>
-          <div className="py-1">
-            <button
-              type="button"
-              role="menuitem"
-              onClick={toggleTheme}
-              className="flex w-max max-w-full items-center gap-2.5 whitespace-nowrap px-3 py-2.5 text-left text-sm text-parchment transition hover:bg-dusk-850/90"
-              aria-label={
-                isDark ? "Switch to light theme" : "Switch to dark theme"
-              }
-            >
-              {!themeMounted ? (
-                <SunIcon className="size-4 shrink-0 text-umber-300" />
-              ) : isDark ? (
-                <SunIcon className="size-4 shrink-0 text-umber-300" />
-              ) : (
-                <MoonIcon className="size-4 shrink-0 text-parchment-muted" />
-              )}
-              <span>
-                {!themeMounted
-                  ? "Theme"
-                  : isDark
-                    ? "Light mode"
-                    : "Dark mode"}
-              </span>
-            </button>
-            <button
-              type="button"
-              role="menuitem"
-              onClick={() => void copyProfileUrl()}
-              className="flex w-max max-w-full items-center gap-2.5 whitespace-nowrap px-3 py-2.5 text-left text-sm text-parchment transition hover:bg-dusk-850/90"
-            >
-              <LinkShareIcon className="size-4 shrink-0 text-umber-300" />
-              <span>
-                {copied ? "Copied" : copyError ? "Copy failed" : "Copy share link"}
-              </span>
-            </button>
-            <button
-              type="button"
-              role="menuitem"
-              disabled={signingOut}
-              onClick={() => void onSignOut()}
-              className="flex w-max max-w-full items-center gap-2.5 whitespace-nowrap px-3 py-2.5 text-left text-sm text-parchment-muted transition hover:bg-dusk-850/90 hover:text-parchment disabled:opacity-50"
-            >
-              <SignOutIcon className="size-4 shrink-0 text-umber-300/80" />
-              <span>{signingOut ? "Signing out…" : "Sign out"}</span>
-            </button>
-          </div>
         </div>
-      ) : null}
-    </div>
+      )}
+    </>
   );
 }

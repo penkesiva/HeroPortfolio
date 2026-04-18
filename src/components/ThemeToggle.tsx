@@ -50,7 +50,8 @@ export function ThemeToggle() {
 
   const isDark = theme === "dark";
 
-  if (pathname === "/timeline") {
+  const appRoutes = ["/timeline", "/timeline/album", "/timeline/analytics", "/pricing"];
+  if (appRoutes.some((r) => pathname === r || pathname.startsWith(r + "/"))) {
     return null;
   }
 

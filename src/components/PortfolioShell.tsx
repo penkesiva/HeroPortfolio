@@ -24,6 +24,9 @@ import {
   loadDraftTimeline,
   saveDraftTimeline,
 } from "@/lib/draftTimeline";
+import { saveTimelineAction, saveProfileAction } from "@/app/actions/portfolio";
+import { AchievementBadges } from "@/components/AchievementBadges";
+import { TimelineEmptyState } from "@/components/TimelineEmptyState";
 import {
   musicUrlToEmbedSrc,
   videoUrlToEmbedSrc,
@@ -444,9 +447,9 @@ function AchievementCard({
               Watch video
             </button>
           ) : null}
-          {achievement.links?.map((l) => (
+          {achievement.links?.map((l, li) => (
             <Link
-              key={l.href + l.label}
+              key={`${li}-${l.href}-${l.label}`}
               href={l.href}
               target="_blank"
               rel="noopener noreferrer"
@@ -574,12 +577,18 @@ type PortfolioShellProps = {
   siteIntro: SiteIntro;
   /** Read-only shared view: no local draft, no editor, no saving */
   publicView?: boolean;
+  /** Authenticated user id — enables DB saving */
+  userId?: string;
+  /** Current subscription plan */
+  plan?: "free" | "pro";
 };
 
 export function PortfolioShell({
   timeline: serverTimeline,
   siteIntro: serverIntro,
   publicView = false,
+  userId,
+  plan = "free",
 }: PortfolioShellProps) {
   const [timeline, setTimeline] = useState(serverTimeline);
   const [draftHydrated, setDraftHydrated] = useState(false);
@@ -590,9 +599,18 @@ export function PortfolioShell({
     if (publicView) return;
     const d = loadDraftTimeline();
     startTransition(() => {
-      if (d?.length) setTimeline(d);
+      if (d?.length && serverTimeline.length > 0) {
+        // Only restore a draft if the server already has real data for this user.
+        // If the server is empty, any draft in storage is orphaned (dev leftovers
+        // or data from a previous account) — discard it so new users see the
+        // correct empty state.
+        setTimeline(d);
+      } else if (d?.length && serverTimeline.length === 0) {
+        clearDraftTimeline();
+      }
       setDraftHydrated(true);
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [publicView]);
 
   useEffect(() => {
@@ -650,11 +668,33 @@ export function PortfolioShell({
     [publicView, serverIntro],
   );
 
+  const handleAddYear = useCallback(
+    (year: number) => {
+      if (publicView) return;
+      const next = [...timeline, { year, tagline: "", achievements: [] }].sort(
+        (a, b) => b.year - a.year,
+      );
+      applyTimeline(next);
+      setEditorOpen(true);
+    },
+    [publicView, timeline, applyTimeline],
+  );
+
   const persistDrafts = useCallback(() => {
     if (publicView) return;
     saveDraftTimeline(timeline);
     saveDraftProfileIntro(serverIntroToDraftFields(intro));
-  }, [publicView, timeline, intro]);
+    // Also persist to DB when the user is authenticated
+    if (userId) {
+      void saveTimelineAction(timeline).catch(() => {});
+      void saveProfileAction({
+        heroLead: intro.heroLead,
+        role: intro.role,
+        bio: intro.bio,
+        photoSrc: intro.photoSrc,
+      }).catch(() => {});
+    }
+  }, [publicView, timeline, intro, userId]);
 
   const discardDrafts = useCallback(() => {
     if (publicView) return;
@@ -665,24 +705,9 @@ export function PortfolioShell({
   }, [publicView, serverTimeline, serverIntro]);
 
   const [editorOpen, setEditorOpen] = useState(false);
-  const [editMode, setEditMode] = useState(false);
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const p = new URLSearchParams(window.location.search);
-    startTransition(() => setEditMode(p.get("edit") === "1"));
-  }, []);
 
-  /** Floating editor: `?edit=1`, or local dev, or NEXT_PUBLIC_CONTENT_EDITOR=true */
-  const showContentEditor = useMemo(() => {
-    if (publicView) return false;
-    const flag = process.env.NEXT_PUBLIC_CONTENT_EDITOR;
-    return (
-      editMode ||
-      flag === "true" ||
-      flag === "1" ||
-      process.env.NODE_ENV === "development"
-    );
-  }, [editMode, publicView]);
+  // Always show the editor for the authenticated owner; never for public visitors
+  const showContentEditor = !publicView;
 
   const sorted = useMemo(
     () => [...timeline].sort((a, b) => b.year - a.year),
@@ -723,9 +748,7 @@ export function PortfolioShell({
       .filter((b) => b.achievements.length > 0);
   }, [sorted, categoryFilter, mediaFilter]);
 
-  const [selectedYear, setSelectedYear] = useState(
-    sorted[0]?.year ?? 2026,
-  );
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
   useEffect(() => {
     startTransition(() => {
@@ -887,6 +910,11 @@ export function PortfolioShell({
             >
               {intro.bio}
             </motion.p>
+            {timeline.length > 0 && (
+              <motion.div variants={heroItem} className="mt-5">
+                <AchievementBadges timeline={timeline} />
+              </motion.div>
+            )}
             <motion.div
               variants={heroItem}
               className="mt-8 flex flex-wrap items-center gap-3"
@@ -917,9 +945,21 @@ export function PortfolioShell({
                 className="object-cover"
                 sizes="(max-width: 1024px) 72vw, 380px"
                 priority
-                unoptimized={photoIsDataUrl}
+                unoptimized={photoIsDataUrl || intro.photoSrc.endsWith(".svg")}
               />
               <span className="pointer-events-none absolute inset-0 bg-gradient-to-t from-dusk-950/50 via-transparent to-transparent" />
+              {/* Upload nudge for owner when no real photo is set */}
+              {!publicView && intro.photoSrc === "/avatar-placeholder.svg" && (
+                <button
+                  type="button"
+                  onClick={() => setEditorOpen(true)}
+                  className="absolute inset-0 flex flex-col items-center justify-end gap-1 pb-6 opacity-0 transition-opacity duration-200 hover:opacity-100"
+                >
+                  <span className="rounded-full bg-dusk-950/80 px-4 py-1.5 text-xs font-medium text-parchment backdrop-blur-sm">
+                    Upload photo
+                  </span>
+                </button>
+              )}
             </div>
           </motion.div>
         </div>
@@ -929,6 +969,7 @@ export function PortfolioShell({
         id="timeline-start"
         className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 px-4 py-10 sm:px-6 lg:flex-row lg:gap-12 lg:px-8"
       >
+        {achievementsHeaderContext.totalAll > 0 && (
         <motion.aside
           initial={{ opacity: 0, x: -16 }}
           whileInView={{ opacity: 1, x: 0 }}
@@ -980,8 +1021,10 @@ export function PortfolioShell({
             </nav>
           </div>
         </motion.aside>
+        )}
 
         <main className="min-w-0 flex-1 pb-16">
+          {achievementsHeaderContext.totalAll > 0 && (
           <div className="mb-10 border-b border-dusk-700/70 pb-6 lg:mb-12">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-umber-400">
               Achievements
@@ -1182,8 +1225,15 @@ export function PortfolioShell({
               </div>
             ) : null}
           </div>
+          )}
 
           <div className="flex flex-col gap-20 lg:gap-24">
+            {achievementsHeaderContext.totalAll === 0 && !publicView ? (
+              <TimelineEmptyState
+                onAddYear={handleAddYear}
+                onOpenEditor={() => setEditorOpen(true)}
+              />
+            ) : null}
             {visibleBlocks.length === 0 &&
             achievementsHeaderContext.totalAll > 0 ? (
               <p className="rounded-2xl border border-dusk-700/80 bg-dusk-900/40 px-5 py-8 text-center text-sm text-parchment-muted">
@@ -1260,70 +1310,31 @@ export function PortfolioShell({
             onApplyIntro={applyIntro}
             onPersistDrafts={persistDrafts}
             onDiscardDrafts={discardDrafts}
+            onAddYear={handleAddYear}
+            plan={plan}
           />
         </>
       ) : null}
 
-      <footer className="border-t border-dusk-700/70 bg-dusk-900/30 py-6 text-center text-xs text-parchment-muted">
-        {publicView ? (
-          <p>
-            Shared from{" "}
-            <Link
-              href="/"
-              className="font-medium text-umber-300/90 underline decoration-umber-500/40 underline-offset-2 hover:text-umber-200"
-            >
-              HeroPortfolio.com
-            </Link>
-            <span className="mx-2 text-dusk-600">·</span>
-            <Link
-              href="/signup"
-              className="font-medium text-umber-300/90 underline decoration-umber-500/40 underline-offset-2 hover:text-umber-200"
-            >
-              Create your portfolio
-            </Link>
-          </p>
-        ) : (
-          <div className="mx-auto max-w-lg space-y-3">
-            <p className="leading-relaxed">
-              <span className="font-medium text-parchment/85">Edit content</span>{" "}
-              keeps hero and timeline in this browser; export from the panel to commit files to Git.
-            </p>
-            <p className="text-[11px] leading-relaxed text-parchment-muted/90">
-              URL filters:{" "}
-              <code className="rounded bg-dusk-800 px-1 py-0.5 font-mono text-umber-300/85">
-                ?category=music
-              </code>
-              ,{" "}
-              <code className="rounded bg-dusk-800 px-1 py-0.5 font-mono text-umber-300/85">
-                ?media=photos
-              </code>
-              . Production editor:{" "}
-              <code className="rounded bg-dusk-800 px-1 py-0.5 font-mono text-umber-300/85">
-                ?edit=1
-              </code>{" "}
-              or{" "}
-              <code className="rounded bg-dusk-800 px-1 py-0.5 font-mono text-umber-300/85">
-                NEXT_PUBLIC_CONTENT_EDITOR=true
-              </code>
-              .
-            </p>
-            <p>
-              <Link
-                href="/login"
-                className="font-medium text-umber-300/90 underline decoration-umber-500/40 underline-offset-2 hover:text-umber-200"
-              >
-                Log in
-              </Link>
-              <span className="mx-2 text-dusk-600">·</span>
+      <footer className="border-t border-dusk-700/70 bg-dusk-900/30 py-6 text-center text-xs text-parchment-muted/60">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-4 gap-y-1 px-4">
+          <span>© {new Date().getFullYear()} OneCreator LLC. All rights reserved.</span>
+          <span className="text-dusk-700">·</span>
+          <Link href="/" className="hover:text-parchment-muted transition">HeroPortfolio.com</Link>
+          <span className="text-dusk-700">·</span>
+          <Link href="/pricing" className="hover:text-parchment-muted transition">Pricing</Link>
+          {publicView && (
+            <>
+              <span className="text-dusk-700">·</span>
               <Link
                 href="/signup"
-                className="font-medium text-umber-300/90 underline decoration-umber-500/40 underline-offset-2 hover:text-umber-200"
+                className="font-medium text-umber-300/80 hover:text-umber-200 transition"
               >
-                Sign up
+                Create your portfolio
               </Link>
-            </p>
-          </div>
-        )}
+            </>
+          )}
+        </div>
       </footer>
     </div>
   );
