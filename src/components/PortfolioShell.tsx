@@ -26,7 +26,7 @@ import {
   loadDraftTimeline,
   saveDraftTimeline,
 } from "@/lib/draftTimeline";
-import { saveTimelineAction, saveProfileAction } from "@/app/actions/portfolio";
+import { saveTimelineAction, saveProfileAction, deleteYearBlockAction } from "@/app/actions/portfolio";
 import { AchievementBadges } from "@/components/AchievementBadges";
 import { TimelineEmptyState } from "@/components/TimelineEmptyState";
 import {
@@ -711,6 +711,40 @@ export function PortfolioShell({
       setEditorOpen(true);
     },
     [publicView, timeline, intro, applyTimeline, userId],
+  );
+
+  // Add exactly one year (used by the editor's "+ Add school year" picker).
+  // Unlike handleAddYear (onboarding), this does NOT scaffold a range.
+  const handleAddSingleYear = useCallback(
+    (year: number) => {
+      if (publicView) return;
+      if (timeline.some((b) => b.year === year)) return;
+      const next = [...timeline, { year, tagline: "", achievements: [] }].sort(
+        (a, b) => b.year - a.year,
+      );
+      applyTimeline(next);
+      if (userId) {
+        lastSavedTimeline.current = next;
+        panelOpenTimeline.current = next;
+        void saveTimelineAction(next).catch(() => {});
+      }
+    },
+    [publicView, timeline, applyTimeline, userId],
+  );
+
+  // Remove an empty year from state and DB.
+  const handleDeleteYear = useCallback(
+    async (year: number) => {
+      if (publicView) return;
+      const next = timeline.filter((b) => b.year !== year);
+      applyTimeline(next);
+      lastSavedTimeline.current = next;
+      panelOpenTimeline.current = next;
+      if (userId) {
+        await deleteYearBlockAction(year).catch(() => {});
+      }
+    },
+    [publicView, timeline, applyTimeline, userId],
   );
 
   const persistDrafts = useCallback(async (): Promise<{ error: string | null }> => {
@@ -1426,6 +1460,8 @@ export function PortfolioShell({
             onPersistDrafts={persistDrafts}
             onDiscardDrafts={discardDrafts}
             onAddYear={handleAddYear}
+            onAddSingleYear={handleAddSingleYear}
+            onDeleteYear={handleDeleteYear}
             plan={plan}
             openOnYear={editorOpenOnYear}
           />

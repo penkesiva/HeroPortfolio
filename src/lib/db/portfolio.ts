@@ -212,6 +212,19 @@ export async function deleteEvent(
     .eq("user_id", userId);
 }
 
+export async function deleteYearBlock(
+  supabase: SupabaseClient,
+  userId: string,
+  year: number,
+): Promise<{ error: string | null }> {
+  const { error } = await supabase
+    .from("year_blocks")
+    .delete()
+    .eq("user_id", userId)
+    .eq("year", year);
+  return { error: error?.message ?? null };
+}
+
 // ─── profile intro → SiteIntro ───────────────────────────────────────────────
 
 /**

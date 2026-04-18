@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import type { SiteIntro, YearBlock } from "@/data/timeline";
-import { saveUserTimeline, upsertProfile } from "@/lib/db/portfolio";
+import { saveUserTimeline, upsertProfile, deleteYearBlock } from "@/lib/db/portfolio";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -48,4 +48,19 @@ export async function saveProfileAction(
   });
 
   return { error: null };
+}
+
+export async function deleteYearBlockAction(
+  year: number,
+): Promise<{ error: string | null }> {
+  if (!isSupabaseConfigured()) return { error: "Supabase not configured" };
+
+  const supabase = await createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) redirect("/login?next=/timeline");
+
+  return deleteYearBlock(supabase, user.id, year);
 }
