@@ -130,6 +130,7 @@ export function PortfolioContentEditor({
     feature: "",
   });
   const [exportLoading, setExportLoading] = useState(false);
+  const [confirmDeleteYear, setConfirmDeleteYear] = useState(false);
 
   // ─── Resize handle ────────────────────────────────────────────────────────
   const MIN_WIDTH = 340;
@@ -174,7 +175,8 @@ export function PortfolioContentEditor({
     startTransition(() => {
       setYearIndex((i) => Math.min(i, Math.max(0, years.length - 1)));
     });
-  }, [years.length]);
+    setConfirmDeleteYear(false);
+  }, [years.length, yearIndex]);
 
   // Auto-revert to "hero" if all year blocks are gone to prevent a null crash
   useEffect(() => {
@@ -475,19 +477,36 @@ export function PortfolioContentEditor({
             ))}
           </select>
 
-          {/* Add school year */}
+          {/* Add school year / Remove school year — same row */}
           <div className="mt-2">
             {!addingYear ? (
-              <button
-                type="button"
-                onClick={() => {
-                  setAddingYear(true);
-                  setNewYearValue(new Date().getFullYear());
-                }}
-                className="text-xs font-medium text-umber-300/80 underline decoration-umber-500/40 underline-offset-2 hover:text-umber-200"
-              >
-                + Add school year
-              </button>
+              <div className="flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAddingYear(true);
+                    setConfirmDeleteYear(false);
+                    setNewYearValue(new Date().getFullYear());
+                  }}
+                  className="text-xs font-medium text-umber-300/80 underline decoration-umber-500/40 underline-offset-2 hover:text-umber-200"
+                >
+                  + Add school year
+                </button>
+
+                {/* Remove year — right side, empty years only */}
+                {section === "year" && achievements.length === 0 && onDeleteYear && (
+                  <button
+                    type="button"
+                    onClick={() => setConfirmDeleteYear(true)}
+                    className="flex items-center gap-1 text-xs text-parchment-muted/40 transition hover:text-red-400/80"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="size-3">
+                      <path fillRule="evenodd" d="M5 3.25V4H2.75a.75.75 0 0 0 0 1.5h.3l.815 8.15A1.5 1.5 0 0 0 5.357 15h5.285a1.5 1.5 0 0 0 1.493-1.35l.815-8.15h.3a.75.75 0 0 0 0-1.5H11v-.75A2.25 2.25 0 0 0 8.75 1h-1.5A2.25 2.25 0 0 0 5 3.25Zm2.25-.75a.75.75 0 0 0-.75.75V4h3v-.75a.75.75 0 0 0-.75-.75h-1.5ZM6.05 6a.75.75 0 0 1 .787.713l.275 5.5a.75.75 0 0 1-1.498.075l-.275-5.5A.75.75 0 0 1 6.05 6Zm3.9 0a.75.75 0 0 1 .712.787l-.275 5.5a.75.75 0 0 1-1.498-.075l.275-5.5A.75.75 0 0 1 9.95 6Z" clipRule="evenodd" />
+                    </svg>
+                    Remove {block?.year}
+                  </button>
+                )}
+              </div>
             ) : (
               <div className="flex items-center gap-2">
                 <input
@@ -601,6 +620,32 @@ export function PortfolioContentEditor({
             </div>
           ) : (
             <>
+              {/* Inline confirm for Remove year — above Year tagline */}
+              {confirmDeleteYear && onDeleteYear && (
+                <div className="mt-2 flex items-center justify-between rounded-xl border border-dusk-600 bg-dusk-850 px-3 py-2.5">
+                  <p className="text-xs text-parchment-muted">Remove {block.year} permanently?</p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setConfirmDeleteYear(false)}
+                      className="rounded-lg px-2.5 py-1 text-xs font-medium text-parchment-muted transition hover:text-parchment"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setConfirmDeleteYear(false);
+                        void onDeleteYear(block.year);
+                      }}
+                      className="rounded-lg border border-red-500/30 px-2.5 py-1 text-xs font-medium text-red-400/80 transition hover:border-red-400/50 hover:text-red-400"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              )}
+
               <label className="mt-4 block text-xs font-semibold uppercase tracking-wide text-parchment-muted">
                 Year tagline
               </label>
@@ -610,25 +655,6 @@ export function PortfolioContentEditor({
                 rows={2}
                 className="mt-1 w-full resize-y rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-2 text-sm text-parchment placeholder:text-parchment-muted/50"
               />
-
-              {/* Remove year — only shown when the year has no events */}
-              {achievements.length === 0 && onDeleteYear && (
-                <div className="mt-2 flex justify-end">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (!window.confirm(`Remove ${block.year} from your timeline? This cannot be undone.`)) return;
-                      void onDeleteYear(block.year);
-                    }}
-                    className="flex items-center gap-1 text-xs text-parchment-muted/50 transition hover:text-red-400"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="size-3">
-                      <path fillRule="evenodd" d="M5 3.25V4H2.75a.75.75 0 0 0 0 1.5h.3l.815 8.15A1.5 1.5 0 0 0 5.357 15h5.285a1.5 1.5 0 0 0 1.493-1.35l.815-8.15h.3a.75.75 0 0 0 0-1.5H11v-.75A2.25 2.25 0 0 0 8.75 1h-1.5A2.25 2.25 0 0 0 5 3.25Zm2.25-.75a.75.75 0 0 0-.75.75V4h3v-.75a.75.75 0 0 0-.75-.75h-1.5ZM6.05 6a.75.75 0 0 1 .787.713l.275 5.5a.75.75 0 0 1-1.498.075l-.275-5.5A.75.75 0 0 1 6.05 6Zm3.9 0a.75.75 0 0 1 .712.787l-.275 5.5a.75.75 0 0 1-1.498-.075l.275-5.5A.75.75 0 0 1 9.95 6Z" clipRule="evenodd" />
-                    </svg>
-                    Remove {block.year}
-                  </button>
-                </div>
-              )}
 
               {/* Event picker header — label + count + add + delete in one row */}
               <div className="mt-4 flex items-center gap-2">
@@ -931,6 +957,7 @@ export function PortfolioContentEditor({
               <DotLottieReact
                 src="/animations/saved_confetti.lottie"
                 autoplay
+                speed={1.8}
                 className="h-48 w-48"
               />
               <p className="text-base font-semibold text-parchment">Saved ✓</p>
