@@ -23,7 +23,7 @@ type PortfolioContentEditorProps = {
   onApplyTimeline: (next: YearBlock[]) => void;
   intro: SiteIntro;
   onApplyIntro: (patch: Partial<DraftProfileFields>) => void;
-  onPersistDrafts: () => void;
+  onPersistDrafts: () => Promise<{ error: string | null }>;
   onDiscardDrafts: () => void;
   onAddYear?: (year: number) => void;
   plan?: "free" | "pro";
@@ -53,7 +53,7 @@ function addYearBlock(timeline: YearBlock[], year: number): YearBlock[] {
 
 function newEmptyAchievement(): Achievement {
   return {
-    id: `evt-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+    id: crypto.randomUUID(),
     title: "New event",
     description: "",
     body: "",
@@ -88,6 +88,8 @@ export function PortfolioContentEditor({
   openOnYear = null,
 }: PortfolioContentEditorProps) {
   const [saveAck, setSaveAck] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const [addingYear, setAddingYear] = useState(false);
   const [newYearValue, setNewYearValue] = useState(new Date().getFullYear());
   const [linkUrl, setLinkUrl] = useState("");
@@ -871,6 +873,11 @@ export function PortfolioContentEditor({
         </div>
 
         <div className="border-t border-dusk-700/80 px-4 py-3">
+          {saveError && (
+            <p className="mb-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-400">
+              {saveError}
+            </p>
+          )}
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -884,14 +891,33 @@ export function PortfolioContentEditor({
             </button>
             <button
               type="button"
+              disabled={saving}
               onClick={() => {
-                onPersistDrafts();
-                setSaveAck(true);
-                window.setTimeout(() => setSaveAck(false), 2200);
+                setSaving(true);
+                setSaveError(null);
+                void onPersistDrafts().then(({ error }) => {
+                  setSaving(false);
+                  if (error) {
+                    setSaveError(`Save failed: ${error}`);
+                  } else {
+                    setSaveAck(true);
+                    window.setTimeout(() => setSaveAck(false), 2200);
+                  }
+                });
               }}
-              className="relative flex-1 overflow-hidden rounded-lg border border-umber-500/50 bg-umber-500/20 py-2 text-sm font-medium text-umber-200 transition hover:bg-umber-500/30"
+              className="relative flex-1 overflow-hidden rounded-lg border border-umber-500/50 bg-umber-500/20 py-2 text-sm font-medium text-umber-200 transition hover:bg-umber-500/30 disabled:opacity-60"
             >
-              {saveAck ? (
+              {saving ? (
+                <span className="flex items-center justify-center gap-1.5">
+                  <DotLottieReact
+                    src="/animations/loading.lottie"
+                    autoplay
+                    loop
+                    className="h-4 w-4 shrink-0"
+                  />
+                  Saving…
+                </span>
+              ) : saveAck ? (
                 <span className="flex items-center justify-center gap-1.5">
                   <DotLottieReact
                     src="/animations/saved_confetti.lottie"

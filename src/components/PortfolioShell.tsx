@@ -597,10 +597,16 @@ export function PortfolioShell({
   const [intro, setIntro] = useState(serverIntro);
   const [introDraftHydrated, setIntroDraftHydrated] = useState(false);
 
-  // Track the last successfully saved state so Discard always reverts to the
-  // most recent save — not to the stale page-load snapshot.
+  // Track the last successfully saved state (used after handleAddYear scaffolding).
   const lastSavedTimeline = useRef<YearBlock[]>(serverTimeline);
   const lastSavedIntro = useRef(serverIntro);
+
+  // Snapshot taken when the editor panel opens. Discard always reverts to this,
+  // meaning it only undoes unsaved changes made during the current panel session.
+  // Clicking Save advances this snapshot forward so a subsequent Discard in the
+  // same session only undoes changes made after that Save.
+  const panelOpenTimeline = useRef<YearBlock[]>(serverTimeline);
+  const panelOpenIntro = useRef(serverIntro);
 
   useEffect(() => {
     if (publicView) return;
@@ -698,47 +704,68 @@ export function PortfolioShell({
         lastSavedTimeline.current = next;
         void saveTimelineAction(next).catch(() => {});
       }
+      // Snapshot the scaffolded state as the panel-open baseline so Discard
+      // after onboarding reverts to the scaffolded years, not an empty timeline.
+      panelOpenTimeline.current = next;
+      panelOpenIntro.current = intro;
       setEditorOpen(true);
     },
-    [publicView, timeline, applyTimeline, userId],
+    [publicView, timeline, intro, applyTimeline, userId],
   );
 
-  const persistDrafts = useCallback(() => {
-    if (publicView) return;
+  const persistDrafts = useCallback(async (): Promise<{ error: string | null }> => {
+    if (publicView) return { error: null };
     saveDraftTimeline(timeline);
     saveDraftProfileIntro(serverIntroToDraftFields(intro));
-    // Snapshot what we're saving so Discard can revert to it later
     lastSavedTimeline.current = timeline;
     lastSavedIntro.current = intro;
-    // Also persist to DB when the user is authenticated
+    // Advance the panel-open snapshot so Discard after Save only undoes
+    // changes made since this Save, not everything since the panel opened.
+    panelOpenTimeline.current = timeline;
+    panelOpenIntro.current = intro;
     if (userId) {
-      void saveTimelineAction(timeline).catch(() => {});
-      void saveProfileAction({
-        name: intro.name,
-        heroLead: intro.heroLead,
-        role: intro.role,
-        bio: intro.bio,
-        photoSrc: intro.photoSrc,
-      }).catch(() => {});
+      const [timelineResult] = await Promise.all([
+        saveTimelineAction(timeline),
+        saveProfileAction({
+          name: intro.name,
+          heroLead: intro.heroLead,
+          role: intro.role,
+          bio: intro.bio,
+          photoSrc: intro.photoSrc,
+        }),
+      ]);
+      if (timelineResult.error) return { error: timelineResult.error };
     }
+    return { error: null };
   }, [publicView, timeline, intro, userId]);
 
   const discardDrafts = useCallback(() => {
     if (publicView) return;
     clearDraftTimeline();
     clearDraftProfileIntro();
-    // Revert to the most recent saved state, not to the stale page-load snapshot
-    setTimeline(lastSavedTimeline.current);
-    setIntro(lastSavedIntro.current);
+    // Revert to the snapshot taken when this panel session opened (or the last
+    // Save within this session). This undoes only unsaved in-panel edits.
+    setTimeline(panelOpenTimeline.current);
+    setIntro(panelOpenIntro.current);
   }, [publicView]);
 
   const [editorOpen, setEditorOpen] = useState(false);
   const [editorOpenOnYear, setEditorOpenOnYear] = useState<number | null>(null);
 
+  // Always snapshot current state before opening the panel so Discard can
+  // revert to exactly what the user saw when they clicked "Edit content".
+  const openEditor = useCallback(() => {
+    panelOpenTimeline.current = timeline;
+    panelOpenIntro.current = intro;
+    setEditorOpen(true);
+  }, [timeline, intro]);
+
   const openEditorForYear = useCallback((year: number) => {
     setEditorOpenOnYear(year);
+    panelOpenTimeline.current = timeline;
+    panelOpenIntro.current = intro;
     setEditorOpen(true);
-  }, []);
+  }, [timeline, intro]);
 
   // Always show the editor for the authenticated owner; never for public visitors
   const showContentEditor = !publicView;
@@ -996,7 +1023,7 @@ export function PortfolioShell({
               {!publicView && intro.photoSrc === "/avatar-placeholder.svg" && (
                 <button
                   type="button"
-                  onClick={() => setEditorOpen(true)}
+                  onClick={() => openEditor()}
                   className="absolute inset-0 flex flex-col items-center justify-end gap-1 pb-6 opacity-0 transition-opacity duration-200 hover:opacity-100"
                 >
                   <span className="rounded-full bg-dusk-950/80 px-4 py-1.5 text-xs font-medium text-parchment backdrop-blur-sm">
@@ -1275,7 +1302,7 @@ export function PortfolioShell({
             {sorted.length === 0 && !publicView ? (
               <TimelineEmptyState
                 onAddYear={handleAddYear}
-                onOpenEditor={() => setEditorOpen(true)}
+                onOpenEditor={() => openEditor()}
               />
             ) : null}
             {(categoryFilter || mediaFilter) &&
@@ -1380,7 +1407,7 @@ export function PortfolioShell({
         <>
           <button
             type="button"
-            onClick={() => setEditorOpen(true)}
+            onClick={() => openEditor()}
             className="fixed bottom-5 right-5 z-[80] rounded-full border border-umber-500/50 bg-umber-500/20 px-4 py-2.5 text-sm font-medium text-umber-200 shadow-lg backdrop-blur transition hover:bg-umber-500/30"
           >
             Edit content
