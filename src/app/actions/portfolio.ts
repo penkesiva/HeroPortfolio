@@ -22,7 +22,7 @@ export async function saveTimelineAction(
 }
 
 export async function saveProfileAction(
-  intro: Pick<SiteIntro, "heroLead" | "role" | "bio" | "photoSrc">,
+  intro: Pick<SiteIntro, "heroLead" | "role" | "bio" | "photoSrc" | "name">,
 ): Promise<{ error: string | null }> {
   if (!isSupabaseConfigured()) return { error: "Supabase not configured" };
 
@@ -40,6 +40,7 @@ export async function saveProfileAction(
       : null;
 
   await upsertProfile(supabase, user.id, {
+    display_name: intro.name?.trim() || null,
     hero_lead: intro.heroLead ?? null,
     role: intro.role,
     bio: intro.bio,

@@ -8,6 +8,7 @@ export type DraftProfileFields = {
   role: string;
   bio: string;
   photoSrc: string;
+  name: string;
 };
 
 function isRecord(x: unknown): x is Record<string, unknown> {
@@ -59,11 +60,13 @@ export function introFromDraftFields(
 ): SiteIntro {
   return {
     ...server,
-    heroLead:
-      draft.heroLead.trim() === "" ? undefined : draft.heroLead.trim(),
+    // Preserve raw value in state (keeps spaces while typing); only treat
+    // all-whitespace as "empty / hidden". Trim happens at display/save time.
+    heroLead: draft.heroLead.trim() === "" ? undefined : draft.heroLead,
     role: draft.role,
     bio: draft.bio,
     photoSrc: draft.photoSrc,
+    name: draft.name || server.name,
   };
 }
 
@@ -73,5 +76,6 @@ export function serverIntroToDraftFields(server: SiteIntro): DraftProfileFields 
     role: server.role,
     bio: server.bio,
     photoSrc: server.photoSrc,
+    name: server.name,
   };
 }

@@ -714,6 +714,7 @@ export function PortfolioShell({
     if (userId) {
       void saveTimelineAction(timeline).catch(() => {});
       void saveProfileAction({
+        name: intro.name,
         heroLead: intro.heroLead,
         role: intro.role,
         bio: intro.bio,
@@ -732,6 +733,12 @@ export function PortfolioShell({
   }, [publicView]);
 
   const [editorOpen, setEditorOpen] = useState(false);
+  const [editorOpenOnYear, setEditorOpenOnYear] = useState<number | null>(null);
+
+  const openEditorForYear = useCallback((year: number) => {
+    setEditorOpenOnYear(year);
+    setEditorOpen(true);
+  }, []);
 
   // Always show the editor for the authenticated owner; never for public visitors
   const showContentEditor = !publicView;
@@ -1322,7 +1329,7 @@ export function PortfolioShell({
                   // Empty year — owner sees a "log first event" placeholder
                   <button
                     type="button"
-                    onClick={() => setEditorOpen(true)}
+                    onClick={() => openEditorForYear(block.year)}
                     className="group flex w-full flex-col items-center rounded-2xl border border-dashed border-dusk-600/70 bg-dusk-900/30 py-10 text-center transition hover:border-umber-500/50 hover:bg-dusk-900/50"
                   >
                     <DotLottieReact
@@ -1380,7 +1387,10 @@ export function PortfolioShell({
           </button>
           <PortfolioContentEditor
             open={editorOpen}
-            onClose={() => setEditorOpen(false)}
+            onClose={() => {
+              setEditorOpen(false);
+              setEditorOpenOnYear(null);
+            }}
             timeline={timeline}
             serverTimeline={serverTimeline}
             onApplyTimeline={applyTimeline}
@@ -1390,6 +1400,7 @@ export function PortfolioShell({
             onDiscardDrafts={discardDrafts}
             onAddYear={handleAddYear}
             plan={plan}
+            openOnYear={editorOpenOnYear}
           />
         </>
       ) : null}

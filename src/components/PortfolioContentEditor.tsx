@@ -27,6 +27,8 @@ type PortfolioContentEditorProps = {
   onDiscardDrafts: () => void;
   onAddYear?: (year: number) => void;
   plan?: "free" | "pro";
+  /** When set, the editor jumps to this year's section on open. */
+  openOnYear?: number | null;
 };
 
 function sortYearsDesc(t: YearBlock[]): YearBlock[] {
@@ -83,6 +85,7 @@ export function PortfolioContentEditor({
   onDiscardDrafts,
   onAddYear,
   plan = "free",
+  openOnYear = null,
 }: PortfolioContentEditorProps) {
   const [saveAck, setSaveAck] = useState(false);
   const [addingYear, setAddingYear] = useState(false);
@@ -148,9 +151,22 @@ export function PortfolioContentEditor({
     }
   }, [section, years.length]);
 
+  // When openOnYear is specified, jump to that year's section as the editor opens
+  useEffect(() => {
+    if (!open || openOnYear == null) return;
+    const idx = years.findIndex((b) => b.year === openOnYear);
+    if (idx >= 0) {
+      startTransition(() => {
+        setSection("year");
+        setYearIndex(idx);
+      });
+    }
+  }, [open, openOnYear, years]);
+
   const block = years[yearIndex] ?? years[0];
   const year = block?.year ?? new Date().getFullYear();
   const heroFields: DraftProfileFields = {
+    name: intro.name,
     heroLead: intro.heroLead ?? "",
     role: intro.role,
     bio: intro.bio,
@@ -297,38 +313,6 @@ export function PortfolioContentEditor({
     }
   };
 
-  const exportYearJson = () => {
-    const payload = {
-      tagline: block.tagline,
-      events: achievements.map((a) => ({
-        id: a.id,
-        heading1: a.title,
-        heading2: a.heading2,
-        heading3: a.heading3,
-        body: a.body ?? a.description,
-        images:
-          a.images && a.images.length > 0
-            ? a.images
-            : a.imageSrc
-              ? [a.imageSrc]
-              : undefined,
-        categories: a.categories?.length ? a.categories : undefined,
-        videoUrl: a.videoUrl,
-        musicUrl: a.musicUrl,
-        links: a.links?.filter((l) => l.href.trim()).length
-          ? a.links.filter((l) => l.href.trim())
-          : undefined,
-      })),
-    };
-    const blob = new Blob([JSON.stringify(payload, null, 2)], {
-      type: "application/json",
-    });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `events-${year}.json`;
-    a.click();
-    URL.revokeObjectURL(a.href);
-  };
 
   const onPickHeroPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
@@ -347,107 +331,6 @@ export function PortfolioContentEditor({
     }
   };
 
-  const exportProfileJson = () => {
-    const payload = {
-      heroLead: heroFields.heroLead.trim() === "" ? undefined : heroFields.heroLead,
-      role: heroFields.role,
-      bio: heroFields.bio,
-      photoSrc: heroFields.photoSrc,
-    };
-    const blob = new Blob([JSON.stringify(payload, null, 2)], {
-      type: "application/json",
-    });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "profile.json";
-    a.click();
-    URL.revokeObjectURL(a.href);
-  };
-
-  const importProfileJson = (file: File) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        const data = JSON.parse(String(reader.result)) as Record<
-          string,
-          unknown
-        >;
-        const role = typeof data.role === "string" ? data.role : intro.role;
-        const bio = typeof data.bio === "string" ? data.bio : intro.bio;
-        const photoSrc =
-          typeof data.photoSrc === "string" ? data.photoSrc : intro.photoSrc;
-        let heroLead = heroFields.heroLead;
-        if ("heroLead" in data) {
-          heroLead =
-            typeof data.heroLead === "string" ? data.heroLead : "";
-        }
-        onApplyIntro({ role, bio, photoSrc, heroLead });
-      } catch {
-        window.alert("Could not parse profile JSON.");
-      }
-    };
-    reader.readAsText(file);
-  };
-
-  const importYearJson = (file: File) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        const data = JSON.parse(String(reader.result)) as {
-          tagline?: string;
-          events?: unknown[];
-        };
-        if (!data.events || !Array.isArray(data.events)) {
-          window.alert("Invalid JSON: need an `events` array.");
-          return;
-        }
-        const tagline =
-          typeof data.tagline === "string" && data.tagline.trim()
-            ? data.tagline.trim()
-            : block.tagline;
-        const mapped: Achievement[] = data.events.map((ev, i) => {
-          const o = ev as Record<string, unknown>;
-          const imgs = Array.isArray(o.images)
-            ? (o.images as string[]).filter(Boolean)
-            : [];
-          const catsRaw = [
-            ...(typeof o.category === "string" ? [o.category] : []),
-            ...(Array.isArray(o.categories) ? (o.categories as string[]) : []),
-          ];
-          const categories = [
-            ...new Set(
-              catsRaw.map((c) => String(c).trim().toLowerCase()).filter(Boolean),
-            ),
-          ];
-          return {
-            id: String(o.id ?? `imported-${year}-${i}`),
-            title: String(o.heading1 ?? "Untitled"),
-            heading2: o.heading2 ? String(o.heading2) : undefined,
-            heading3: o.heading3 ? String(o.heading3) : undefined,
-            body: o.body ? String(o.body) : undefined,
-            description: String(o.body ?? ""),
-            ...(imgs.length
-              ? {
-                  imageSrc: imgs[0],
-                  images: imgs.length > 1 ? imgs : undefined,
-                }
-              : {}),
-            videoUrl: o.videoUrl ? String(o.videoUrl) : undefined,
-            musicUrl: o.musicUrl ? String(o.musicUrl) : undefined,
-            links: Array.isArray(o.links)
-              ? (o.links as { label: string; href: string }[])
-              : undefined,
-            categories: categories.length ? categories : undefined,
-          };
-        });
-        apply(replaceYear(timeline, year, { tagline, achievements: mapped }));
-        setSelectedId(mapped[0]?.id ?? null);
-      } catch {
-        window.alert("Could not parse JSON.");
-      }
-    };
-    reader.readAsText(file);
-  };
 
   const triggerExport = async (format: "json" | "csv" | "pdf") => {
     if ((format === "pdf" || format === "csv") && plan === "free") {
@@ -556,7 +439,7 @@ export function PortfolioContentEditor({
             }}
             className="mt-1 w-full rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-2 text-sm text-parchment"
           >
-            <option value="hero">Hero / Profile</option>
+            <option value="hero">Hero</option>
             {years.map((y, i) => (
               <option key={`${i}-${y.year}`} value={i}>
                 {y.year}
@@ -621,10 +504,15 @@ export function PortfolioContentEditor({
 
           {section === "hero" ? (
             <div className="mt-4 space-y-3 border-t border-dusk-700/60 pt-4">
-              <p className="text-[11px] text-parchment-muted">
-                Your name comes from your account. Changes here save to the cloud automatically.
-              </p>
-              <Field label="Lead line (e.g. I'm)">
+              <Field label="Display name">
+                <input
+                  value={heroFields.name}
+                  onChange={(e) => onApplyIntro({ name: e.target.value })}
+                  placeholder="Your name"
+                  className="w-full rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-2 text-sm text-parchment placeholder:text-parchment-muted/40"
+                />
+              </Field>
+              <Field label="Lead line (e.g. I'm, Hello, I'm)">
                 <input
                   value={heroFields.heroLead}
                   onChange={(e) => onApplyIntro({ heroLead: e.target.value })}
@@ -681,28 +569,6 @@ export function PortfolioContentEditor({
                   </div>
                 </div>
               </Field>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={exportProfileJson}
-                  className="rounded-full border border-dusk-600 bg-dusk-850 px-3 py-1.5 text-xs font-medium text-parchment-muted"
-                >
-                  Export profile.json
-                </button>
-                <label className="cursor-pointer rounded-full border border-dusk-600 bg-dusk-850 px-3 py-1.5 text-xs font-medium text-parchment-muted hover:text-parchment">
-                  Import profile.json
-                  <input
-                    type="file"
-                    accept="application/json,.json"
-                    className="hidden"
-                    onChange={(e) => {
-                      const f = e.target.files?.[0];
-                      e.target.value = "";
-                      if (f) importProfileJson(f);
-                    }}
-                  />
-                </label>
-              </div>
             </div>
           ) : (
             <>
@@ -716,52 +582,56 @@ export function PortfolioContentEditor({
                 className="mt-1 w-full resize-y rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-2 text-sm text-parchment placeholder:text-parchment-muted/50"
               />
 
-              <div className="mt-4 flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={addEvent}
-                  className="rounded-full border border-umber-500/45 bg-umber-500/15 px-3 py-1.5 text-xs font-medium text-umber-300"
-                >
-                  + Add event
-                </button>
-                <button
-                  type="button"
-                  onClick={exportYearJson}
-                  className="rounded-full border border-dusk-600 bg-dusk-850 px-3 py-1.5 text-xs font-medium text-parchment-muted"
-                >
-                  Export JSON
-                </button>
-                <label className="cursor-pointer rounded-full border border-dusk-600 bg-dusk-850 px-3 py-1.5 text-xs font-medium text-parchment-muted hover:text-parchment">
-                  Import JSON
-                  <input
-                    type="file"
-                    accept="application/json,.json"
-                    className="hidden"
-                    onChange={(e) => {
-                      const f = e.target.files?.[0];
-                      e.target.value = "";
-                      if (f) importYearJson(f);
-                    }}
-                  />
-                </label>
+              {/* Event picker header — label + count + add + delete in one row */}
+              <div className="mt-4 flex items-center gap-2">
+                <span className="text-xs font-semibold uppercase tracking-wide text-parchment-muted">
+                  Event
+                </span>
+                {achievements.length > 0 && (
+                  <span className="rounded-full bg-dusk-800 px-1.5 py-0.5 text-[10px] tabular-nums text-parchment-muted/60">
+                    {achievements.length}
+                  </span>
+                )}
+                <div className="ml-auto flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={addEvent}
+                    className="flex items-center gap-1 rounded-lg border border-umber-500/45 bg-umber-500/15 px-2.5 py-1 text-xs font-medium text-umber-300 transition hover:bg-umber-500/25"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="size-3">
+                      <path d="M8.75 3.75a.75.75 0 0 0-1.5 0v3.5h-3.5a.75.75 0 0 0 0 1.5h3.5v3.5a.75.75 0 0 0 1.5 0v-3.5h3.5a.75.75 0 0 0 0-1.5h-3.5v-3.5Z" />
+                    </svg>
+                    Add
+                  </button>
+                  {selected && (
+                    <button
+                      type="button"
+                      onClick={() => removeEvent(selected.id)}
+                      title="Delete this event"
+                      className="flex items-center gap-1 rounded-lg border border-red-500/25 bg-transparent px-2.5 py-1 text-xs font-medium text-red-400/70 transition hover:border-red-400/50 hover:bg-red-500/8 hover:text-red-400"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="size-3">
+                        <path fillRule="evenodd" d="M5 3.25V4H2.75a.75.75 0 0 0 0 1.5h.3l.815 8.15A1.5 1.5 0 0 0 5.357 15h5.285a1.5 1.5 0 0 0 1.493-1.35l.815-8.15h.3a.75.75 0 0 0 0-1.5H11v-.75A2.25 2.25 0 0 0 8.75 1h-1.5A2.25 2.25 0 0 0 5 3.25Zm2.25-.75a.75.75 0 0 0-.75.75V4h3v-.75a.75.75 0 0 0-.75-.75h-1.5ZM6.05 6a.75.75 0 0 1 .787.713l.275 5.5a.75.75 0 0 1-1.498.075l-.275-5.5A.75.75 0 0 1 6.05 6Zm3.9 0a.75.75 0 0 1 .712.787l-.275 5.5a.75.75 0 0 1-1.498-.075l.275-5.5A.75.75 0 0 1 9.95 6Z" clipRule="evenodd" />
+                      </svg>
+                      Delete
+                    </button>
+                  )}
+                </div>
               </div>
 
-              <label className="mt-4 block text-xs font-semibold uppercase tracking-wide text-parchment-muted">
-                Event
-              </label>
               {achievements.length === 0 ? (
                 <p className="mt-2 rounded-lg border border-dashed border-dusk-600 px-3 py-4 text-center text-xs text-parchment-muted/60">
-                  No events yet. Click &quot;+ Add event&quot; above to log your first one.
+                  No events yet — click Add to log your first one.
                 </p>
               ) : (
                 <select
                   value={selectedId ?? ""}
                   onChange={(e) => setSelectedId(e.target.value || null)}
-                  className="mt-1 w-full rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-2 text-sm text-parchment"
+                  className="mt-1.5 w-full rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-2 text-sm text-parchment"
                 >
                   {achievements.map((a) => (
                     <option key={a.id} value={a.id}>
-                      {a.title || a.id}
+                      {a.title || "Untitled"}
                     </option>
                   ))}
                 </select>
@@ -769,13 +639,6 @@ export function PortfolioContentEditor({
 
               {selected ? (
             <div className="mt-4 space-y-3 border-t border-dusk-700/60 pt-4">
-              <button
-                type="button"
-                onClick={() => removeEvent(selected.id)}
-                className="text-xs text-red-400/90 hover:text-red-300"
-              >
-                Delete this event
-              </button>
 
               {/* AI Link Summarizer */}
               <div className="rounded-xl border border-umber-500/30 bg-umber-500/8 p-3">
