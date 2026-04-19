@@ -107,3 +107,19 @@ html[data-theme="light"] ::selection {
   0%, 100% { opacity: 0.35; }
   50%       { opacity: 0.6; }
 }
+
+/* ── Badge ring animations ────────────────────────────────── */
+@keyframes ring-fill {
+  from { stroke-dashoffset: 276; }
+  to   { stroke-dashoffset: 0; }
+}
+
+@keyframes ring-rotate {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes badge-glow-pulse {
+  0%, 100% { opacity: 0.6; }
+  50%       { opacity: 1; }
+}

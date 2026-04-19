@@ -62,6 +62,13 @@ export function AppHeader({ userId, displayName, plan }: AppHeaderProps) {
             Album
           </Link>
 
+          <Link
+            href="/timeline/badges"
+            className="hidden text-sm font-medium text-parchment-muted transition hover:text-parchment sm:inline"
+          >
+            Badges
+          </Link>
+
           {plan === "pro" && (
             <Link
               href="/timeline/analytics"
