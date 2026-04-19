@@ -976,7 +976,7 @@ export function PortfolioShell({
         aria-label="Introduction"
         className="relative flex min-h-[100dvh] flex-col justify-center border-b border-dusk-700/70"
       >
-        <div className="mx-auto grid w-full max-w-6xl flex-1 grid-cols-1 items-center gap-10 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:gap-14 lg:px-8">
+        <div className="mx-auto grid w-full max-w-6xl flex-1 grid-cols-1 items-center gap-10 px-4 py-8 sm:px-6 lg:grid-cols-2 lg:gap-14 lg:px-8">
           <motion.div
             variants={heroContainer}
             initial="hidden"
@@ -1040,9 +1040,9 @@ export function PortfolioShell({
             initial={{ opacity: 0, scale: 0.98, y: 12 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ duration: 0.55, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
-            className="order-1 flex justify-center lg:order-2 lg:justify-end"
+            className="order-1 flex items-center justify-center lg:order-2 lg:justify-end"
           >
-            <div className="relative aspect-[4/5] w-full max-w-[320px] overflow-hidden rounded-3xl border border-dusk-700/90 bg-dusk-900/50 shadow-[0_28px_80px_rgba(0,0,0,0.45)] sm:max-w-[380px]">
+            <div className="relative aspect-[3/4] w-full max-w-[300px] overflow-hidden rounded-3xl border border-dusk-700/90 bg-dusk-900/50 shadow-[0_28px_80px_rgba(0,0,0,0.45)] sm:max-w-[340px]">
               <Image
                 src={intro.photoSrc}
                 alt={photoAlt}

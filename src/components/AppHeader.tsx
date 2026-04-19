@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { TimelineAccountMenu } from "@/components/TimelineAccountMenu";
 
 interface AppHeaderProps {
@@ -12,6 +15,7 @@ interface AppHeaderProps {
  * Matches the timeline page header exactly — logo left, nav + avatar right.
  */
 export function AppHeader({ userId, displayName, plan }: AppHeaderProps) {
+  const pathname = usePathname();
   return (
     <header className="sticky top-0 z-40 border-b border-dusk-700/80 bg-dusk-950/85 px-4 py-3 backdrop-blur-md sm:px-6">
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3">
@@ -19,6 +23,11 @@ export function AppHeader({ userId, displayName, plan }: AppHeaderProps) {
           href="/timeline"
           className="group flex items-center gap-2 transition"
           aria-label="HeroPortfolio.com — your timeline"
+          onClick={() => {
+            if (pathname === "/timeline") {
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }
+          }}
         >
           {/* Icon mark */}
           <span className="flex size-9 items-center justify-center rounded-xl bg-umber-500/20 ring-1 ring-umber-500/30 transition group-hover:bg-umber-500/30">
