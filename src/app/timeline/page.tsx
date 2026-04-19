@@ -11,7 +11,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 export const metadata: Metadata = {
   title: "Your timeline",
   description:
-    "Build your HeroPortfolio timeline — achievements and milestones year by year.",
+    "Build your HeroPortfolio timeline: achievements and milestones year by year.",
 };
 
 export default async function TimelinePage() {

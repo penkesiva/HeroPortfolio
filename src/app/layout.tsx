@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Script from "next/script";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { getThemeInitScript } from "@/lib/themePreference";
 import "./globals.css";
 
@@ -21,7 +20,7 @@ export const metadata: Metadata = {
     template: "%s · HeroPortfolio.com",
   },
   description:
-    "HeroPortfolio.com — portfolio timelines, achievements, and account sign-in.",
+    "HeroPortfolio.com: portfolio timelines, achievements, and account sign-in.",
 };
 
 export default function RootLayout({
@@ -41,7 +40,6 @@ export default function RootLayout({
           strategy="beforeInteractive"
           dangerouslySetInnerHTML={{ __html: getThemeInitScript() }}
         />
-        <ThemeToggle />
         {children}
       </body>
     </html>

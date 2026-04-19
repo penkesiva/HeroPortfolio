@@ -369,7 +369,7 @@ export function PortfolioContentEditor({
         feature: format === "pdf" ? "PDF Achievement Book export" : "CSV export",
         description:
           format === "pdf"
-            ? "Create a beautiful printable PDF of your entire portfolio — cover page, year sections, and all achievements. Upgrade to Pro to unlock it."
+            ? "Create a beautiful printable PDF of your entire portfolio: cover page, year sections, and all achievements. Upgrade to Pro to unlock it."
             : "Export your portfolio to a spreadsheet for college applications and scholarship forms.",
       });
       return;
@@ -695,7 +695,7 @@ export function PortfolioContentEditor({
 
               {achievements.length === 0 ? (
                 <p className="mt-2 rounded-lg border border-dashed border-dusk-600 px-3 py-4 text-center text-xs text-parchment-muted/60">
-                  No events yet — click Add to log your first one.
+                  No events yet. Click Add to log your first one.
                 </p>
               ) : (
                 <select
@@ -717,7 +717,7 @@ export function PortfolioContentEditor({
               {/* AI Link Summarizer */}
               <div className="rounded-xl border border-umber-500/30 bg-umber-500/8 p-3">
                 <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-umber-300">
-                  Smart import — paste a news link
+                  Smart import: paste a news link
                 </p>
                 <p className="mb-2 text-[11px] leading-relaxed text-parchment-muted">
                   Paste an article or competition results URL and AI will auto-fill the title, subtitle, and description.

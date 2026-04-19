@@ -389,7 +389,7 @@ export function TimelineAccountMenu({ userId, displayName, plan = "free" }: Prop
               PDF &amp; CSV export is a Pro feature
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-parchment-muted">
-              Upgrade to Pro to export your portfolio as a beautiful PDF Achievement Book or a CSV spreadsheet — perfect for college applications.
+              Upgrade to Pro to export your portfolio as a beautiful PDF Achievement Book or a CSV spreadsheet. Perfect for college applications.
             </p>
             <div className="mt-6 flex flex-col gap-3">
               <Link

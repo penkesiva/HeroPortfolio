@@ -38,7 +38,7 @@ export default async function AnalyticsPage() {
           <div className="mb-6 text-5xl opacity-50">📊</div>
           <h1 className="text-2xl font-semibold text-parchment">Analytics is a Pro feature</h1>
           <p className="mt-3 text-parchment-muted">
-            See exactly how many people are viewing your public portfolio — by week, month, and all time.
+            See exactly how many people are viewing your public portfolio, by week, month, and all time.
           </p>
           <Link
             href="/pricing"

@@ -77,7 +77,7 @@ export default async function AlbumPage() {
           </h1>
           <p className="mt-2 text-sm text-parchment-muted">
             {photos.length === 0
-              ? "No photos yet — add images to your events to see them here."
+              ? "No photos yet. Add images to your events to see them here."
               : `${photos.length} photo${photos.length === 1 ? "" : "s"} across all your achievements`}
           </p>
         </div>

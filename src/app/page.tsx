@@ -6,22 +6,22 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { HomeLottie } from "@/components/home/HomeLottie";
 
 export const metadata: Metadata = {
-  title: "HeroPortfolio — Track your achievements, year by year",
+  title: "HeroPortfolio: Track your achievements, year by year",
   description:
     "HeroPortfolio helps students capture competitions, projects, leadership, and growth in a beautiful year-by-year timeline. Free to start.",
   openGraph: {
-    title: "HeroPortfolio — Track your achievements, year by year",
+    title: "HeroPortfolio: Track your achievements, year by year",
     description:
-      "A simple place for students to log achievements, milestones, and stories — organized by school year and shareable with anyone.",
+      "A simple place for students to log achievements, milestones, and stories. Organized by school year and shareable with anyone.",
     url: "https://heroportfolio.com",
     siteName: "HeroPortfolio",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "HeroPortfolio — Track your achievements, year by year",
+    title: "HeroPortfolio: Track your achievements, year by year",
     description:
-      "A simple place for students to log achievements, milestones, and stories — organized by school year.",
+      "A simple place for students to log achievements, milestones, and stories. Organized by school year.",
   },
 };
 
@@ -33,7 +33,7 @@ const features = [
       </svg>
     ),
     label: "Log every win",
-    desc: "Competitions, projects, volunteer work, sports — all in one place.",
+    desc: "Competitions, projects, sports and more.",
   },
   {
     icon: (
@@ -42,7 +42,7 @@ const features = [
       </svg>
     ),
     label: "Photos and links",
-    desc: "Attach images, article links, and source URLs to each achievement.",
+    desc: "Images, articles, and source URLs per event.",
   },
   {
     icon: (
@@ -52,7 +52,7 @@ const features = [
       </svg>
     ),
     label: "Year by year",
-    desc: "A timeline organized by school year, from middle school through graduation.",
+    desc: "Middle school through graduation, in order.",
   },
   {
     icon: (
@@ -61,7 +61,7 @@ const features = [
       </svg>
     ),
     label: "Share with anyone",
-    desc: "Get a public profile link to share with colleges, coaches, or employers.",
+    desc: "A public link for colleges, coaches, or employers.",
   },
 ];
 
@@ -129,8 +129,8 @@ export default async function HomePage() {
           </h1>
           <p className="mt-5 max-w-xl text-base leading-relaxed text-parchment-muted sm:text-[17px]">
             HeroPortfolio is a free timeline for students. Capture competitions,
-            projects, leadership, and growth — organized by school year, shareable
-            with anyone.
+            projects, leadership, and growth. Organized by school year and
+            shareable with anyone.
           </p>
 
           {/* CTAs */}

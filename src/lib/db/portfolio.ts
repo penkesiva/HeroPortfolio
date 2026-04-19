@@ -245,7 +245,7 @@ export async function dbProfileToSiteIntro(
     role: profile?.role ?? "Student · Portfolio",
     bio:
       profile?.bio ??
-      "Add your milestones, media, and links — this timeline tracks your achievements year by year.",
+      "Add your milestones, media, and links. This timeline tracks your achievements year by year.",
     photoSrc,
     photoAlt: profile?.display_name ?? fallbackName,
   };

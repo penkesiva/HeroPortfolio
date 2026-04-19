@@ -49,7 +49,7 @@ export default async function PricingPage() {
             <Link
               href="/"
               className="group flex items-center gap-2 transition"
-              aria-label="HeroPortfolio.com — home"
+              aria-label="HeroPortfolio.com home"
             >
               <span className="flex size-9 items-center justify-center rounded-xl bg-umber-500/20 ring-1 ring-umber-500/30 transition group-hover:bg-umber-500/30">
                 <svg viewBox="0 0 16 16" className="size-5 fill-umber-300" aria-hidden>

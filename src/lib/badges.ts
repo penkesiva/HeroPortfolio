@@ -66,7 +66,7 @@ export function computeBadges(timeline: YearBlock[]): Badge[] {
       id: "twenty_five_events",
       emoji: "🏆",
       name: "Portfolio Champion",
-      description: "Logged 25 achievements — that's a serious portfolio!",
+      description: "Logged 25 achievements. That's a serious portfolio!",
       earned: totalEvents >= 25,
     },
     {

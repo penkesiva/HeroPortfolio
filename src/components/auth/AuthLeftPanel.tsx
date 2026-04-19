@@ -156,7 +156,7 @@ export function AuthLeftPanel({ mode }: { mode: "login" | "signup" }) {
         <ul className="space-y-3 text-sm text-parchment-muted">
           {[
             "Public portfolio link for coaches and college applications",
-            "AI Smart Import — paste a news article to auto-fill events",
+            "AI Smart Import: paste a news article to auto-fill events",
             "PDF Achievement Book, ready for scholarship forms",
           ].map((f) => (
             <li key={f} className="flex items-start gap-3">

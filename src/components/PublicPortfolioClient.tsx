@@ -32,7 +32,7 @@ export function PublicPortfolioClient({
         name,
         heroLead: "I'm",
         role: "Student · Shared portfolio",
-        bio: "You’re viewing your public link. Others see this same timeline — personalize it from your private editor, then publish updates to the site when you’re ready.",
+        bio: "You’re viewing your public link. Others see this same timeline. Personalize it from your private editor. Publish updates when you’re ready.",
         photoAlt: name,
       });
     });

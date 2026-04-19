@@ -221,7 +221,7 @@ async function exportPdf(timeline: YearBlock[], name: string): Promise<NextRespo
   const { createElement: e } = await import("react");
 
   const docElement = e(Document, {
-    title: `${name} — Achievement Portfolio`,
+    title: `${name}: Achievement Portfolio`,
     author: "HeroPortfolio.com",
   },
     // Cover page

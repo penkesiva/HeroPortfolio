@@ -5,7 +5,7 @@ import { AuthLeftPanel } from "@/components/auth/AuthLeftPanel";
 import { sanitizeAuthRedirect } from "@/lib/auth/redirect";
 
 export const metadata: Metadata = {
-  title: "Sign up — HeroPortfolio.com",
+  title: "Sign up · HeroPortfolio.com",
   description:
     "Create a HeroPortfolio.com account with Google, email and password, or a magic link.",
 };
