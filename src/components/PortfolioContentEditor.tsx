@@ -609,7 +609,7 @@ export function PortfolioContentEditor({
                         onClick={() =>
                           onApplyIntro({ photoSrc: "/avatar-placeholder.svg" })
                         }
-                        className="rounded-lg border border-red-900/40 bg-red-950/20 px-3 py-1.5 text-xs text-red-400 hover:text-red-300"
+                        className="rounded-lg border border-red-500/30 px-3 py-1.5 text-xs text-red-400/80 transition hover:border-red-400/50 hover:text-red-400"
                       >
                         Remove photo
                       </button>

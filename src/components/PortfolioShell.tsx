@@ -350,7 +350,7 @@ function AchievementCard({
                   >
                   <MediaImage
                     src={src}
-                    alt={`${achievement.title} — image ${i + 1}`}
+                    alt={`${achievement.title} image ${i + 1}`}
                     className="object-cover opacity-95 transition duration-500 hover:opacity-100"
                     sizes="(max-width: 768px) 100vw, 35vw"
                     priority={false}
@@ -405,7 +405,7 @@ function AchievementCard({
           musicEmbed ? (
             <div className="overflow-hidden rounded-xl border border-dusk-700/80 bg-black/30">
               <iframe
-                title={`${achievement.title} — music`}
+                title={`${achievement.title}: music`}
                 src={musicEmbed}
                 className="h-[180px] w-full sm:h-[232px]"
                 allow="autoplay; clipboard-write; encrypted-media; fullscreen"

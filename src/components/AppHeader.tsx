@@ -22,7 +22,7 @@ export function AppHeader({ userId, displayName, plan }: AppHeaderProps) {
         <Link
           href="/timeline"
           className="group flex items-center gap-2 transition"
-          aria-label="HeroPortfolio.com — your timeline"
+          aria-label="HeroPortfolio.com: your timeline"
           onClick={() => {
             if (pathname === "/timeline") {
               window.scrollTo({ top: 0, behavior: "smooth" });

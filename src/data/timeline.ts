@@ -30,7 +30,7 @@ export type YearBlock = {
 export const timeline: YearBlock[] = [
   {
     year: 2026,
-    tagline: "High school — goals in motion (placeholder).",
+    tagline: "High school: goals in motion (placeholder).",
     achievements: [
       {
         id: "26-1",
@@ -52,7 +52,7 @@ export const timeline: YearBlock[] = [
   },
   {
     year: 2025,
-    tagline: "Placeholder year — academics, arts, or athletics highlights.",
+    tagline: "Placeholder year: academics, arts, or athletics highlights.",
     achievements: [
       {
         id: "25-1",
@@ -78,7 +78,7 @@ export const timeline: YearBlock[] = [
   },
   {
     year: 2024,
-    tagline: "Placeholder — bridge year between programs.",
+    tagline: "Placeholder: bridge year between programs.",
     achievements: [
       {
         id: "24-1",
@@ -151,7 +151,7 @@ export const siteIntro: SiteIntro = {
   name: "Student Name",
   heroLead: "I'm",
   role: "Student · Portfolio",
-  bio: "I build projects across academics, arts, and competitions — this timeline tracks milestones year by year. Override the hero photo and tagline in public/content/profile.json, or edit public/content/<year>/events.json for yearly entries.",
+  bio: "I build projects across academics, arts, and competitions. This timeline tracks milestones year by year. Override the hero photo and tagline in public/content/profile.json, or edit public/content/<year>/events.json for yearly entries.",
   photoSrc: "/placeholder-achievement.svg",
   photoAlt: "Student Name",
 };
