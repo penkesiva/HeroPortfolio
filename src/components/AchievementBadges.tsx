@@ -99,7 +99,7 @@ function BadgeChip({
           : "border-dusk-700/40 bg-dusk-900/20 text-parchment-muted/40 cursor-default"
       }`}
     >
-      <span>{badge.emoji}</span>
+      <span>{badge.icon}</span>
       <span className="hidden sm:inline">{badge.name}</span>
     </motion.button>
   );
