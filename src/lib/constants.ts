@@ -11,12 +11,12 @@ export const FREE_AI_EXHAUSTED_MESSAGE = `You've used your ${FREE_AI_USES_PER_MO
 // ── Subscription prices (USD) ─────────────────────────────────────────────────
 export const PRICES = {
   pro: {
-    monthly: 4.99,
-    yearly: 39.99,
+    monthly: 2.99,
+    yearly: 23.99,   // ~$2.00/mo, saves 33%
   },
   family: {
-    monthly: 11.99,
-    yearly: 89.99,
+    monthly: 6.99,   // up to 4 members, saves ~42% vs 4 individual Pros
+    yearly: 55.99,   // saves 33% vs family monthly
   },
 } as const;
 

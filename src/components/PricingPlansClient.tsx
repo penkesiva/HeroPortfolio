@@ -23,7 +23,7 @@ export function PricingPlansClient({
   userPlan = "free",
   hasStripeCustomer = false,
 }: Props) {
-  const [yearly, setYearly] = useState(true);
+  const [yearly, setYearly] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -262,8 +262,8 @@ export function PricingPlansClient({
             </div>
             <p className="family-accent-muted mt-1 text-xs">
               {yearly
-                ? `~$${famYearlyEquivMonthly}/mo · saves ~44% vs 4 individual Pros`
-                : `Or $${FAM_YEARLY}/yr (save 37%)`}
+                ? `~$${famYearlyEquivMonthly}/mo · saves ~42% vs 4 individual Pros`
+                : `Or $${FAM_YEARLY}/yr (save 33%)`}
             </p>
           </div>
           <ul className="mt-5 flex flex-1 flex-col gap-2 text-sm text-parchment-muted">
