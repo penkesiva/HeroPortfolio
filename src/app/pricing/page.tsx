@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { AppHeader } from "@/components/AppHeader";
+import { BackToTimeline } from "@/components/BackToTimeline";
 import { PricingPlansClient } from "@/components/PricingPlansClient";
 import { displayNameFromUser } from "@/lib/auth/displayName";
 import { getProfile } from "@/lib/db/portfolio";
@@ -83,12 +83,7 @@ export default async function PricingPage() {
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-12 sm:px-6 sm:py-16">
         {isLoggedIn && (
           <div className="mb-6">
-            <Link
-              href="/timeline"
-              className="inline-flex items-center gap-1.5 text-sm text-parchment-muted transition hover:text-parchment"
-            >
-              ← Timeline
-            </Link>
+            <BackToTimeline />
           </div>
         )}
 

@@ -1,19 +1,18 @@
 "use client";
 
+import { FREE_AI_LABEL, PRICES, FAMILY_PLAN_MAILTO } from "@/lib/constants";
+
 import { startTransition, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-const PRO_MONTHLY = 4.99;
-const PRO_YEARLY = 39.99;
+const PRO_MONTHLY = PRICES.pro.monthly;
+const PRO_YEARLY = PRICES.pro.yearly;
 const proYearlyEquivMonthly = (PRO_YEARLY / 12).toFixed(2);
 
-const FAM_MONTHLY = 11.99;
-const FAM_YEARLY = 89.99;
+const FAM_MONTHLY = PRICES.family.monthly;
+const FAM_YEARLY = PRICES.family.yearly;
 const famYearlyEquivMonthly = (FAM_YEARLY / 12).toFixed(2);
-
-const FAM_MAILTO =
-  "mailto:hello@heroportfolio.com?subject=Family%20Plan%20Interest&body=Hi%2C%20I%27d%20like%20to%20set%20up%20a%20Family%20plan%20for%20my%20household.";
 
 type Props = {
   userPlan?: "free" | "pro";
@@ -139,7 +138,7 @@ export function PricingPlansClient({
               <strong className="font-medium text-parchment/90">JSON export</strong> for backup
             </Feature>
             <Feature>
-              <strong className="font-medium text-parchment/90">AI Smart Import</strong>, 2 free summaries per month
+              <strong className="font-medium text-parchment/90">AI Smart Import</strong>, {FREE_AI_LABEL}
             </Feature>
             <Feature>
               <strong className="font-medium text-parchment/90">Milestone badges</strong> earned automatically
@@ -244,8 +243,8 @@ export function PricingPlansClient({
         </article>
 
         {/* ── Family ── */}
-        <article className="relative flex flex-col rounded-2xl border border-sky-500/30 bg-gradient-to-b from-sky-500/8 to-dusk-900/50 p-5 shadow-lg ring-1 ring-sky-500/15 sm:p-6">
-          <span className="absolute right-4 top-4 rounded-full bg-sky-500/20 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-sky-300">
+        <article className="family-card family-card-bg relative flex flex-col rounded-2xl border p-5 shadow-lg sm:p-6">
+          <span className="family-badge absolute right-4 top-4 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest">
             Family
           </span>
           <h2 className="text-base font-semibold text-parchment">Family</h2>
@@ -261,7 +260,7 @@ export function PricingPlansClient({
                 {yearly ? "/ year" : "/ month"}
               </span>
             </div>
-            <p className="mt-1 text-xs text-sky-300/80">
+            <p className="family-accent-muted mt-1 text-xs">
               {yearly
                 ? `~$${famYearlyEquivMonthly}/mo · saves ~44% vs 4 individual Pros`
                 : `Or $${FAM_YEARLY}/yr (save 37%)`}
@@ -286,8 +285,8 @@ export function PricingPlansClient({
           </ul>
 
           <a
-            href={`${FAM_MAILTO}&body=Hi%2C%20I%27d%20like%20to%20set%20up%20a%20Family%20plan%20for%20${yearly ? "the%20yearly" : "the%20monthly"}%20option.`}
-            className="mt-6 block w-full rounded-full border border-sky-500/40 bg-sky-500/15 py-2.5 text-center text-sm font-semibold text-sky-200 transition hover:bg-sky-500/25"
+            href={`${FAMILY_PLAN_MAILTO}&body=Hi%2C%20I%27d%20like%20to%20set%20up%20a%20Family%20plan%20for%20${yearly ? "the%20yearly" : "the%20monthly"}%20option.`}
+            className="family-btn mt-6 block w-full rounded-full border py-2.5 text-center text-sm font-semibold transition"
           >
             Get started with Family
           </a>
@@ -314,7 +313,7 @@ function Feature({
   return (
     <li className="flex gap-2">
       <span
-        className={`mt-0.5 shrink-0 ${check === "sky" ? "text-sky-400" : "text-umber-400"}`}
+        className={`mt-0.5 shrink-0 ${check === "sky" ? "family-check" : "text-umber-400"}`}
         aria-hidden
       >
         ✓

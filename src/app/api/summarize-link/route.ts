@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import * as cheerio from "cheerio";
 import OpenAI from "openai";
+import { FREE_AI_EXHAUSTED_MESSAGE } from "@/lib/constants";
 import { checkAndIncrementAiUsage, getUserPlan } from "@/lib/db/portfolio";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -59,7 +60,7 @@ export async function POST(req: NextRequest) {
       {
         error:
           plan === "free"
-            ? "You've used your 2 free AI summaries this month. Upgrade to Pro for unlimited access."
+            ? FREE_AI_EXHAUSTED_MESSAGE
             : "AI usage limit reached.",
         upgradeRequired: plan === "free",
       },

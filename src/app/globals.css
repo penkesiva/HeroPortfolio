@@ -49,6 +49,33 @@ body {
   color: var(--parchment);
 }
 
+/* Family plan card — sky accent adapts to theme */
+.family-card          { border-color: rgba(56,189,248,0.30); }
+.family-card-bg       { background: linear-gradient(to bottom, rgba(56,189,248,0.08), rgba(6,5,4,0.50)); }
+.family-badge         { background: rgba(56,189,248,0.20); color: #7dd3fc; } /* sky-300 */
+.family-accent-text   { color: #7dd3fc; }   /* sky-300 */
+.family-accent-muted  { color: rgba(125,211,252,0.80); }
+.family-check         { color: #38bdf8; }   /* sky-400 */
+.family-btn           { border-color: rgba(56,189,248,0.40); background: rgba(56,189,248,0.15); color: #bae6fd; } /* sky-200 */
+.family-btn:hover     { background: rgba(56,189,248,0.25); }
+
+html[data-theme="light"] .family-card          { border-color: rgba(2,132,199,0.40); }
+html[data-theme="light"] .family-card-bg       { background: linear-gradient(to bottom, rgba(186,230,253,0.35), rgba(241,245,249,0.6)); }
+html[data-theme="light"] .family-badge         { background: rgba(2,132,199,0.12); color: #0369a1; } /* sky-700 */
+html[data-theme="light"] .family-accent-text   { color: #0369a1; }
+html[data-theme="light"] .family-accent-muted  { color: #0284c7; } /* sky-600 */
+html[data-theme="light"] .family-check         { color: #0284c7; }
+html[data-theme="light"] .family-btn           { border-color: rgba(2,132,199,0.50); background: rgba(2,132,199,0.10); color: #0369a1; }
+html[data-theme="light"] .family-btn:hover     { background: rgba(2,132,199,0.18); }
+
+/* Badges page — dampen the ambient glow in dark mode only */
+.badges-page-bg {
+  background: linear-gradient(to bottom, transparent 0px, rgba(6,5,4,0.55) 160px);
+}
+html[data-theme="light"] .badges-page-bg {
+  background: none;
+}
+
 /* Light theme — same token names so Tailwind `bg-dusk-*` etc. follow preference */
 html[data-theme="light"] {
   color-scheme: light;

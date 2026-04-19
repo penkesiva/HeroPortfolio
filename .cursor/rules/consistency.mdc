@@ -1,0 +1,34 @@
+---
+description: Enforce single-source-of-truth for constants and shared UI components
+globs: ["src/**/*.tsx", "src/**/*.ts"]
+alwaysApply: true
+---
+
+# Consistency Rules for HeroPortfolio
+
+## Constants — never hardcode inline
+
+All limits, prices, and user-facing copy strings live in **`src/lib/constants.ts`**.
+
+When editing any of these files, import from constants instead of using literal values:
+
+- `src/lib/db/portfolio.ts` — uses `FREE_AI_USES_PER_MONTH`
+- `src/app/api/summarize-link/route.ts` — uses `FREE_AI_EXHAUSTED_MESSAGE`
+- `src/components/PortfolioContentEditor.tsx` — uses `FREE_AI_LABEL`
+- `src/components/PricingPlansClient.tsx` — uses `PRICES`, `FREE_AI_LABEL`, `FAMILY_PLAN_MAILTO`
+
+**If you change a limit or price, update `src/lib/constants.ts` first, then verify no raw values remain.**
+
+## Back navigation button
+
+The "← Timeline" back button is **`<BackToTimeline />`** from `src/components/BackToTimeline.tsx`.
+
+Do NOT inline the pill-button JSX. Pages that use it:
+- `src/app/timeline/album/page.tsx`
+- `src/app/timeline/analytics/page.tsx`
+- `src/app/timeline/badges/page.tsx`
+- `src/app/pricing/page.tsx`
+
+## General rule
+
+If a UI pattern or string appears in 2+ places and you need to change it, extract it first, then change in one place.

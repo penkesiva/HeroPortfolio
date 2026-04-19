@@ -13,6 +13,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { DotLottieReact } from "@lottiefiles/dotlottie-react";
 import type { Achievement, SiteIntro, YearBlock } from "@/data/timeline";
 import type { DraftProfileFields } from "@/lib/draftProfileIntro";
+import { FREE_AI_LABEL } from "@/lib/constants";
 import { UpgradeModal } from "@/components/UpgradeModal";
 
 type PortfolioContentEditorProps = {
@@ -721,7 +722,7 @@ export function PortfolioContentEditor({
                 </p>
                 <p className="mb-2 text-[11px] leading-relaxed text-parchment-muted">
                   Paste a news or results URL — AI fills the title and description.
-                  {plan === "free" && " 2 uses/month free."}
+                  {plan === "free" && ` ${FREE_AI_LABEL}.`}
                 </p>
                 <div className="flex gap-2">
                   <input

@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AppHeader } from "@/components/AppHeader";
 import { AlbumGrid } from "@/components/AlbumGrid";
+import { BackToTimeline } from "@/components/BackToTimeline";
 import { displayNameFromUser } from "@/lib/auth/displayName";
 import { getUserTimeline, getProfile, getUserPlan } from "@/lib/db/portfolio";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
@@ -64,12 +64,7 @@ export default async function AlbumPage() {
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 sm:px-6">
         <div className="mb-2">
-          <Link
-            href="/timeline"
-            className="inline-flex items-center gap-1.5 text-sm text-parchment-muted transition hover:text-parchment"
-          >
-            ← Timeline
-          </Link>
+          <BackToTimeline />
         </div>
         <div className="mb-8 mt-4">
           <h1 className="text-2xl font-semibold tracking-tight text-parchment sm:text-3xl">

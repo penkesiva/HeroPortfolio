@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AppHeader } from "@/components/AppHeader";
+import { BackToTimeline } from "@/components/BackToTimeline";
 import { BadgesClient } from "@/components/BadgesClient";
 import { displayNameFromUser } from "@/lib/auth/displayName";
 import { getUserTimeline, getUserPlan } from "@/lib/db/portfolio";
@@ -34,17 +34,12 @@ export default async function BadgesPage() {
   const lifetimeRaised = computeLifetimeRaised(timeline);
 
   return (
-    <div className="flex min-h-screen flex-col" style={{ background: "linear-gradient(to bottom, transparent 0px, rgba(6,5,4,0.55) 160px)" }}>
+    <div className="badges-page-bg flex min-h-screen flex-col">
       <AppHeader userId={user.id} displayName={name} plan={plan} />
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 sm:px-6">
         <div className="mb-2">
-          <Link
-            href="/timeline"
-            className="inline-flex items-center gap-1.5 text-sm text-parchment-muted transition hover:text-parchment"
-          >
-            ← Timeline
-          </Link>
+          <BackToTimeline />
         </div>
 
         <div className="mb-8 mt-4">

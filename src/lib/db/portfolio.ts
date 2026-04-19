@@ -305,7 +305,9 @@ export async function getAnalyticsSummary(
 
 // ─── AI usage gating ─────────────────────────────────────────────────────────
 
-const FREE_AI_LIMIT = 2;
+import { FREE_AI_USES_PER_MONTH } from "@/lib/constants";
+
+const FREE_AI_LIMIT = FREE_AI_USES_PER_MONTH;
 const PRO_AI_LIMIT = Infinity;
 
 export async function checkAndIncrementAiUsage(
