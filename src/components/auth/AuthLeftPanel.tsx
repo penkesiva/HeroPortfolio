@@ -60,9 +60,9 @@ export function AuthLeftPanel({ mode }: { mode: "login" | "signup" }) {
           </p>
         </div>
 
-        {/* ── Illustration placeholder ── */}
-        <div className="relative my-10 flex-1">
-          <div className="relative h-full min-h-60 overflow-hidden rounded-2xl border border-dusk-600/40 bg-dusk-950/70">
+        {/* Animation card — fills remaining space */}
+        <div className="relative mt-10 flex-1">
+          <div className="relative h-full min-h-72 overflow-hidden rounded-2xl border border-dusk-600/40 bg-dusk-950/70">
             {/* Dot-grid background */}
             <div
               className="absolute inset-0 opacity-[0.15]"
@@ -94,7 +94,7 @@ export function AuthLeftPanel({ mode }: { mode: "login" | "signup" }) {
                 src="/animations/hero_rocket.lottie"
                 loop
                 autoplay
-                className="h-56 w-56 xl:h-64 xl:w-64"
+                className="h-72 w-72 xl:h-80 xl:w-80"
               />
             </div>
 
@@ -146,25 +146,9 @@ export function AuthLeftPanel({ mode }: { mode: "login" | "signup" }) {
               </div>
             </div>
 
-            <p className="absolute bottom-2.5 left-1/2 -translate-x-1/2 whitespace-nowrap text-[9px] font-semibold uppercase tracking-[0.2em] text-parchment-muted/20">
-              hero_rocket.lottie
-            </p>
           </div>
         </div>
 
-        {/* Feature bullets */}
-        <ul className="space-y-3 text-sm text-parchment-muted">
-          {[
-            "Public portfolio link for coaches and college applications",
-            "AI Smart Import: paste a news article to auto-fill events",
-            "PDF Achievement Book, ready for scholarship forms",
-          ].map((f) => (
-            <li key={f} className="flex items-start gap-3">
-              <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-umber-400" />
-              {f}
-            </li>
-          ))}
-        </ul>
       </div>
     </aside>
   );
