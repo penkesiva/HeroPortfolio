@@ -59,7 +59,6 @@ export default async function AnalyticsPage() {
 
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-10 sm:px-6">
         <div className="mb-2">
-          <Link
           <BackToTimeline />
         </div>
         <div className="mb-8 mt-4">
