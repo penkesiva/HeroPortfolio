@@ -131,7 +131,6 @@ export function dbEventToAchievement(
     id: ev.id,
     title: ev.heading1,
     heading2: ev.heading2 ?? undefined,
-    heading3: ev.heading3 ?? undefined,
     body: ev.body ?? undefined,
     description: ev.body ?? "",
     imageSrc: imagePaths[0] ?? undefined,
@@ -140,6 +139,7 @@ export function dbEventToAchievement(
     musicUrl: ev.music_url ?? undefined,
     links: Array.isArray(ev.links) && ev.links.length > 0 ? ev.links : undefined,
     categories: ev.categories.length > 0 ? ev.categories : undefined,
+    amountRaised: ev.amount_raised ?? undefined,
   };
 }
 
@@ -155,12 +155,13 @@ export function achievementToDbEvent(
     user_id: userId,
     heading1: a.title,
     heading2: a.heading2 ?? null,
-    heading3: a.heading3 ?? null,
+    heading3: null,
     body: a.body ?? a.description ?? null,
     categories: a.categories ?? [],
     video_url: a.videoUrl ?? null,
     music_url: a.musicUrl ?? null,
     links: a.links ?? [],
+    amount_raised: a.amountRaised ?? null,
     position,
   };
 }
@@ -304,7 +305,7 @@ export async function getAnalyticsSummary(
 
 // ─── AI usage gating ─────────────────────────────────────────────────────────
 
-const FREE_AI_LIMIT = 3;
+const FREE_AI_LIMIT = 2;
 const PRO_AI_LIMIT = Infinity;
 
 export async function checkAndIncrementAiUsage(

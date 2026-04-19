@@ -6,7 +6,6 @@ export type ContentEventJson = {
   id: string;
   heading1: string;
   heading2?: string;
-  heading3?: string;
   body?: string;
   images?: string[];
   /** Single category slug; merged with `categories`. */
@@ -48,7 +47,6 @@ function mapEventToAchievement(event: ContentEventJson): Achievement {
     id: String(event.id),
     title: String(event.heading1),
     heading2: event.heading2,
-    heading3: event.heading3,
     body: event.body,
     description: event.body ?? "",
     ...(hasImages

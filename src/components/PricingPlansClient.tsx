@@ -139,7 +139,7 @@ export function PricingPlansClient({
               <strong className="font-medium text-parchment/90">JSON export</strong> for backup
             </Feature>
             <Feature>
-              <strong className="font-medium text-parchment/90">AI Smart Import</strong>, 3 free summaries per month
+              <strong className="font-medium text-parchment/90">AI Smart Import</strong>, 2 free summaries per month
             </Feature>
             <Feature>
               <strong className="font-medium text-parchment/90">Milestone badges</strong> earned automatically

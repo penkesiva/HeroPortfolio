@@ -72,7 +72,6 @@ function exportJson(timeline: YearBlock[], name: string): NextResponse {
         id: a.id,
         heading1: a.title,
         heading2: a.heading2,
-        heading3: a.heading3,
         body: a.body ?? a.description,
         categories: a.categories,
         images: a.images ?? (a.imageSrc ? [a.imageSrc] : undefined),

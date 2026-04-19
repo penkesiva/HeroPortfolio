@@ -717,11 +717,11 @@ export function PortfolioContentEditor({
               {/* AI Link Summarizer */}
               <div className="rounded-xl border border-umber-500/30 bg-umber-500/8 p-3">
                 <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-umber-300">
-                  Smart import: paste a news link
+                  Smart import
                 </p>
                 <p className="mb-2 text-[11px] leading-relaxed text-parchment-muted">
-                  Paste an article or competition results URL and AI will auto-fill the title, subtitle, and description.
-                  {plan === "free" && " (3 uses/month free)"}
+                  Paste a news or results URL — AI fills the title and description.
+                  {plan === "free" && " 2 uses/month free."}
                 </p>
                 <div className="flex gap-2">
                   <input
@@ -773,17 +773,6 @@ export function PortfolioContentEditor({
                   onChange={(e) =>
                     patchAchievement(selected.id, {
                       heading2: e.target.value || undefined,
-                    })
-                  }
-                  className="w-full rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-2 text-sm text-parchment"
-                />
-              </Field>
-              <Field label="Heading 3">
-                <input
-                  value={selected.heading3 ?? ""}
-                  onChange={(e) =>
-                    patchAchievement(selected.id, {
-                      heading3: e.target.value || undefined,
                     })
                   }
                   className="w-full rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-2 text-sm text-parchment"
@@ -857,29 +846,109 @@ export function PortfolioContentEditor({
                 </ul>
               </Field>
 
-              <Field label="Video link (YouTube / Vimeo)">
-                <input
-                  value={selected.videoUrl ?? ""}
-                  onChange={(e) =>
-                    patchAchievement(selected.id, {
-                      videoUrl: e.target.value || undefined,
-                    })
-                  }
-                  placeholder="https://www.youtube.com/watch?v=…"
-                  className="w-full rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-2 text-sm text-parchment placeholder:text-parchment-muted/40"
-                />
+              <Field label="Amount raised (optional, USD)">
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-parchment-muted/60">$</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={selected.amountRaised ?? ""}
+                    onChange={(e) =>
+                      patchAchievement(selected.id, {
+                        amountRaised: e.target.value ? parseFloat(e.target.value) : undefined,
+                      })
+                    }
+                    placeholder="0.00"
+                    className="w-full rounded-lg border border-dusk-600 bg-dusk-850 py-2 pl-6 pr-3 text-sm text-parchment placeholder:text-parchment-muted/40"
+                  />
+                </div>
+                <p className="mt-1 text-[11px] text-parchment-muted/50">
+                  For fundraising or donation events. Counts toward your lifetime total on the Badges page.
+                </p>
               </Field>
+
+              <Field label="Video link (YouTube / Vimeo)">
+                <div className="flex gap-2">
+                  <input
+                    value={selected.videoUrl ?? ""}
+                    onChange={(e) =>
+                      patchAchievement(selected.id, {
+                        videoUrl: e.target.value || undefined,
+                      })
+                    }
+                    placeholder="https://www.youtube.com/watch?v=…"
+                    className="min-w-0 flex-1 rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-2 text-sm text-parchment placeholder:text-parchment-muted/40"
+                  />
+                  <button
+                    type="button"
+                    title={plan === "pro" ? "Upload video file (Pro)" : "Upgrade to Pro to upload video files"}
+                    onClick={() => {
+                      if (plan !== "pro") {
+                        window.alert("Video file uploads are a Pro feature. Upgrade to Pro to upload your own videos directly.");
+                        return;
+                      }
+                      // Pro: trigger file picker (placeholder — wire to storage upload)
+                      window.alert("Video upload coming soon. For now, paste a YouTube or Vimeo link.");
+                    }}
+                    className={`flex shrink-0 items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition ${
+                      plan === "pro"
+                        ? "border-dusk-600 bg-dusk-850 text-parchment-muted hover:border-dusk-500 hover:text-parchment"
+                        : "border-umber-500/35 bg-umber-500/10 text-umber-300 hover:bg-umber-500/18"
+                    }`}
+                  >
+                    <svg viewBox="0 0 16 16" fill="currentColor" className="size-3.5 shrink-0" aria-hidden>
+                      <path d="M8 1a.75.75 0 0 1 .75.75v5.5h5.5a.75.75 0 0 1 0 1.5h-5.5v5.5a.75.75 0 0 1-1.5 0v-5.5H1.75a.75.75 0 0 1 0-1.5h5.5V1.75A.75.75 0 0 1 8 1Z" />
+                    </svg>
+                    {plan === "pro" ? "Upload" : (
+                      <span className="flex items-center gap-1">
+                        Upload
+                        <span className="rounded-full bg-umber-500/25 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-umber-200">Pro</span>
+                      </span>
+                    )}
+                  </button>
+                </div>
+              </Field>
+
               <Field label="Music link (Spotify / SoundCloud)">
-                <input
-                  value={selected.musicUrl ?? ""}
-                  onChange={(e) =>
-                    patchAchievement(selected.id, {
-                      musicUrl: e.target.value || undefined,
-                    })
-                  }
-                  placeholder="https://open.spotify.com/track/…"
-                  className="w-full rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-2 text-sm text-parchment placeholder:text-parchment-muted/40"
-                />
+                <div className="flex gap-2">
+                  <input
+                    value={selected.musicUrl ?? ""}
+                    onChange={(e) =>
+                      patchAchievement(selected.id, {
+                        musicUrl: e.target.value || undefined,
+                      })
+                    }
+                    placeholder="https://open.spotify.com/track/…"
+                    className="min-w-0 flex-1 rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-2 text-sm text-parchment placeholder:text-parchment-muted/40"
+                  />
+                  <button
+                    type="button"
+                    title={plan === "pro" ? "Upload audio file (Pro)" : "Upgrade to Pro to upload audio files"}
+                    onClick={() => {
+                      if (plan !== "pro") {
+                        window.alert("Audio file uploads are a Pro feature. Upgrade to Pro to upload your own music or recordings.");
+                        return;
+                      }
+                      window.alert("Audio upload coming soon. For now, paste a Spotify or SoundCloud link.");
+                    }}
+                    className={`flex shrink-0 items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition ${
+                      plan === "pro"
+                        ? "border-dusk-600 bg-dusk-850 text-parchment-muted hover:border-dusk-500 hover:text-parchment"
+                        : "border-umber-500/35 bg-umber-500/10 text-umber-300 hover:bg-umber-500/18"
+                    }`}
+                  >
+                    <svg viewBox="0 0 16 16" fill="currentColor" className="size-3.5 shrink-0" aria-hidden>
+                      <path d="M8 1a.75.75 0 0 1 .75.75v5.5h5.5a.75.75 0 0 1 0 1.5h-5.5v5.5a.75.75 0 0 1-1.5 0v-5.5H1.75a.75.75 0 0 1 0-1.5h5.5V1.75A.75.75 0 0 1 8 1Z" />
+                    </svg>
+                    {plan === "pro" ? "Upload" : (
+                      <span className="flex items-center gap-1">
+                        Upload
+                        <span className="rounded-full bg-umber-500/25 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-umber-200">Pro</span>
+                      </span>
+                    )}
+                  </button>
+                </div>
               </Field>
 
               <div className="space-y-2">

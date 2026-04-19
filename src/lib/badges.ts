@@ -89,6 +89,10 @@ export function computeBadges(timeline: YearBlock[]): Badge[] {
   const hasVideo = allEvents.some((a) => a.videoUrl?.trim());
   const hasLinks = allEvents.some((a) => (a.links ?? []).length > 0);
 
+  // Fundraising totals
+  const fundraisingEvents = allEvents.filter((a) => (a.amountRaised ?? 0) > 0);
+  const lifetimeRaised = fundraisingEvents.reduce((sum, a) => sum + (a.amountRaised ?? 0), 0);
+
   return [
     // ── Milestone ────────────────────────────────────────────────────────────
     {
@@ -424,7 +428,52 @@ export function computeBadges(timeline: YearBlock[]): Badge[] {
       tier: "platinum",
       earned: allCategories.size >= 7,
     },
+
+    // ── Fundraising ──────────────────────────────────────────────────────────
+    {
+      id: "fundraiser_first",
+      icon: "💝",
+      name: "First Fundraiser",
+      description: "Logged your first fundraising or donation event.",
+      category: "community",
+      tier: "bronze",
+      earned: fundraisingEvents.length >= 1,
+    },
+    {
+      id: "fundraiser_100",
+      icon: "💛",
+      name: "Community Fund",
+      description: "Raised $100 or more for causes across your timeline.",
+      category: "community",
+      tier: "silver",
+      earned: lifetimeRaised >= 100,
+    },
+    {
+      id: "fundraiser_500",
+      icon: "🤍",
+      name: "Big Heart",
+      description: "Raised $500 or more for causes across your timeline.",
+      category: "community",
+      tier: "gold",
+      earned: lifetimeRaised >= 500,
+    },
+    {
+      id: "fundraiser_1000",
+      icon: "🌟",
+      name: "Philanthropist",
+      description: "Raised $1,000 or more for causes across your timeline.",
+      category: "community",
+      tier: "platinum",
+      earned: lifetimeRaised >= 1000,
+    },
   ];
+}
+
+/** Total lifetime amount raised across all events with amountRaised set. */
+export function computeLifetimeRaised(timeline: YearBlock[]): number {
+  return timeline
+    .flatMap((b) => b.achievements)
+    .reduce((sum, a) => sum + (a.amountRaised ?? 0), 0);
 }
 
 export function earnedBadges(timeline: YearBlock[]): Badge[] {

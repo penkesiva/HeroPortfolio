@@ -12,8 +12,11 @@ import Link from "next/link";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import {
   applyTheme,
+  applyAutoTheme,
   getDocumentTheme,
+  readStoredThemeSetting,
   type ThemeChoice,
+  type ThemeSetting,
 } from "@/lib/themePreference";
 
 function UserAvatarIcon({ className }: { className?: string }) {
@@ -126,6 +129,7 @@ export function TimelineAccountMenu({ userId, displayName, plan = "free" }: Prop
   const [copyError, setCopyError] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [theme, setTheme] = useState<ThemeChoice>("dark");
+  const [themeSetting, setThemeSetting] = useState<ThemeSetting>("auto");
   const [themeMounted, setThemeMounted] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
@@ -137,6 +141,7 @@ export function TimelineAccountMenu({ userId, displayName, plan = "free" }: Prop
   useEffect(() => {
     startTransition(() => {
       setTheme(getDocumentTheme());
+      setThemeSetting(readStoredThemeSetting());
       setThemeMounted(true);
     });
   }, []);
@@ -144,6 +149,7 @@ export function TimelineAccountMenu({ userId, displayName, plan = "free" }: Prop
   useEffect(() => {
     if (!open) return;
     setTheme(getDocumentTheme());
+    setThemeSetting(readStoredThemeSetting());
   }, [open]);
 
   useEffect(() => {
@@ -162,11 +168,16 @@ export function TimelineAccountMenu({ userId, displayName, plan = "free" }: Prop
     };
   }, [open, close]);
 
-  function toggleTheme() {
-    const next: ThemeChoice = getDocumentTheme() === "dark" ? "light" : "dark";
-    applyTheme(next);
-    setTheme(next);
-    close();
+  function setThemeOption(setting: ThemeSetting) {
+    if (setting === "auto") {
+      applyAutoTheme();
+      setThemeSetting("auto");
+      setTheme(getDocumentTheme());
+    } else {
+      applyTheme(setting);
+      setThemeSetting(setting);
+      setTheme(setting);
+    }
   }
 
   async function copyProfileUrl() {
@@ -224,7 +235,7 @@ export function TimelineAccountMenu({ userId, displayName, plan = "free" }: Prop
     }
   }
 
-  const isDark = theme === "dark";
+  void theme; // used indirectly via themeSetting
 
   return (
     <>
@@ -322,24 +333,44 @@ export function TimelineAccountMenu({ userId, displayName, plan = "free" }: Prop
 
             {/* Actions */}
             <div className="py-1">
-              <button
-                type="button"
-                role="menuitem"
-                onClick={toggleTheme}
-                className="flex w-max max-w-full items-center gap-2.5 whitespace-nowrap px-3 py-2.5 text-left text-sm text-parchment transition hover:bg-dusk-850/90"
-                aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
-              >
-                {!themeMounted ? (
-                  <SunIcon className="size-4 shrink-0 text-umber-300" />
-                ) : isDark ? (
-                  <SunIcon className="size-4 shrink-0 text-umber-300" />
-                ) : (
-                  <MoonIcon className="size-4 shrink-0 text-parchment-muted" />
+              {/* Theme segmented control */}
+              <div className="px-3 py-2.5">
+                <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-parchment-muted/60">
+                  Theme
+                </p>
+                <div className="flex gap-1 rounded-lg border border-dusk-600 bg-dusk-850 p-0.5">
+                  {(["auto", "light", "dark"] as ThemeSetting[]).map((opt) => {
+                    const isActive = themeMounted && themeSetting === opt;
+                    return (
+                      <button
+                        key={opt}
+                        type="button"
+                        role="menuitem"
+                        onClick={() => setThemeOption(opt)}
+                        className={`flex flex-1 items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-xs font-medium transition ${
+                          isActive
+                            ? "bg-dusk-700 text-parchment shadow-sm"
+                            : "text-parchment-muted hover:text-parchment"
+                        }`}
+                      >
+                        {opt === "auto" && (
+                          <svg viewBox="0 0 16 16" className="size-3.5 shrink-0" fill="currentColor" aria-hidden>
+                            <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1ZM2 8a6 6 0 0 1 6-6v12A6 6 0 0 1 2 8Z" />
+                          </svg>
+                        )}
+                        {opt === "light" && <SunIcon className="size-3.5 shrink-0" />}
+                        {opt === "dark"  && <MoonIcon className="size-3.5 shrink-0" />}
+                        <span className="capitalize">{opt}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                {themeMounted && themeSetting === "auto" && (
+                  <p className="mt-1.5 text-[10px] text-parchment-muted/50">
+                    Follows time of day · light 6am–6pm
+                  </p>
                 )}
-                <span>
-                  {!themeMounted ? "Theme" : isDark ? "Light mode" : "Dark mode"}
-                </span>
-              </button>
+              </div>
               <button
                 type="button"
                 role="menuitem"

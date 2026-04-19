@@ -7,7 +7,7 @@ import { displayNameFromUser } from "@/lib/auth/displayName";
 import { getUserTimeline, getUserPlan } from "@/lib/db/portfolio";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { computeBadges } from "@/lib/badges";
+import { computeBadges, computeLifetimeRaised } from "@/lib/badges";
 
 export const metadata: Metadata = {
   title: "My Badges",
@@ -31,9 +31,10 @@ export default async function BadgesPage() {
   ]);
 
   const badges = computeBadges(timeline);
+  const lifetimeRaised = computeLifetimeRaised(timeline);
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col" style={{ background: "linear-gradient(to bottom, transparent 0px, rgba(6,5,4,0.55) 160px)" }}>
       <AppHeader userId={user.id} displayName={name} plan={plan} />
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 sm:px-6">
@@ -55,7 +56,7 @@ export default async function BadgesPage() {
           </p>
         </div>
 
-        <BadgesClient badges={badges} />
+        <BadgesClient badges={badges} lifetimeRaised={lifetimeRaised} />
       </main>
     </div>
   );

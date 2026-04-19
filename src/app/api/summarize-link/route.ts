@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
       {
         error:
           plan === "free"
-            ? "You've used your 3 free AI summaries this month. Upgrade to Pro for unlimited access."
+            ? "You've used your 2 free AI summaries this month. Upgrade to Pro for unlimited access."
             : "AI usage limit reached.",
         upgradeRequired: plan === "free",
       },

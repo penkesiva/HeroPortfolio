@@ -110,16 +110,26 @@ html[data-theme="light"] ::selection {
 
 /* ── Badge ring animations ────────────────────────────────── */
 @keyframes ring-fill {
-  from { stroke-dashoffset: 276; }
-  to   { stroke-dashoffset: 0; }
+  from { stroke-dashoffset: 276; transform: rotate(-90deg); }
+  to   { stroke-dashoffset: 0;   transform: rotate(-90deg); }
 }
 
 @keyframes ring-rotate {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
+  from { transform: rotate(-90deg); }
+  to   { transform: rotate(270deg); }
 }
 
 @keyframes badge-glow-pulse {
   0%, 100% { opacity: 0.6; }
   50%       { opacity: 1; }
+}
+
+@keyframes badge-spin-3d {
+  from { transform: rotateY(0deg); }
+  to   { transform: rotateY(360deg); }
+}
+
+@keyframes confetti-float {
+  0%   { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
+  100% { transform: translate(var(--tx), var(--ty)) rotate(var(--rot)) scale(0.2); opacity: 0; }
 }

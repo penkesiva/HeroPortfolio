@@ -37,6 +37,7 @@ export type DbEvent = {
   video_url: string | null;
   music_url: string | null;
   links: Array<{ label: string; href: string }>;
+  amount_raised: number | null;
   position: number;
   created_at: string;
   updated_at: string;

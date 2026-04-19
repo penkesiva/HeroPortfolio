@@ -3,7 +3,6 @@ export type Achievement = {
   /** Primary heading (from JSON `heading1` or legacy `title`). */
   title: string;
   heading2?: string;
-  heading3?: string;
   /** Optional long copy; falls back to `description` in the UI when set from JSON. */
   body?: string;
   description: string;
@@ -17,6 +16,8 @@ export type Achievement = {
   links?: { label: string; href: string }[];
   /** Lowercase slugs, e.g. `["music", "stem"]`. Used for filters; omit = uncategorized. */
   categories?: string[];
+  /** Optional self-reported amount raised (USD) for fundraising/donation events. */
+  amountRaised?: number;
 };
 
 export type YearBlock = {

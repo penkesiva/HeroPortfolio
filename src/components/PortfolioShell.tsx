@@ -393,9 +393,6 @@ function AchievementCard({
             {achievement.heading2}
           </p>
         ) : null}
-        {achievement.heading3 ? (
-          <p className="text-sm text-parchment-muted">{achievement.heading3}</p>
-        ) : null}
         {prose ? (
           <p className="text-[15px] leading-relaxed text-parchment-muted">
             {prose}
