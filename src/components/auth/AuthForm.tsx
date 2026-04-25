@@ -72,14 +72,40 @@ export function AuthForm({ mode, redirectAfterAuth }: { mode: Mode; redirectAfte
   async function onGoogle() {
     const supabase = createBrowserSupabaseClient();
     if (!supabase) { setPwStatus("error"); setPwMessage("Supabase is not configured."); return; }
+    setPwMessage(null);
     setOauthLoading(true);
+    const redirectTo = callbackUrl();
+    if (!redirectTo) {
+      setOauthLoading(false);
+      setPwStatus("error");
+      setPwMessage("Could not build sign-in redirect URL.");
+      return;
+    }
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: callbackUrl() },
+      options: {
+        redirectTo,
+        // Google needs these scopes so Supabase can read email + profile on first sign-in
+        scopes: "email profile openid",
+      },
     });
-    if (error) { setOauthLoading(false); setPwStatus("error"); setPwMessage(error.message); return; }
-    if (data.url) { window.location.href = data.url; }
-    else { setOauthLoading(false); setPwStatus("error"); setPwMessage("Could not start Google sign-in."); }
+    if (error) {
+      setOauthLoading(false);
+      setPwStatus("error");
+      setPwMessage(
+        error.message.includes("not enabled") || error.message.includes("Unsupported provider")
+          ? "Google sign-in is not enabled for this project yet. In Supabase: Authentication → Providers → Google, add your OAuth client ID and secret."
+          : error.message,
+      );
+      return;
+    }
+    if (data.url) {
+      window.location.href = data.url;
+      return;
+    }
+    setOauthLoading(false);
+    setPwStatus("error");
+    setPwMessage("Could not start Google sign-in.");
   }
 
   async function onPasswordSubmit(e: React.FormEvent) {
@@ -157,6 +183,19 @@ export function AuthForm({ mode, redirectAfterAuth }: { mode: Mode; redirectAfte
         {mode === "login" ? "Welcome back." : "Free forever. No credit card needed."}
       </p>
 
+      {pwMessage ? (
+        <p
+          className={`mt-4 rounded-lg border px-3 py-2 text-center text-xs ${
+            pwStatus === "error"
+              ? "border-red-500/35 bg-red-950/25 text-red-200/90"
+              : "border-dusk-600 bg-dusk-900/60 text-parchment-muted"
+          }`}
+          role={pwStatus === "error" ? "alert" : "status"}
+        >
+          {pwMessage}
+        </p>
+      ) : null}
+
       <div className="mt-8 space-y-2.5">
         {/* Google */}
         <button
@@ -222,11 +261,6 @@ export function AuthForm({ mode, redirectAfterAuth }: { mode: Mode; redirectAfte
                   </span>
                 ) : mode === "login" ? "Sign in" : "Create account"}
               </button>
-              {pwMessage && (
-                <p className={`text-center text-xs ${pwStatus === "error" ? "text-red-300/90" : "text-parchment-muted"}`} role={pwStatus === "error" ? "alert" : "status"}>
-                  {pwMessage}
-                </p>
-              )}
             </form>
           )}
         </div>
