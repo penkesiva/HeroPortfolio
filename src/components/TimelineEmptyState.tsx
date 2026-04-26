@@ -74,12 +74,18 @@ export function TimelineEmptyState({
 
   const onRocketLoad = (instance: DotLottie | null) => {
     if (!instance) return;
-    instance.setLoop(false);
-    instance.play();
-    // Fire the transition exactly when the animation ends — no hardcoded timeout
-    instance.addEventListener("complete", () => {
+    let fired = false;
+    const proceed = () => {
+      if (fired) return;
+      fired = true;
       afterLaunchRef.current();
-    });
+    };
+    // Register listener BEFORE play so we never miss the complete event
+    instance.addEventListener("complete", proceed);
+    instance.play();
+    // Fallback: if the animation never fires complete (e.g. load failure),
+    // proceed after 4 seconds so the user is never permanently stuck.
+    setTimeout(proceed, 4000);
   };
 
   return (
@@ -87,7 +93,7 @@ export function TimelineEmptyState({
       {launched ? (
         <DotLottieReact
           src="/animations/rocket_launch.lottie"
-          autoplay
+          loop={false}
           className="h-40 w-40"
           dotLottieRefCallback={onRocketLoad}
         />
