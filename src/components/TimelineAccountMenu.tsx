@@ -302,7 +302,7 @@ export function TimelineAccountMenu({ userId, displayName, plan = "free" }: Prop
                 >
                   CSV
                   {plan === "free" && (
-                    <span className="rounded-full bg-umber-500/25 px-1 text-[9px] font-bold uppercase tracking-wide text-umber-200">
+                    <span className="rounded-full bg-umber-500 px-1.5 text-[9px] font-bold uppercase tracking-wide text-white">
                       Pro
                     </span>
                   )}
@@ -320,7 +320,7 @@ export function TimelineAccountMenu({ userId, displayName, plan = "free" }: Prop
                 >
                   PDF Book
                   {plan === "free" && (
-                    <span className="rounded-full bg-umber-500/25 px-1 text-[9px] font-bold uppercase tracking-wide text-umber-200">
+                    <span className="rounded-full bg-umber-500 px-1.5 text-[9px] font-bold uppercase tracking-wide text-white">
                       Pro
                     </span>
                   )}

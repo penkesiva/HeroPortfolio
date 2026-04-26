@@ -17,11 +17,13 @@ const famYearlyEquivMonthly = (FAM_YEARLY / 12).toFixed(2);
 type Props = {
   userPlan?: "free" | "pro";
   hasStripeCustomer?: boolean;
+  isLoggedIn?: boolean;
 };
 
 export function PricingPlansClient({
   userPlan = "free",
   hasStripeCustomer = false,
+  isLoggedIn = false,
 }: Props) {
   const [yearly, setYearly] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -145,7 +147,11 @@ export function PricingPlansClient({
             </Feature>
             <Feature>Light &amp; dark themes, video &amp; music embeds</Feature>
           </ul>
-          {userPlan === "free" ? (
+          {userPlan === "free" && isLoggedIn ? (
+            <p className="mt-6 py-2.5 text-center text-sm font-medium text-parchment-muted">
+              ✓ Your current plan
+            </p>
+          ) : userPlan === "free" ? (
             <Link
               href="/signup"
               className="mt-6 block w-full rounded-full border border-dusk-600 bg-dusk-850 py-2.5 text-center text-sm font-semibold text-parchment transition hover:border-umber-500/45 hover:bg-dusk-800"

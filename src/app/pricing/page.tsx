@@ -102,6 +102,7 @@ export default async function PricingPage() {
           <PricingPlansClient
             userPlan={userPlan}
             hasStripeCustomer={hasStripeCustomer}
+            isLoggedIn={isLoggedIn}
           />
         </div>
       </main>
