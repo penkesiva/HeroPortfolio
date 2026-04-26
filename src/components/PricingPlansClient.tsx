@@ -1,6 +1,6 @@
 "use client";
 
-import { FREE_AI_LABEL, PRICES, FAMILY_PLAN_MAILTO } from "@/lib/constants";
+import { FREE_AI_LABEL, PRICES } from "@/lib/constants";
 
 import { startTransition, useState } from "react";
 import Link from "next/link";
@@ -290,14 +290,16 @@ export function PricingPlansClient({
             </Feature>
           </ul>
 
-          <a
-            href={`${FAMILY_PLAN_MAILTO}&body=Hi%2C%20I%27d%20like%20to%20set%20up%20a%20Family%20plan%20for%20${yearly ? "the%20yearly" : "the%20monthly"}%20option.`}
-            className="family-btn mt-6 block w-full rounded-full border py-2.5 text-center text-sm font-semibold transition"
+          <button
+            type="button"
+            onClick={() => void handleUpgrade("family")}
+            disabled={loading}
+            className="family-btn mt-6 w-full rounded-full border py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Get started with Family
-          </a>
+            {loading ? "Redirecting…" : `Get started with Family  ${yearly ? `$${FAM_YEARLY}/yr` : `$${FAM_MONTHLY}/mo`}`}
+          </button>
           <p className="mt-2 text-center text-[11px] text-parchment-muted">
-            We&apos;ll set up accounts within 24 hrs · Dashboard launching Q3 2026
+            Stripe checkout · Cancel any time · Dashboard launching Q3 2026
           </p>
         </article>
       </div>

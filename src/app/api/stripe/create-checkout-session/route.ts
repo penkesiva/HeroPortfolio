@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getProfile } from "@/lib/db/portfolio";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { stripe, getStripeProPriceId } from "@/lib/stripe";
+import { stripe, getStripeProPriceId, getStripeFamilyPriceId } from "@/lib/stripe";
 
 export async function POST(req: NextRequest) {
   if (!isSupabaseConfigured()) {
@@ -18,9 +18,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = (await req.json()) as { interval?: "month" | "year" };
+  const body = (await req.json()) as { interval?: "month" | "year"; tier?: "pro" | "family" };
   const interval = body.interval === "year" ? "year" : "month";
-  const priceId = getStripeProPriceId(interval);
+  const tier = body.tier === "family" ? "family" : "pro";
+  const priceId = tier === "family"
+    ? getStripeFamilyPriceId(interval)
+    : getStripeProPriceId(interval);
 
   if (!priceId) {
     return NextResponse.json(
