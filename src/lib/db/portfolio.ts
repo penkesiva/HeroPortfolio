@@ -17,6 +17,26 @@ import {
   signStoragePath,
   BUCKET_PROFILE_PHOTOS,
 } from "@/lib/storage";
+import { createServiceSupabaseClient } from "@/lib/supabase/service";
+
+/**
+ * Private Storage objects are only readable by the owner per RLS. Public pages
+ * use an anon (or unscoped) Supabase client, so `createSignedUrl` would fail
+ * and images/audio would 404. Use the service role only to sign paths we already
+ * loaded from trusted DB rows. Falls back to the session client if no key.
+ */
+function getClientForStorageSigning(
+  userSessionClient: SupabaseClient,
+): SupabaseClient {
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return userSessionClient;
+  }
+  try {
+    return createServiceSupabaseClient();
+  } catch {
+    return userSessionClient;
+  }
+}
 
 // ─── profile ──────────────────────────────────────────────────────────────────
 
@@ -102,7 +122,8 @@ export async function getUserTimeline(
       (u): u is string =>
         Boolean(u && !u.startsWith("http") && !u.startsWith("data:")),
     );
-  const signedMap = await signEventImagePaths(supabase, [
+  const signClient = getClientForStorageSigning(supabase);
+  const signedMap = await signEventImagePaths(signClient, [
     ...imagePaths,
     ...musicPaths,
   ]);
@@ -260,7 +281,8 @@ export async function dbProfileToSiteIntro(
   fallbackName: string,
 ): Promise<SiteIntro> {
   const rawPhotoUrl = profile?.photo_url ?? "/avatar-placeholder.svg";
-  const photoSrc = await signStoragePath(supabase, BUCKET_PROFILE_PHOTOS, rawPhotoUrl);
+  const signClient = getClientForStorageSigning(supabase);
+  const photoSrc = await signStoragePath(signClient, BUCKET_PROFILE_PHOTOS, rawPhotoUrl);
 
   return {
     name: profile?.display_name ?? fallbackName,
