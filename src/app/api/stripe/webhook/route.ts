@@ -1,15 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { stripe } from "@/lib/stripe";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { createServiceSupabaseClient } from "@/lib/supabase/service";
 
 async function updatePlan(
   userId: string,
   plan: "free" | "pro",
   subscriptionId?: string,
 ): Promise<void> {
-  const supabase = await createServerSupabaseClient();
-  await supabase
+  // Stripe webhooks have no user session; anon client + RLS would block the update.
+  // Service role is required to update `profiles` from a trusted server route.
+  const supabase = createServiceSupabaseClient();
+  const { error } = await supabase
     .from("profiles")
     .update({
       plan,
@@ -17,6 +19,9 @@ async function updatePlan(
       updated_at: new Date().toISOString(),
     })
     .eq("id", userId);
+  if (error) {
+    throw new Error(`Profile update failed: ${error.message}`);
+  }
 }
 
 export async function POST(req: NextRequest) {
