@@ -39,6 +39,12 @@ function gradeLabel(year: number, currentGrade: number): string {
   return "";
 }
 
+/** US-style school year that contains most of `calendarYear` (Aug–Jun), e.g. 2026 → Aug ’25–Jun ’26 */
+function schoolYearSpanForCalendarYear(calendarYear: number): string {
+  const yy = (y: number) => String(y).slice(-2).padStart(2, "0");
+  return `Aug ’${yy(calendarYear - 1)}–Jun ’${yy(calendarYear)}`;
+}
+
 export function TimelineEmptyState({
   onAddYear,
   onOpenEditor,
@@ -117,7 +123,9 @@ export function TimelineEmptyState({
         Start logging your story
       </h2>
       <p className="mt-2 max-w-xs text-sm leading-relaxed text-parchment-muted">
-        Tell us where you are in school, then pick your earliest year. We will set up every year from there to today.
+        Tell us your grade, then pick the <strong className="font-medium text-parchment/90">oldest calendar year</strong> you
+        want on your timeline. We add a section for each year through <strong className="font-medium text-parchment/90">{CURRENT_YEAR}</strong>—each
+        section is January through December (not the same as a single school year label on a transcript).
       </p>
 
       <div className="mt-8 w-full max-w-xs space-y-4 text-left">
@@ -140,7 +148,7 @@ export function TimelineEmptyState({
 
         <div>
           <label className="block text-xs font-semibold uppercase tracking-wide text-parchment-muted">
-            Start from which year?
+            Oldest calendar year on your timeline
           </label>
           <select
             value={selectedYear}
@@ -149,18 +157,27 @@ export function TimelineEmptyState({
           >
             {yearOptions.map((y) => {
               const label = gradeLabel(y, currentGrade);
+              const schoolSpan = y === CURRENT_YEAR ? ` · ${schoolYearSpanForCalendarYear(y)}` : "";
               return (
                 <option key={y} value={y}>
-                  {y}{label ? `  ·  ${label}` : ""}
+                  {y}
+                  {label ? `  ·  ${label}` : ""}
+                  {schoolSpan}
                 </option>
               );
             })}
           </select>
+          <p className="mt-2 text-[11px] leading-snug text-parchment-muted/70">
+            The grade you chose above is tied to the <span className="text-parchment-muted">{CURRENT_YEAR}</span> section.
+            U.S. school years often start the previous fall; for example, a typical schedule for this row is{" "}
+            <span className="whitespace-nowrap text-parchment-muted">{schoolYearSpanForCalendarYear(CURRENT_YEAR)}</span>{" "}
+            (one grade level—your activities for this school year still live under calendar year {CURRENT_YEAR}).
+          </p>
         </div>
 
         {selectedYear < CURRENT_YEAR && (
           <p className="text-xs text-parchment-muted/55">
-            Creates years {selectedYear} through {CURRENT_YEAR}
+            Adds calendar-year sections {selectedYear}–{CURRENT_YEAR} (Jan–Dec each)
           </p>
         )}
 
