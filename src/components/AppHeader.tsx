@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { HeaderPlanCta } from "@/components/HeaderPlanCta";
 import { SiteBrandLink } from "@/components/SiteBrandLink";
 import { TimelineAccountMenu } from "@/components/TimelineAccountMenu";
 
@@ -57,22 +58,7 @@ export function AppHeader({ userId, displayName, plan }: AppHeaderProps) {
             )}
           </Link>
 
-          <Link
-            href="/pricing"
-            className="flex items-center gap-2 rounded-full border border-umber-500/35 bg-umber-500/10 px-3 py-1.5 text-sm transition hover:border-umber-400/50 hover:bg-umber-500/18"
-          >
-            <span className="font-medium text-umber-200">Plans</span>
-            {plan === "free" && (
-              <span className="rounded-full bg-umber-500/25 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-umber-200">
-                Pro
-              </span>
-            )}
-            {plan === "pro" && (
-              <span className="rounded-full bg-umber-500/40 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-umber-100">
-                ✓ Pro
-              </span>
-            )}
-          </Link>
+          <HeaderPlanCta plan={plan} />
 
           <TimelineAccountMenu
             userId={userId}

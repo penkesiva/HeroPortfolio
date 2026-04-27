@@ -479,3 +479,29 @@ export function computeLifetimeRaised(timeline: YearBlock[]): number {
 export function earnedBadges(timeline: YearBlock[]): Badge[] {
   return computeBadges(timeline).filter((b) => b.earned);
 }
+
+/**
+ * Badges that became earned on this transition and sit in a {@link BadgeCategory}
+ * that previously had no earned badges — first unlock on that category track.
+ * (e.g. first milestone vs first time you earn anything in "sports".)
+ */
+export function newlyUnlockedCategoryBadges(
+  before: YearBlock[],
+  after: YearBlock[],
+): Badge[] {
+  const oldBadges = computeBadges(before);
+  const newBadges = computeBadges(after);
+  const categoriesWithEarnedBefore = new Set(
+    oldBadges.filter((b) => b.earned).map((b) => b.category),
+  );
+  const oldEarnedIds = new Set(
+    oldBadges.filter((b) => b.earned).map((b) => b.id),
+  );
+
+  return newBadges.filter(
+    (b) =>
+      b.earned &&
+      !oldEarnedIds.has(b.id) &&
+      !categoriesWithEarnedBefore.has(b.category),
+  );
+}

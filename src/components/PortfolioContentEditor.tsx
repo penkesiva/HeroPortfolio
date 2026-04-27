@@ -14,7 +14,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { DotLottieReact } from "@lottiefiles/dotlottie-react";
 import type { Achievement, SiteIntro, YearBlock } from "@/data/timeline";
 import type { DraftProfileFields } from "@/lib/draftProfileIntro";
-import { FREE_AI_LABEL } from "@/lib/constants";
+import { FREE_AI_EXHAUSTED_MESSAGE, FREE_AI_LABEL } from "@/lib/constants";
 import { UpgradeModal } from "@/components/UpgradeModal";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import {
@@ -25,6 +25,7 @@ import {
 } from "@/lib/storage";
 import { isDirectPlayableAudioUrl, musicUrlToEmbedSrc } from "@/lib/embedUrls";
 import { canAccess } from "@/lib/planGate";
+import type { CelebrationUnlockLite } from "@/components/FirstContributionParty";
 import type { Plan } from "@/types/database";
 
 type PortfolioContentEditorProps = {
@@ -35,7 +36,12 @@ type PortfolioContentEditorProps = {
   onApplyTimeline: (next: YearBlock[]) => void;
   intro: SiteIntro;
   onApplyIntro: (patch: Partial<DraftProfileFields>) => void;
-  onPersistDrafts: () => Promise<{ error: string | null }>;
+  onPersistDrafts: () => Promise<{
+    error: string | null;
+    celebrateFirstContribution?: boolean;
+    celebrationDisplayName?: string | null;
+    celebrationUnlocks?: CelebrationUnlockLite[];
+  }>;
   onDiscardDrafts: () => void;
   onAddYear?: (year: number) => void;
   /** Add exactly one year (no range scaffolding). Used by the in-editor year picker. */
@@ -318,6 +324,14 @@ export function PortfolioContentEditor({
         upgradeRequired?: boolean;
       };
       if (!res.ok || data.error) {
+        if (res.status === 429 && data.upgradeRequired) {
+          setUpgradeModal({
+            open: true,
+            feature: "AI Smart Import",
+            description: data.error ?? FREE_AI_EXHAUSTED_MESSAGE,
+          });
+          return;
+        }
         setLinkError(data.error ?? "Failed to summarize link.");
         return;
       }
@@ -994,7 +1008,12 @@ export function PortfolioContentEditor({
                     title={plan === "pro" ? "Upload video file (Pro)" : "Upgrade to Pro to upload video files"}
                     onClick={() => {
                       if (plan !== "pro") {
-                        window.alert("Video file uploads are a Pro feature. Upgrade to Pro to upload your own videos directly.");
+                        setUpgradeModal({
+                          open: true,
+                          feature: "Video file upload",
+                          description:
+                            "Upload your own video files directly to an event (YouTube/Vimeo links stay free for everyone).",
+                        });
                         return;
                       }
                       // Pro: trigger file picker (placeholder — wire to storage upload)
@@ -1065,9 +1084,12 @@ export function PortfolioContentEditor({
                       disabled={audioUploading}
                       onClick={() => {
                         if (!canAccess(plan, "eventAudioUpload")) {
-                          window.alert(
-                            "Audio file uploads are a Pro feature. Upgrade to Pro to upload your own recordings.",
-                          );
+                          setUpgradeModal({
+                            open: true,
+                            feature: "Audio file upload",
+                            description:
+                              "Upload MP3, WAV, and more to your events. Spotify and SoundCloud links stay free for everyone.",
+                          });
                           return;
                         }
                         audioFileInputRef.current?.click();
@@ -1248,6 +1270,7 @@ export function PortfolioContentEditor({
         </div>
       </motion.aside>
 
+      {/* Confirm before leaving draft context; header / other CTAs link straight to /pricing */}
       <UpgradeModal
         open={upgradeModal.open}
         onClose={() => setUpgradeModal((u) => ({ ...u, open: false }))}

@@ -8,7 +8,7 @@ import {
   useRef,
   useState,
 } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import {
   applyTheme,
@@ -132,9 +132,9 @@ export function TimelineAccountMenu({ userId, displayName, plan = "free" }: Prop
   const [themeSetting, setThemeSetting] = useState<ThemeSetting>("auto");
   const [themeMounted, setThemeMounted] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
-  const [upgradeOpen, setUpgradeOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
   const menuId = useId();
+  const router = useRouter();
 
   const close = useCallback(() => setOpen(false), []);
 
@@ -209,7 +209,7 @@ export function TimelineAccountMenu({ userId, displayName, plan = "free" }: Prop
   async function downloadExport(format: "json" | "csv" | "pdf") {
     if ((format === "pdf" || format === "csv") && plan === "free") {
       close();
-      setUpgradeOpen(true);
+      router.push("/pricing");
       return;
     }
     close();
@@ -272,15 +272,24 @@ export function TimelineAccountMenu({ userId, displayName, plan = "free" }: Prop
             aria-label="Account"
             className="absolute right-0 top-[calc(100%+0.5rem)] z-[100] w-max max-w-[min(18rem,calc(100vw-1.5rem))] rounded-xl border border-dusk-600/90 bg-dusk-900/95 py-2 shadow-[0_16px_48px_rgba(0,0,0,0.45)] backdrop-blur-md"
           >
-            {/* Name + plan badge */}
+            {/* Name + plan (one row when it fits; pill wraps to next line, right-aligned) */}
             <div className="border-b border-dusk-700/80 px-3 py-2.5">
-              <div className="flex items-center gap-2">
-                <p className="max-w-[min(13rem,calc(100vw-2rem))] truncate text-sm font-medium text-parchment">
-                  Hi, {displayName}
+              <div className="flex w-full min-w-0 flex-wrap items-center gap-x-2 gap-y-1.5">
+                <p className="min-w-0 flex-1 text-sm font-medium text-parchment">
+                  <span
+                    className="block min-w-0 truncate"
+                    title={`Hi, ${displayName}`}
+                  >
+                    Hi, {displayName}
+                  </span>
                 </p>
-                {plan === "pro" && (
-                  <span className="rounded-full bg-umber-500/30 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-umber-200">
+                {plan === "pro" ? (
+                  <span className="ml-auto inline-flex shrink-0 rounded-full border border-umber-500/40 bg-umber-500/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-umber-200">
                     Pro
+                  </span>
+                ) : (
+                  <span className="ml-auto inline-flex shrink-0 rounded-full border border-dusk-600 bg-dusk-850/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-parchment-muted">
+                    Basic plan
                   </span>
                 )}
               </div>
@@ -345,12 +354,12 @@ export function TimelineAccountMenu({ userId, displayName, plan = "free" }: Prop
 
             {/* Actions */}
             <div className="py-1">
-              {/* Theme segmented control */}
+              {/* Theme: capsule track + pill segments (matches export row style) */}
               <div className="px-3 py-2.5">
                 <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-parchment-muted/60">
                   Theme
                 </p>
-                <div className="flex gap-1 rounded-lg border border-dusk-600 bg-dusk-850 p-0.5">
+                <div className="flex w-full min-w-0 gap-0.5 rounded-full border border-dusk-600 bg-dusk-850/90 p-0.5 shadow-sm">
                   {(["auto", "light", "dark"] as ThemeSetting[]).map((opt) => {
                     const isActive = themeMounted && themeSetting === opt;
                     return (
@@ -359,10 +368,10 @@ export function TimelineAccountMenu({ userId, displayName, plan = "free" }: Prop
                         type="button"
                         role="menuitem"
                         onClick={() => setThemeOption(opt)}
-                        className={`flex flex-1 items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-xs font-medium transition ${
+                        className={`flex min-w-0 flex-1 items-center justify-center gap-0.5 rounded-full px-1 py-1.5 text-[11px] font-medium leading-tight transition sm:gap-1.5 sm:px-2 sm:text-xs ${
                           isActive
-                            ? "bg-dusk-700 text-parchment shadow-sm"
-                            : "text-parchment-muted hover:text-parchment"
+                            ? "bg-dusk-700 text-parchment shadow-sm ring-1 ring-dusk-500/30"
+                            : "text-parchment-muted hover:bg-dusk-800/80 hover:text-parchment"
                         }`}
                       >
                         {opt === "auto" && (
@@ -372,7 +381,7 @@ export function TimelineAccountMenu({ userId, displayName, plan = "free" }: Prop
                         )}
                         {opt === "light" && <SunIcon className="size-3.5 shrink-0" />}
                         {opt === "dark"  && <MoonIcon className="size-3.5 shrink-0" />}
-                        <span className="capitalize">{opt}</span>
+                        <span className="truncate capitalize">{opt}</span>
                       </button>
                     );
                   })}
@@ -383,17 +392,32 @@ export function TimelineAccountMenu({ userId, displayName, plan = "free" }: Prop
                   </p>
                 )}
               </div>
-              <button
-                type="button"
-                role="menuitem"
-                onClick={() => void copyProfileUrl()}
-                className="flex w-max max-w-full items-center gap-2.5 whitespace-nowrap px-3 py-2.5 text-left text-sm text-parchment transition hover:bg-dusk-850/90"
-              >
-                <LinkShareIcon className="size-4 shrink-0 text-umber-300" />
-                <span>
-                  {copied ? "Copied!" : copyError ? "Copy failed" : "Copy share link"}
-                </span>
-              </button>
+              <div className="px-3 pb-2.5">
+                <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-parchment-muted/60">
+                  Share
+                </p>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => void copyProfileUrl()}
+                  className={`flex w-full items-center justify-center gap-2 rounded-full border px-2.5 py-2 text-xs font-medium transition ${
+                    copied
+                      ? "border-umber-500/40 bg-umber-500/15 text-umber-200 shadow-sm ring-1 ring-umber-500/20"
+                      : copyError
+                        ? "border-red-500/35 bg-red-500/10 text-red-300/95 hover:border-red-500/45"
+                        : "border-dusk-600 bg-dusk-850 text-parchment-muted shadow-sm hover:border-umber-500/35 hover:bg-dusk-800 hover:text-parchment"
+                  }`}
+                >
+                  <LinkShareIcon
+                    className={`size-3.5 shrink-0 ${
+                      copied ? "text-umber-200" : copyError ? "text-red-300/90" : "text-umber-300"
+                    }`}
+                  />
+                  <span>
+                    {copied ? "Copied!" : copyError ? "Copy failed" : "Copy share link"}
+                  </span>
+                </button>
+              </div>
               <div className="border-t border-dusk-700/60 mt-1 pt-1">
                 <button
                   type="button"
@@ -410,51 +434,6 @@ export function TimelineAccountMenu({ userId, displayName, plan = "free" }: Prop
           </div>
         ) : null}
       </div>
-
-      {/* Upgrade modal when free user clicks a Pro export */}
-      {upgradeOpen && (
-        <div
-          className="fixed inset-0 z-[200] flex items-center justify-center px-4"
-          role="dialog"
-          aria-modal="true"
-        >
-          <button
-            type="button"
-            aria-label="Close"
-            className="absolute inset-0 bg-dusk-950/80 backdrop-blur-sm"
-            onClick={() => setUpgradeOpen(false)}
-          />
-          <div className="relative z-10 w-full max-w-sm rounded-2xl border border-umber-500/40 bg-gradient-to-b from-dusk-900 to-dusk-950 p-8 shadow-2xl">
-            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-umber-500/20 text-xl">
-              ⭐
-            </div>
-            <h2 className="text-lg font-semibold text-parchment">
-              PDF &amp; CSV export is a Pro feature
-            </h2>
-            <p className="mt-2 text-sm leading-relaxed text-parchment-muted">
-              Upgrade to Pro to export your portfolio as a beautiful PDF Achievement Book or a CSV spreadsheet. Perfect for college applications.
-            </p>
-            <div className="mt-6 flex flex-col gap-3">
-              <Link
-                href="/pricing"
-                className="block w-full rounded-full border border-umber-500/50 bg-umber-500/25 py-3 text-center text-sm font-semibold text-umber-100 transition hover:bg-umber-500/35"
-              >
-                Upgrade to Pro
-              </Link>
-              <button
-                type="button"
-                onClick={() => setUpgradeOpen(false)}
-                className="w-full rounded-full border border-dusk-600 py-2.5 text-sm font-medium text-parchment-muted hover:text-parchment"
-              >
-                Maybe later
-              </button>
-            </div>
-            <p className="mt-4 text-center text-[11px] text-parchment-muted/70">
-              Basic stays free forever · JSON export is always free
-            </p>
-          </div>
-        </div>
-      )}
     </>
   );
 }

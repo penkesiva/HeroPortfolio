@@ -26,7 +26,15 @@ import {
   loadDraftTimeline,
   saveDraftTimeline,
 } from "@/lib/draftTimeline";
-import { saveTimelineAction, saveProfileAction, deleteYearBlockAction } from "@/app/actions/portfolio";
+import {
+  saveTimelineAction,
+  saveProfileAction,
+  deleteYearBlockAction,
+} from "@/app/actions/portfolio";
+import {
+  FirstContributionParty,
+  type CelebrationUnlockLite,
+} from "@/components/FirstContributionParty";
 import { AchievementBadges } from "@/components/AchievementBadges";
 import { EventMusicPlayer } from "@/components/EventMusicPlayer";
 import { TimelineEmptyState } from "@/components/TimelineEmptyState";
@@ -749,7 +757,21 @@ export function PortfolioShell({
     [publicView, timeline, applyTimeline, userId],
   );
 
-  const persistDrafts = useCallback(async (): Promise<{ error: string | null }> => {
+  const [firstContributionParty, setFirstContributionParty] = useState<{
+    displayName: string;
+    unlocks: CelebrationUnlockLite[];
+  } | null>(null);
+
+  const dismissFirstContributionParty = useCallback(() => {
+    setFirstContributionParty(null);
+  }, []);
+
+  const persistDrafts = useCallback(async (): Promise<{
+    error: string | null;
+    celebrateFirstContribution?: boolean;
+    celebrationDisplayName?: string | null;
+    celebrationUnlocks?: CelebrationUnlockLite[];
+  }> => {
     if (publicView) return { error: null };
     saveDraftTimeline(timeline);
     saveDraftProfileIntro(serverIntroToDraftFields(intro));
@@ -771,6 +793,22 @@ export function PortfolioShell({
         }),
       ]);
       if (timelineResult.error) return { error: timelineResult.error };
+      if (timelineResult.celebrateFirstContribution) {
+        const displayName =
+          timelineResult.celebrationDisplayName?.trim() ||
+          intro.name?.trim() ||
+          "there";
+        const unlocks = timelineResult.celebrationUnlocks ?? [];
+        startTransition(() =>
+          setFirstContributionParty({ displayName, unlocks }),
+        );
+      }
+      return {
+        error: null,
+        celebrateFirstContribution: timelineResult.celebrateFirstContribution,
+        celebrationDisplayName: timelineResult.celebrationDisplayName,
+        celebrationUnlocks: timelineResult.celebrationUnlocks,
+      };
     }
     return { error: null };
   }, [publicView, timeline, intro, userId]);
@@ -1438,6 +1476,16 @@ export function PortfolioShell({
       </div>
 
       <VideoLightbox state={videoLightbox} onClose={closeVideo} />
+
+      {firstContributionParty && userId ? (
+        <FirstContributionParty
+          displayName={firstContributionParty.displayName}
+          unlocks={firstContributionParty.unlocks}
+          userId={userId}
+          timeline={timeline}
+          onClose={dismissFirstContributionParty}
+        />
+      ) : null}
 
       {showContentEditor ? (
         <>

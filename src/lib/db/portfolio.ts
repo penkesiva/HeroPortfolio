@@ -240,6 +240,26 @@ export async function saveUserTimeline(
         .upsert(eventRows, { onConflict: "id" });
       if (evErr) return { error: evErr.message };
     }
+
+    // Drop events removed in the editor (upsert only writes rows still present).
+    const { data: existingRows, error: listErr } = await supabase
+      .from("events")
+      .select("id")
+      .eq("year_block_id", yearBlockId)
+      .eq("user_id", userId);
+    if (listErr) return { error: listErr.message };
+    const keepIds = new Set(block.achievements.map((a) => a.id));
+    const orphanIds = (existingRows ?? [])
+      .map((r) => (r as { id: string }).id)
+      .filter((id) => !keepIds.has(id));
+    if (orphanIds.length > 0) {
+      const { error: delErr } = await supabase
+        .from("events")
+        .delete()
+        .in("id", orphanIds)
+        .eq("user_id", userId);
+      if (delErr) return { error: delErr.message };
+    }
   }
 
   return { error: null };

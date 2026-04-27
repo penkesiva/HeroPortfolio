@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { redirect } from "next/navigation";
+import { AnalyticsFreeUpgradeCta } from "@/components/AnalyticsFreeUpgradeCta";
 import { AppHeader } from "@/components/AppHeader";
 import { BackToTimeline } from "@/components/BackToTimeline";
 import { displayNameFromUser } from "@/lib/auth/displayName";
@@ -40,12 +40,7 @@ export default async function AnalyticsPage() {
           <p className="mt-3 text-parchment-muted">
             See exactly how many people are viewing your public portfolio, by week, month, and all time.
           </p>
-          <Link
-            href="/pricing"
-            className="mt-8 inline-block rounded-full border border-umber-500/50 bg-umber-500/20 px-8 py-3 text-sm font-semibold text-umber-100 transition hover:bg-umber-500/30"
-          >
-            Upgrade to Pro
-          </Link>
+          <AnalyticsFreeUpgradeCta />
         </main>
       </div>
     );

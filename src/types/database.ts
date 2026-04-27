@@ -7,6 +7,10 @@ export type DbProfile = {
   role: string | null;
   bio: string | null;
   photo_url: string | null;
+  /** Legacy one-time party flag; superseded by celebrated_badge_categories. */
+  has_celebrated?: boolean;
+  /** BadgeCategory keys that have already triggered the unlock celebration. */
+  celebrated_badge_categories?: string[];
   plan: Plan;
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
