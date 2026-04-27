@@ -1,20 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 
 export function UpgradedBanner() {
   const [visible, setVisible] = useState(true);
-  const router = useRouter();
 
-  // Strip ?upgraded=1 from the URL immediately so a refresh doesn't re-show it
+  // Strip ?upgraded=1 from the address bar without a Next.js navigation.
+  // router.replace() refetches RSC and the server drops this banner — it vanished in <1s.
   useEffect(() => {
     const url = new URL(window.location.href);
     if (url.searchParams.has("upgraded")) {
       url.searchParams.delete("upgraded");
-      router.replace(url.pathname + (url.search || ""), { scroll: false });
+      const next = url.pathname + (url.searchParams.toString() ? `?${url.searchParams.toString()}` : "");
+      window.history.replaceState(window.history.state, "", next);
     }
-  }, [router]);
+  }, []);
 
   if (!visible) return null;
 

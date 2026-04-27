@@ -217,8 +217,20 @@ export function TimelineAccountMenu({ userId, displayName, plan = "free" }: Prop
     try {
       const res = await fetch(`/api/export?format=${format}`);
       if (!res.ok) {
-        const d = (await res.json()) as { error?: string };
-        window.alert(d.error ?? "Export failed.");
+        let message = "Export failed.";
+        const ct = res.headers.get("content-type") ?? "";
+        try {
+          if (ct.includes("application/json")) {
+            const d = (await res.json()) as { error?: string };
+            message = d.error ?? message;
+          } else {
+            const t = await res.text();
+            if (t) message = t.slice(0, 200);
+          }
+        } catch {
+          /* keep default */
+        }
+        window.alert(message);
         return;
       }
       const blob = await res.blob();
