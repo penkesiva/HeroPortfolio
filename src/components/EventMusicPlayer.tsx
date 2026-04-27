@@ -24,19 +24,44 @@ function unitNoise(i: number, salt: number): number {
   return x - Math.floor(x);
 }
 
-/** Closed loop of irregular samples so motion never shares one simple back-and-forth. */
-function wanderKeyframes(
-  i: number,
-  salt: number,
-  interior: number,
-  amp: number
-): number[] {
-  const out: number[] = [0];
-  for (let k = 0; k < interior; k++) {
-    out.push((unitNoise(i, salt + k * 0.17) * 2 - 1) * amp);
-  }
-  out.push(0);
-  return out;
+/** Gentle side-to-side wobble (px) while rising; closes to 0 for a seamless loop. */
+function lateralDriftKeyframes(i: number): number[] {
+  const w = (salt: number, amp: number) => (unitNoise(i, salt) * 2 - 1) * amp;
+  return [
+    0,
+    w(1.2, 14),
+    w(1.3, 18),
+    w(1.4, 12),
+    w(1.5, 16),
+    w(1.6, 10),
+    w(1.7, 8),
+    0,
+  ];
+}
+
+/**
+ * Negative y = move up (Framer translate). Start at card bottom, climb, ease back down.
+ */
+function riseKeyframes(i: number): number[] {
+  const peak = -(92 + unitNoise(i, 2.1) * 48);
+  return [
+    0,
+    -8 - unitNoise(i, 2.2) * 8,
+    -22 - unitNoise(i, 2.3) * 12,
+    -42 - unitNoise(i, 2.4) * 16,
+    -62 - unitNoise(i, 2.5) * 18,
+    peak * 0.92,
+    peak,
+    peak * 0.78,
+    -38 - unitNoise(i, 2.6) * 14,
+    -14 - unitNoise(i, 2.7) * 8,
+    0,
+  ];
+}
+
+function tumbleKeyframes(i: number): number[] {
+  const t = (salt: number, amp: number) => (unitNoise(i, salt) * 2 - 1) * amp;
+  return [0, t(3.2, 14), t(3.3, 18), t(3.4, 12), t(3.5, 16), t(3.6, 10), 0];
 }
 
 type NoteDriftPlan = {
@@ -53,35 +78,35 @@ type NoteDriftPlan = {
 };
 
 function buildNoteDriftPlans(): NoteDriftPlan[] {
-  const layout: { position: Corner; delay: number }[] = [
-    { position: { top: "8%", left: "6%" }, delay: 0 },
-    { position: { top: "14%", right: "8%" }, delay: 0.35 },
-    { position: { top: "42%", left: "4%" }, delay: 0.7 },
-    { position: { top: "52%", right: "6%" }, delay: 1.05 },
-    { position: { bottom: "18%", left: "12%" }, delay: 1.4 },
-    { position: { bottom: "12%", right: "10%" }, delay: 1.75 },
-  ];
+  const baseLeft = [11, 26, 41, 56, 71, 86];
+  const bottomPct = 4;
 
-  return layout.map(({ position, delay }, i) => ({
-    position,
-    delay,
-    x: wanderKeyframes(i, 0, 8, 20),
-    y: wanderKeyframes(i, 4.2, 7, 24),
-    rotate: wanderKeyframes(i, 8.1, 6, 16),
-    opacity: [
-      0.2,
-      0.45 + unitNoise(i, 30) * 0.28,
-      0.28 + unitNoise(i, 31) * 0.2,
-      0.62 + unitNoise(i, 32) * 0.18,
-      0.32,
-      0.55 + unitNoise(i, 33) * 0.2,
-      0.2,
-    ],
-    durX: 2.6 + unitNoise(i, 40) * 4.2,
-    durY: 3.1 + unitNoise(i, 41) * 4.8,
-    durR: 2.2 + unitNoise(i, 42) * 3.6,
-    durOpacity: 1.8 + unitNoise(i, 43) * 2.4,
-  }));
+  return baseLeft.map((left, i) => {
+    const jitter = (unitNoise(i, 50) - 0.5) * 7;
+    const leftPct = Math.min(90, Math.max(6, left + jitter));
+    return {
+      position: { bottom: `${bottomPct}%`, left: `${leftPct}%` },
+      delay: i * 0.55 + unitNoise(i, 51) * 0.35,
+      x: lateralDriftKeyframes(i),
+      y: riseKeyframes(i),
+      rotate: tumbleKeyframes(i),
+      opacity: [
+        0.12,
+        0.28,
+        0.42,
+        0.55 + unitNoise(i, 30) * 0.18,
+        0.62 + unitNoise(i, 31) * 0.12,
+        0.58,
+        0.4,
+        0.22,
+        0.12,
+      ],
+      durX: 3.4 + unitNoise(i, 40) * 3.8,
+      durY: 5.2 + unitNoise(i, 41) * 4.2,
+      durR: 2.8 + unitNoise(i, 42) * 3.4,
+      durOpacity: 4.6 + unitNoise(i, 43) * 3.2,
+    };
+  });
 }
 
 const NOTE_DRIFT_PLANS = buildNoteDriftPlans();
@@ -111,7 +136,7 @@ function FloatingMusicNotesLayer({ playing }: { playing: boolean }) {
               : {
                   x: 0,
                   y: 0,
-                  rotate: plan.rotate[0] ?? 0,
+                  rotate: 0,
                   opacity: 0,
                 }
           }
@@ -126,7 +151,7 @@ function FloatingMusicNotesLayer({ playing }: { playing: boolean }) {
               duration: plan.durY,
               repeat: playing ? Infinity : 0,
               ease: "easeInOut",
-              delay: plan.delay * 0.4,
+              delay: plan.delay * 0.35,
             },
             rotate: {
               duration: plan.durR,
