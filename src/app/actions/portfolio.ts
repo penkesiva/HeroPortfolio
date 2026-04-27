@@ -2,7 +2,12 @@
 
 import { redirect } from "next/navigation";
 import type { SiteIntro, YearBlock } from "@/data/timeline";
-import { saveUserTimeline, upsertProfile, deleteYearBlock } from "@/lib/db/portfolio";
+import {
+  saveUserTimeline,
+  syncEventImagesForTimeline,
+  upsertProfile,
+  deleteYearBlock,
+} from "@/lib/db/portfolio";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -18,7 +23,9 @@ export async function saveTimelineAction(
 
   if (!user) redirect("/login?next=/timeline");
 
-  return saveUserTimeline(supabase, user.id, yearBlocks);
+  const saved = await saveUserTimeline(supabase, user.id, yearBlocks);
+  if (saved.error) return saved;
+  return syncEventImagesForTimeline(supabase, user.id, yearBlocks);
 }
 
 export async function saveProfileAction(

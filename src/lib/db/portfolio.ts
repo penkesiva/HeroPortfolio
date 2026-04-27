@@ -15,6 +15,7 @@ import type {
 import {
   signEventImagePaths,
   signStoragePath,
+  BUCKET_EVENT_IMAGES,
   BUCKET_PROFILE_PHOTOS,
 } from "@/lib/storage";
 import { createServiceSupabaseClient } from "@/lib/supabase/service";
@@ -241,6 +242,151 @@ export async function saveUserTimeline(
     }
   }
 
+  return { error: null };
+}
+
+function orderedAchievementImageSources(a: Achievement): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  const push = (u: string | undefined) => {
+    const t = u?.trim();
+    if (!t || seen.has(t)) return;
+    seen.add(t);
+    out.push(t);
+  };
+  push(a.imageSrc);
+  if (a.images) for (const x of a.images) push(x);
+  return out;
+}
+
+function parseDataImageUrl(
+  url: string,
+): { bytes: Buffer; contentType: string } | null {
+  if (!url.startsWith("data:image")) return null;
+  const comma = url.indexOf(",");
+  if (comma === -1) return null;
+  const header = url.slice(0, comma);
+  const mimeMatch = /^data:(image\/[^;]+)/i.exec(header);
+  const contentType = mimeMatch?.[1]?.toLowerCase() ?? "image/jpeg";
+  const body = url.slice(comma + 1);
+  const isBase64 = /;base64/i.test(header);
+  try {
+    if (isBase64) return { bytes: Buffer.from(body, "base64"), contentType };
+    return { bytes: Buffer.from(decodeURIComponent(body), "utf8"), contentType };
+  } catch {
+    return null;
+  }
+}
+
+function extForImageContentType(ct: string): string {
+  if (ct.includes("png")) return "png";
+  if (ct.includes("webp")) return "webp";
+  if (ct.includes("gif")) return "gif";
+  return "jpg";
+}
+
+/** Extract bucket path from a Supabase signed (or public) object URL. */
+function storagePathFromSupabaseObjectUrl(url: string): string | null {
+  try {
+    const u = new URL(url);
+    if (!u.hostname.includes("supabase.co")) return null;
+    const p = u.pathname;
+    const signSeg = "/storage/v1/object/sign/event-images/";
+    const i = p.indexOf(signSeg);
+    if (i !== -1) return decodeURIComponent(p.slice(i + signSeg.length));
+    const pubSeg = "/storage/v1/object/public/event-images/";
+    const j = p.indexOf(pubSeg);
+    if (j !== -1) return decodeURIComponent(p.slice(j + pubSeg.length));
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function isRawEventImageStoragePath(s: string): boolean {
+  return (
+    !s.startsWith("data:") &&
+    !s.startsWith("http") &&
+    !s.startsWith("/") &&
+    s.includes("/")
+  );
+}
+
+async function removeExistingEventImages(
+  supabase: SupabaseClient,
+  userId: string,
+  eventId: string,
+): Promise<void> {
+  const { data: rows } = await supabase
+    .from("event_images")
+    .select("storage_path")
+    .eq("event_id", eventId)
+    .eq("user_id", userId);
+  const paths = (rows ?? [])
+    .map((r) => (r as { storage_path: string }).storage_path)
+    .filter((p) => p && !p.startsWith("http") && !p.startsWith("data:"));
+  if (paths.length > 0) {
+    await supabase.storage.from(BUCKET_EVENT_IMAGES).remove(paths);
+  }
+  await supabase
+    .from("event_images")
+    .delete()
+    .eq("event_id", eventId)
+    .eq("user_id", userId);
+}
+
+/**
+ * Persist achievement images to Storage + `event_images` so public timelines
+ * (and server renders) can load them. Editor keeps `data:` URLs client-side;
+ * `saveUserTimeline` only writes `events` rows — this sync fills the gap.
+ */
+export async function syncEventImagesForTimeline(
+  supabase: SupabaseClient,
+  userId: string,
+  yearBlocks: YearBlock[],
+): Promise<{ error: string | null }> {
+  for (const block of yearBlocks) {
+    for (const a of block.achievements) {
+      const sources = orderedAchievementImageSources(a);
+      await removeExistingEventImages(supabase, userId, a.id);
+
+      let position = 0;
+      for (const src of sources) {
+        let storagePath: string | null = null;
+
+        if (src.startsWith("data:image")) {
+          const parsed = parseDataImageUrl(src);
+          if (!parsed) {
+            return { error: "One image could not be read. Try a smaller JPEG or PNG." };
+          }
+          const ext = extForImageContentType(parsed.contentType);
+          storagePath = `${userId}/${a.id}/${Date.now()}-${position}.${ext}`;
+          const { error: upErr } = await supabase.storage
+            .from(BUCKET_EVENT_IMAGES)
+            .upload(storagePath, parsed.bytes, {
+              contentType: parsed.contentType,
+              upsert: false,
+            });
+          if (upErr) return { error: upErr.message };
+        } else if ((storagePath = storagePathFromSupabaseObjectUrl(src))) {
+          // already in our bucket
+        } else if (isRawEventImageStoragePath(src)) {
+          storagePath = src;
+        } else {
+          // e.g. external http URL in image field — skip DB row
+          continue;
+        }
+
+        const { error: insErr } = await supabase.from("event_images").insert({
+          event_id: a.id,
+          user_id: userId,
+          storage_path: storagePath,
+          position: position++,
+        });
+        if (insErr) return { error: insErr.message };
+      }
+    }
+  }
   return { error: null };
 }
 
