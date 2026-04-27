@@ -86,6 +86,10 @@ function collectAchievements(
   return out;
 }
 
+function countAchievementsInTimeline(blocks: YearBlock[]): number {
+  return blocks.reduce((sum, block) => sum + block.achievements.length, 0);
+}
+
 const MEDIA_FILTER_KEYS = ["photos", "videos", "audios"] as const;
 type MediaFilterKey = (typeof MEDIA_FILTER_KEYS)[number];
 
@@ -583,11 +587,17 @@ export function PortfolioShell({
     const d = loadDraftTimeline();
     startTransition(() => {
       if (d?.length && serverTimeline.length > 0) {
-        // Only restore a draft if the server already has real data for this user.
-        // If the server is empty, any draft in storage is orphaned (dev leftovers
-        // or data from a previous account) — discard it so new users see the
-        // correct empty state.
-        setTimeline(d);
+        const serverCount = countAchievementsInTimeline(serverTimeline);
+        const draftCount = countAchievementsInTimeline(d);
+
+        // If server has more saved events than the local draft, prefer server.
+        // This avoids stale local drafts hiding newly saved timeline data.
+        if (serverCount > draftCount) {
+          clearDraftTimeline();
+          setTimeline(serverTimeline);
+        } else {
+          setTimeline(d);
+        }
       } else if (d?.length && serverTimeline.length === 0) {
         clearDraftTimeline();
       }
@@ -618,7 +628,13 @@ export function PortfolioShell({
   useEffect(() => {
     if (publicView) return;
     if (!draftHydrated) return;
-    if (loadDraftTimeline()) return;
+    const d = loadDraftTimeline();
+    if (d) {
+      const serverCount = countAchievementsInTimeline(serverTimeline);
+      const draftCount = countAchievementsInTimeline(d);
+      if (draftCount >= serverCount) return;
+      clearDraftTimeline();
+    }
     startTransition(() => setTimeline(serverTimeline));
   }, [publicView, serverTimeline, draftHydrated]);
 
