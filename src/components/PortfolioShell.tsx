@@ -35,6 +35,8 @@ import {
   FirstContributionParty,
   type CelebrationUnlockLite,
 } from "@/components/FirstContributionParty";
+import { AppHeader } from "@/components/AppHeader";
+import { UpgradedBanner } from "@/components/UpgradedBanner";
 import { AchievementBadges } from "@/components/AchievementBadges";
 import { EventMusicPlayer } from "@/components/EventMusicPlayer";
 import { TimelineEmptyState } from "@/components/TimelineEmptyState";
@@ -581,6 +583,8 @@ type PortfolioShellProps = {
   userId?: string;
   /** Current subscription plan */
   plan?: "free" | "pro";
+  /** After Stripe success redirect: show a short success banner under the app header. */
+  showUpgradedBanner?: boolean;
 };
 
 export function PortfolioShell({
@@ -589,6 +593,7 @@ export function PortfolioShell({
   publicView = false,
   userId,
   plan = "free",
+  showUpgradedBanner = false,
 }: PortfolioShellProps) {
   const [timeline, setTimeline] = useState(serverTimeline);
   const [draftHydrated, setDraftHydrated] = useState(false);
@@ -1010,8 +1015,21 @@ export function PortfolioShell({
   const photoAlt = intro.photoAlt ?? intro.name;
   const photoIsDataUrl = intro.photoSrc.startsWith("data:");
 
+  const headerDisplayName = intro.name?.trim() || "Portfolio";
+
   return (
     <div className="flex min-h-screen flex-col text-parchment">
+      {!publicView && userId ? (
+        <AppHeader
+          userId={userId}
+          displayName={headerDisplayName}
+          plan={plan}
+          avatarSrc={intro.photoSrc}
+          avatarAlt={intro.photoAlt ?? intro.name}
+        />
+      ) : null}
+      {showUpgradedBanner && !publicView && <UpgradedBanner />}
+
       <section
         aria-label="Introduction"
         className="relative flex min-h-[100dvh] flex-col justify-center border-b border-dusk-700/70"

@@ -5,7 +5,7 @@ import { BackToTimeline } from "@/components/BackToTimeline";
 import { PricingPlansClient } from "@/components/PricingPlansClient";
 import { SiteBrandLink } from "@/components/SiteBrandLink";
 import { displayNameFromUser } from "@/lib/auth/displayName";
-import { getProfile } from "@/lib/db/portfolio";
+import { dbProfileToSiteIntro, getProfile } from "@/lib/db/portfolio";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -21,6 +21,7 @@ export default async function PricingPage() {
   let isLoggedIn = false;
   let userId = "";
   let displayName = "";
+  let headerAvatar: { avatarSrc: string; avatarAlt: string } | null = null;
 
   if (isSupabaseConfigured()) {
     try {
@@ -35,6 +36,11 @@ export default async function PricingPage() {
         const profile = await getProfile(supabase, user.id);
         userPlan = (profile?.plan as "free" | "pro") ?? "free";
         hasStripeCustomer = Boolean(profile?.stripe_customer_id);
+        const siteIntro = await dbProfileToSiteIntro(supabase, profile, displayName);
+        headerAvatar = {
+          avatarSrc: siteIntro.photoSrc,
+          avatarAlt: siteIntro.photoAlt ?? siteIntro.name,
+        };
       }
     } catch {
       // Non-fatal — show pricing page unauthenticated
@@ -44,7 +50,13 @@ export default async function PricingPage() {
   return (
     <div className="flex min-h-screen flex-col text-parchment">
       {isLoggedIn ? (
-        <AppHeader userId={userId} displayName={displayName} plan={userPlan} />
+        <AppHeader
+          userId={userId}
+          displayName={displayName}
+          plan={userPlan}
+          avatarSrc={headerAvatar?.avatarSrc}
+          avatarAlt={headerAvatar?.avatarAlt}
+        />
       ) : (
         <header className="sticky top-0 z-40 border-b border-dusk-700/80 bg-dusk-950/85 px-4 py-3 backdrop-blur-md sm:px-6">
           <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3">

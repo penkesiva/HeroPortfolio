@@ -4,7 +4,7 @@ import { AppHeader } from "@/components/AppHeader";
 import { BackToTimeline } from "@/components/BackToTimeline";
 import { BadgesClient } from "@/components/BadgesClient";
 import { displayNameFromUser } from "@/lib/auth/displayName";
-import { getUserTimeline, getUserPlan } from "@/lib/db/portfolio";
+import { dbProfileToSiteIntro, getProfile, getUserPlan, getUserTimeline } from "@/lib/db/portfolio";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { computeBadges, computeLifetimeRaised } from "@/lib/badges";
@@ -25,17 +25,25 @@ export default async function BadgesPage() {
   if (!user) redirect("/login?next=/timeline/badges");
 
   const name = displayNameFromUser(user);
-  const [timeline, plan] = await Promise.all([
+  const [profile, timeline, plan] = await Promise.all([
+    getProfile(supabase, user.id),
     getUserTimeline(supabase, user.id),
     getUserPlan(supabase, user.id),
   ]);
+  const siteIntro = await dbProfileToSiteIntro(supabase, profile, name);
 
   const badges = computeBadges(timeline);
   const lifetimeRaised = computeLifetimeRaised(timeline);
 
   return (
     <div className="badges-page-bg flex min-h-screen flex-col">
-      <AppHeader userId={user.id} displayName={name} plan={plan} />
+      <AppHeader
+        userId={user.id}
+        displayName={name}
+        plan={plan}
+        avatarSrc={siteIntro.photoSrc}
+        avatarAlt={siteIntro.photoAlt ?? siteIntro.name}
+      />
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 sm:px-6">
         <div className="mb-2">

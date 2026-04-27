@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { AppHeader } from "@/components/AppHeader";
 import { PortfolioShell } from "@/components/PortfolioShell";
-import { UpgradedBanner } from "@/components/UpgradedBanner";
 import { displayNameFromUser } from "@/lib/auth/displayName";
 import { getUserTimeline, getProfile, dbProfileToSiteIntro } from "@/lib/db/portfolio";
 import { getUserPlan } from "@/lib/db/portfolio";
@@ -47,13 +45,12 @@ export default async function TimelinePage({
 
   return (
     <div className="flex min-h-screen flex-col">
-      <AppHeader userId={user.id} displayName={name} plan={plan} />
-      {upgraded === "1" && <UpgradedBanner />}
       <PortfolioShell
         timeline={dbTimeline}
         siteIntro={siteIntro}
         userId={user.id}
         plan={plan}
+        showUpgradedBanner={upgraded === "1"}
       />
     </div>
   );

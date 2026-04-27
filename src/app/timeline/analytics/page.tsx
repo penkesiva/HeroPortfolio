@@ -4,7 +4,12 @@ import { AnalyticsFreeUpgradeCta } from "@/components/AnalyticsFreeUpgradeCta";
 import { AppHeader } from "@/components/AppHeader";
 import { BackToTimeline } from "@/components/BackToTimeline";
 import { displayNameFromUser } from "@/lib/auth/displayName";
-import { getAnalyticsSummary, getUserPlan } from "@/lib/db/portfolio";
+import {
+  dbProfileToSiteIntro,
+  getAnalyticsSummary,
+  getProfile,
+  getUserPlan,
+} from "@/lib/db/portfolio";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -23,14 +28,28 @@ export default async function AnalyticsPage() {
 
   if (!user) redirect("/login?next=/timeline/analytics");
 
-  const plan = await getUserPlan(supabase, user.id);
+  const [plan, profile] = await Promise.all([
+    getUserPlan(supabase, user.id),
+    getProfile(supabase, user.id),
+  ]);
   const name = displayNameFromUser(user);
+  const siteIntro = await dbProfileToSiteIntro(supabase, profile, name);
+  const headerAvatar = {
+    avatarSrc: siteIntro.photoSrc,
+    avatarAlt: siteIntro.photoAlt ?? siteIntro.name,
+  };
 
   // Stats and counts are Pro-only; free users see this page as an upgrade path.
   if (plan === "free") {
     return (
       <div className="flex min-h-screen flex-col">
-        <AppHeader userId={user.id} displayName={name} plan={plan} />
+        <AppHeader
+          userId={user.id}
+          displayName={name}
+          plan={plan}
+          avatarSrc={headerAvatar.avatarSrc}
+          avatarAlt={headerAvatar.avatarAlt}
+        />
         <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-10 text-center sm:px-6">
           <div className="mb-6 text-left">
             <BackToTimeline />
@@ -52,7 +71,13 @@ export default async function AnalyticsPage() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <AppHeader userId={user.id} displayName={name} plan={plan} />
+      <AppHeader
+        userId={user.id}
+        displayName={name}
+        plan={plan}
+        avatarSrc={headerAvatar.avatarSrc}
+        avatarAlt={headerAvatar.avatarAlt}
+      />
 
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-10 sm:px-6">
         <div className="mb-2">

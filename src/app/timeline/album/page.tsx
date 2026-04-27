@@ -4,7 +4,12 @@ import { AppHeader } from "@/components/AppHeader";
 import { AlbumGrid } from "@/components/AlbumGrid";
 import { BackToTimeline } from "@/components/BackToTimeline";
 import { displayNameFromUser } from "@/lib/auth/displayName";
-import { getUserTimeline, getProfile, getUserPlan } from "@/lib/db/portfolio";
+import {
+  dbProfileToSiteIntro,
+  getProfile,
+  getUserPlan,
+  getUserTimeline,
+} from "@/lib/db/portfolio";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -24,11 +29,12 @@ export default async function AlbumPage() {
   if (!user) redirect("/login?next=/timeline/album");
 
   const name = displayNameFromUser(user);
-  const [, timeline, plan] = await Promise.all([
+  const [profile, timeline, plan] = await Promise.all([
     getProfile(supabase, user.id),
     getUserTimeline(supabase, user.id),
     getUserPlan(supabase, user.id),
   ]);
+  const siteIntro = await dbProfileToSiteIntro(supabase, profile, name);
 
   // Collect all images with their event context
   type AlbumPhoto = {
@@ -60,7 +66,13 @@ export default async function AlbumPage() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <AppHeader userId={user.id} displayName={name} plan={plan} />
+      <AppHeader
+        userId={user.id}
+        displayName={name}
+        plan={plan}
+        avatarSrc={siteIntro.photoSrc}
+        avatarAlt={siteIntro.photoAlt ?? siteIntro.name}
+      />
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 sm:px-6">
         <div className="mb-2">

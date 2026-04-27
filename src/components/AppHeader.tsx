@@ -10,13 +10,22 @@ interface AppHeaderProps {
   userId: string;
   displayName: string;
   plan: "free" | "pro";
+  /** Hero profile photo; center-cropped in the account icon when set. */
+  avatarSrc?: string | null;
+  avatarAlt?: string;
 }
 
 /**
  * Shared sticky header used on timeline, album, analytics, and pricing pages.
  * Matches the timeline page header exactly — logo left, nav + avatar right.
  */
-export function AppHeader({ userId, displayName, plan }: AppHeaderProps) {
+export function AppHeader({
+  userId,
+  displayName,
+  plan,
+  avatarSrc = null,
+  avatarAlt = "",
+}: AppHeaderProps) {
   const pathname = usePathname();
   return (
     <header className="sticky top-0 z-40 border-b border-dusk-700/80 bg-dusk-950/85 px-4 py-3 backdrop-blur-md sm:px-6">
@@ -64,6 +73,8 @@ export function AppHeader({ userId, displayName, plan }: AppHeaderProps) {
             userId={userId}
             displayName={displayName}
             plan={plan}
+            avatarSrc={avatarSrc}
+            avatarAlt={avatarAlt}
           />
         </div>
       </div>

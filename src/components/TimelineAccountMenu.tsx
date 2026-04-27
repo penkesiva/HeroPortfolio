@@ -117,13 +117,29 @@ function DownloadIcon({ className }: { className?: string }) {
   );
 }
 
+const DEFAULT_AVATAR = "/avatar-placeholder.svg";
+
 type Props = {
   userId: string;
   displayName: string;
   plan?: "free" | "pro";
+  /** Hero / profile photo — shown as a small center-crop circle, same source as the hero image. */
+  avatarSrc?: string | null;
+  avatarAlt?: string;
 };
 
-export function TimelineAccountMenu({ userId, displayName, plan = "free" }: Props) {
+function shouldShowProfileAvatar(avatarSrc: string | null | undefined): boolean {
+  if (!avatarSrc || !String(avatarSrc).trim()) return false;
+  return String(avatarSrc).trim() !== DEFAULT_AVATAR;
+}
+
+export function TimelineAccountMenu({
+  userId,
+  displayName,
+  plan = "free",
+  avatarSrc = null,
+  avatarAlt,
+}: Props) {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [copyError, setCopyError] = useState(false);
@@ -249,6 +265,8 @@ export function TimelineAccountMenu({ userId, displayName, plan = "free" }: Prop
 
   void theme; // used indirectly via themeSetting
 
+  const usePhotoAvatar = shouldShowProfileAvatar(avatarSrc);
+
   return (
     <>
       <div className="relative" ref={wrapRef}>
@@ -259,10 +277,21 @@ export function TimelineAccountMenu({ userId, displayName, plan = "free" }: Prop
           aria-controls={menuId}
           aria-label="Account menu"
           onClick={() => setOpen((o) => !o)}
-          className="flex size-10 shrink-0 items-center justify-center rounded-full border border-dusk-600 bg-dusk-850/90 text-parchment-muted shadow-sm transition hover:border-umber-400/55 hover:bg-dusk-800 hover:text-umber-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-umber-400/70"
+          className={`flex size-10 shrink-0 items-center justify-center rounded-full border border-dusk-600 bg-dusk-850/90 text-parchment-muted shadow-sm transition hover:border-umber-400/55 hover:bg-dusk-800 hover:text-umber-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-umber-400/70 ${
+            usePhotoAvatar ? "overflow-hidden p-0" : ""
+          }`}
           title="Account menu"
         >
-          <UserAvatarIcon className="size-[22px] text-umber-300/95" />
+          {usePhotoAvatar && avatarSrc ? (
+            // eslint-disable-next-line @next/next/no-img-element -- data URLs and signed URLs; matches hero
+            <img
+              src={avatarSrc}
+              alt={avatarAlt || displayName}
+              className="size-full min-h-0 min-w-0 object-cover object-center"
+            />
+          ) : (
+            <UserAvatarIcon className="size-[22px] text-umber-300/95" />
+          )}
         </button>
 
         {open ? (
@@ -359,7 +388,7 @@ export function TimelineAccountMenu({ userId, displayName, plan = "free" }: Prop
                 <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-parchment-muted/60">
                   Theme
                 </p>
-                <div className="flex w-full min-w-0 gap-0.5 rounded-full border border-dusk-600 bg-dusk-850/90 p-0.5 shadow-sm">
+                <div className="flex h-9 w-full min-w-0 items-stretch gap-0 overflow-hidden rounded-full border border-dusk-600 bg-dusk-850/90 p-0 shadow-sm">
                   {(["auto", "light", "dark"] as ThemeSetting[]).map((opt) => {
                     const isActive = themeMounted && themeSetting === opt;
                     return (
@@ -368,10 +397,10 @@ export function TimelineAccountMenu({ userId, displayName, plan = "free" }: Prop
                         type="button"
                         role="menuitem"
                         onClick={() => setThemeOption(opt)}
-                        className={`flex min-w-0 flex-1 items-center justify-center gap-0.5 rounded-full px-1 py-1.5 text-[11px] font-medium leading-tight transition sm:gap-1.5 sm:px-2 sm:text-xs ${
+                        className={`box-border flex h-full min-h-0 w-full min-w-0 flex-1 items-center justify-center gap-0.5 rounded-full px-1 text-[11px] font-medium leading-tight transition sm:gap-1.5 sm:px-2 sm:text-xs ${
                           isActive
-                            ? "bg-dusk-700 text-parchment shadow-sm ring-1 ring-dusk-500/30"
-                            : "text-parchment-muted hover:bg-dusk-800/80 hover:text-parchment"
+                            ? "z-[1] border border-dusk-500/80 bg-dusk-700 text-parchment shadow-sm"
+                            : "border border-transparent text-parchment-muted hover:bg-dusk-800/80 hover:text-parchment"
                         }`}
                       >
                         {opt === "auto" && (
