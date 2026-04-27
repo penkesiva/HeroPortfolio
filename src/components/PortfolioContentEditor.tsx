@@ -73,10 +73,31 @@ function addYearBlock(timeline: YearBlock[], year: number): YearBlock[] {
 }
 
 
-function newEmptyAchievement(): Achievement {
+/** Titles like "New Event 1"; legacy default was "New event" (unnumbered). */
+const NEW_EVENT_NUMBERED = /^New Event (\d+)$/i;
+const LEGACY_UNNUMBERED_NEW = /^(New event|New Event)$/i;
+
+function nextNewEventTitle(achievements: Achievement[]): string {
+  let maxN = 0;
+  let hasLegacy = false;
+  for (const a of achievements) {
+    const t = a.title.trim();
+    const m = t.match(NEW_EVENT_NUMBERED);
+    if (m) {
+      const n = parseInt(m[1], 10);
+      if (!Number.isNaN(n) && n > maxN) maxN = n;
+    } else if (LEGACY_UNNUMBERED_NEW.test(t)) {
+      hasLegacy = true;
+    }
+  }
+  if (hasLegacy) maxN = Math.max(maxN, 1);
+  return `New Event ${maxN + 1}`;
+}
+
+function newEmptyAchievement(title: string): Achievement {
   return {
     id: crypto.randomUUID(),
-    title: "New event",
+    title,
     description: "",
     body: "",
     categories: [],
@@ -301,7 +322,7 @@ export function PortfolioContentEditor({
   };
 
   const addEvent = () => {
-    const na = newEmptyAchievement();
+    const na = newEmptyAchievement(nextNewEventTitle(achievements));
     fixReplaceYear([...achievements, na]);
     setSelectedId(na.id);
   };
