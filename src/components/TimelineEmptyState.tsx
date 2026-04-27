@@ -46,9 +46,10 @@ export function TimelineEmptyState({
   const [currentGrade, setCurrentGrade] = useState(9);
   const [selectedYear, setSelectedYear] = useState(CURRENT_YEAR);
   const [launched, setLaunched] = useState(false);
-  // Keep latest callbacks in a ref so the animation complete handler always
-  // sees the current selectedYear without needing to re-register the listener.
-  const afterLaunchRef = useRef<() => void>(() => {});
+  /** Single-flight guard: animation complete + scheduled fallback share this. */
+  const launchDoneRef = useRef(false);
+  /** Latest proceed fn (set on each "Let's go" click) for the rocket complete event. */
+  const proceedRef = useRef<(() => void) | null>(null);
 
   // Show enough years to reach back to ~grade 5 (elementary), capped at 12 years
   const yearOptions = useMemo(() => {
@@ -64,28 +65,34 @@ export function TimelineEmptyState({
   };
 
   const handleStart = () => {
-    // Snapshot what to do after the rocket finishes
-    afterLaunchRef.current = () => {
-      onAddYear(selectedYear);
-      onOpenEditor();
+    launchDoneRef.current = false;
+    const year = selectedYear;
+    const proceed = () => {
+      if (launchDoneRef.current) return;
+      launchDoneRef.current = true;
+      try {
+        onAddYear(year);
+        onOpenEditor();
+      } catch {
+        setLaunched(false);
+        launchDoneRef.current = false;
+      }
     };
+    proceedRef.current = proceed;
     setLaunched(true);
+    // Always schedule fallback from the click path. If dotLottieRefCallback never
+    // runs (asset blocked, load failure), we still advance — previously users stuck forever.
+    window.setTimeout(() => {
+      proceedRef.current?.();
+    }, 4000);
   };
 
   const onRocketLoad = (instance: DotLottie | null) => {
     if (!instance) return;
-    let fired = false;
-    const proceed = () => {
-      if (fired) return;
-      fired = true;
-      afterLaunchRef.current();
-    };
-    // Register listener BEFORE play so we never miss the complete event
+    const proceed = proceedRef.current;
+    if (!proceed) return;
     instance.addEventListener("complete", proceed);
     instance.play();
-    // Fallback: if the animation never fires complete (e.g. load failure),
-    // proceed after 4 seconds so the user is never permanently stuck.
-    setTimeout(proceed, 4000);
   };
 
   return (
