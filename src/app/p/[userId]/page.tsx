@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PublicPortfolioClient } from "@/components/PublicPortfolioClient";
+import { SiteBrandLink } from "@/components/SiteBrandLink";
 import { isPublicProfileUserId } from "@/lib/auth/profileId";
 import {
   getProfile,
@@ -72,12 +73,7 @@ export default async function PublicProfilePage({ params }: Props) {
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-40 border-b border-dusk-700/80 bg-dusk-950/85 px-4 py-3 backdrop-blur-md sm:px-6">
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3">
-          <Link
-            href="/"
-            className="text-sm font-semibold tracking-tight text-parchment transition hover:text-umber-200"
-          >
-            HeroPortfolio.com
-          </Link>
+          <SiteBrandLink href="/" ariaLabel="HeroPortfolio home" />
           <div className="flex flex-wrap items-center justify-end gap-2 text-xs text-parchment-muted sm:gap-3">
             <Link
               href="/pricing"
