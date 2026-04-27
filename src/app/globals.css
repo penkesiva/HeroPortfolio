@@ -135,6 +135,57 @@ html[data-theme="light"] ::selection {
   50%       { opacity: 0.6; }
 }
 
+/* ── Event card: floating music notes while native <audio> plays ─────────── */
+:root {
+  --event-music-note-shadow: rgba(0, 0, 0, 0.35);
+}
+html[data-theme="light"] {
+  --event-music-note-shadow: rgba(255, 255, 255, 0.55);
+}
+
+@keyframes event-music-note-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(var(--note-rot, -6deg)) scale(0.88);
+    opacity: 0.22;
+  }
+  50% {
+    transform: translate3d(var(--note-dx, 6px), var(--note-dy, -14px), 0)
+      rotate(var(--note-rot2, 10deg)) scale(1.06);
+    opacity: 0.78;
+  }
+}
+
+.event-music-float-wrap {
+  position: relative;
+  overflow: hidden;
+}
+
+.event-music-float-wrap .event-music-notes {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+.event-music-float-wrap.event-music-float-wrap--playing .event-music-notes {
+  opacity: 1;
+}
+
+.event-music-float-wrap .event-music-note {
+  position: absolute;
+  filter: drop-shadow(0 1px 1px var(--event-music-note-shadow));
+  animation: event-music-note-drift 3.1s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.event-music-float-wrap audio {
+  position: relative;
+  z-index: 1;
+}
+
 /* ── Badge ring animations ────────────────────────────────── */
 @keyframes ring-fill {
   from { stroke-dashoffset: 276; transform: rotate(-90deg); }
