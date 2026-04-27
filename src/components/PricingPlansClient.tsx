@@ -26,12 +26,17 @@ export function PricingPlansClient({
   isLoggedIn = false,
 }: Props) {
   const [yearly, setYearly] = useState(false);
-  const [loading, setLoading] = useState(false);
+  /** Which Stripe checkout is in flight (Pro vs Family each have their own label). */
+  const [checkoutTier, setCheckoutTier] = useState<null | "pro" | "family">(null);
+  const [portalLoading, setPortalLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
+  const checkoutBusy = checkoutTier !== null;
+  const anyBillingBusy = checkoutBusy || portalLoading;
+
   const handleUpgrade = async (tier: "pro" | "family" = "pro") => {
-    setLoading(true);
+    setCheckoutTier(tier);
     setError(null);
     try {
       const res = await fetch("/api/stripe/create-checkout-session", {
@@ -48,12 +53,12 @@ export function PricingPlansClient({
     } catch {
       setError("Network error. Please try again.");
     } finally {
-      setLoading(false);
+      setCheckoutTier(null);
     }
   };
 
   const handleManage = async () => {
-    setLoading(true);
+    setPortalLoading(true);
     setError(null);
     try {
       const res = await fetch("/api/stripe/portal", {
@@ -69,7 +74,7 @@ export function PricingPlansClient({
     } catch {
       setError("Network error. Please try again.");
     } finally {
-      setLoading(false);
+      setPortalLoading(false);
     }
   };
 
@@ -222,10 +227,10 @@ export function PricingPlansClient({
                 <button
                   type="button"
                   onClick={() => void handleManage()}
-                  disabled={loading}
+                  disabled={anyBillingBusy}
                   className="w-full rounded-full border border-dusk-600 bg-dusk-850 py-2 text-sm font-medium text-parchment-muted transition hover:text-parchment disabled:opacity-50"
                 >
-                  {loading ? "Opening…" : "Manage subscription"}
+                  {portalLoading ? "Opening…" : "Manage subscription"}
                 </button>
               )}
             </div>
@@ -234,10 +239,10 @@ export function PricingPlansClient({
               <button
                 type="button"
                 onClick={() => void handleUpgrade("pro")}
-                disabled={loading}
+                disabled={anyBillingBusy}
                 className="mt-6 w-full rounded-full border border-umber-500/50 bg-umber-500/25 py-2.5 text-sm font-semibold text-umber-100 transition hover:bg-umber-500/35 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {loading
+                {checkoutTier === "pro"
                   ? "Redirecting…"
                   : `Upgrade to Pro  ${yearly ? `$${PRO_YEARLY}/yr` : `$${PRO_MONTHLY}/mo`}`}
               </button>
@@ -293,10 +298,12 @@ export function PricingPlansClient({
           <button
             type="button"
             onClick={() => void handleUpgrade("family")}
-            disabled={loading}
+            disabled={anyBillingBusy}
             className="family-btn mt-6 w-full rounded-full border py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {loading ? "Redirecting…" : `Get started with Family  ${yearly ? `$${FAM_YEARLY}/yr` : `$${FAM_MONTHLY}/mo`}`}
+            {checkoutTier === "family"
+              ? "Redirecting…"
+              : `Get started with Family  ${yearly ? `$${FAM_YEARLY}/yr` : `$${FAM_MONTHLY}/mo`}`}
           </button>
           <p className="mt-2 text-center text-[11px] text-parchment-muted">
             Stripe checkout · Cancel any time · Dashboard launching Q3 2026
