@@ -94,9 +94,18 @@ export async function getUserTimeline(
     imageRows = (imgs ?? []) as DbEventImage[];
   }
 
-  // Batch-sign all storage paths from the private event-images bucket
-  const allPaths = imageRows.map((img) => img.storage_path);
-  const signedMap = await signEventImagePaths(supabase, allPaths);
+  // Batch-sign all storage paths from the private event-images bucket (images + uploaded audio)
+  const imagePaths = imageRows.map((img) => img.storage_path);
+  const musicPaths = eventRows
+    .map((e) => e.music_url)
+    .filter(
+      (u): u is string =>
+        Boolean(u && !u.startsWith("http") && !u.startsWith("data:")),
+    );
+  const signedMap = await signEventImagePaths(supabase, [
+    ...imagePaths,
+    ...musicPaths,
+  ]);
 
   // Replace storage_path with its signed URL for rendering
   const signedImageRows = imageRows.map((img) => ({
@@ -104,8 +113,21 @@ export async function getUserTimeline(
     storage_path: signedMap.get(img.storage_path) ?? img.storage_path,
   }));
 
+  const eventsWithSignedMusic = eventRows.map((ev) => {
+    const raw = ev.music_url;
+    if (!raw || raw.startsWith("http") || raw.startsWith("data:")) {
+      return ev;
+    }
+    return {
+      ...ev,
+      music_url: signedMap.get(raw) ?? raw,
+    };
+  });
+
   return yearBlockRows.map((block) => {
-    const blockEvents = eventRows.filter((e) => e.year_block_id === block.id);
+    const blockEvents = eventsWithSignedMusic.filter(
+      (e) => e.year_block_id === block.id,
+    );
     return {
       year: block.year,
       tagline: block.tagline,

@@ -10,6 +10,7 @@ export const PLAN_LIMITS = {
     csvExport: false,
     analytics: false,
     albumUnlimited: false,
+    eventAudioUpload: false,
   },
   pro: {
     eventsPerYear: Infinity,
@@ -20,6 +21,7 @@ export const PLAN_LIMITS = {
     csvExport: true,
     analytics: true,
     albumUnlimited: true,
+    eventAudioUpload: true,
   },
 } as const;
 

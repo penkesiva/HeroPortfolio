@@ -87,3 +87,13 @@ export function musicUrlToEmbedSrc(url: string): string | null {
     return null;
   }
 }
+
+/** True when the URL should play in a native <audio> element (uploaded file or signed storage URL). */
+export function isDirectPlayableAudioUrl(url: string): boolean {
+  const t = url.trim();
+  if (!t) return false;
+  if (musicUrlToEmbedSrc(t)) return false;
+  const lower = t.toLowerCase();
+  if (lower.includes(".supabase.co/storage/")) return true;
+  return /\.(mp3|wav|m4a|aac|ogg|opus|flac|webm)(\?|#|$)/i.test(lower);
+}

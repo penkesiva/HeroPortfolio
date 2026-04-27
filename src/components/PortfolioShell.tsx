@@ -30,6 +30,7 @@ import { saveTimelineAction, saveProfileAction, deleteYearBlockAction } from "@/
 import { AchievementBadges } from "@/components/AchievementBadges";
 import { TimelineEmptyState } from "@/components/TimelineEmptyState";
 import {
+  isDirectPlayableAudioUrl,
   musicUrlToEmbedSrc,
   videoUrlToEmbedSrc,
   withVideoAutoplay,
@@ -409,6 +410,22 @@ function AchievementCard({
                 loading="lazy"
                 referrerPolicy="strict-origin-when-cross-origin"
               />
+            </div>
+          ) : isDirectPlayableAudioUrl(achievement.musicUrl) ? (
+            <div className="rounded-xl border border-dusk-700/80 bg-dusk-850/80 p-3">
+              <audio
+                controls
+                preload="metadata"
+                src={achievement.musicUrl}
+                className="w-full"
+              >
+                <a
+                  href={achievement.musicUrl}
+                  className="text-sm text-umber-300 underline"
+                >
+                  Download audio
+                </a>
+              </audio>
             </div>
           ) : (
             <Link

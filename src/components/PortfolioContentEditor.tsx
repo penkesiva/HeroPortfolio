@@ -15,6 +15,16 @@ import type { Achievement, SiteIntro, YearBlock } from "@/data/timeline";
 import type { DraftProfileFields } from "@/lib/draftProfileIntro";
 import { FREE_AI_LABEL } from "@/lib/constants";
 import { UpgradeModal } from "@/components/UpgradeModal";
+import { createBrowserSupabaseClient } from "@/lib/supabase/client";
+import {
+  BUCKET_EVENT_IMAGES,
+  MAX_EVENT_AUDIO_BYTES,
+  deleteEventImage,
+  uploadEventAudio,
+} from "@/lib/storage";
+import { isDirectPlayableAudioUrl, musicUrlToEmbedSrc } from "@/lib/embedUrls";
+import { canAccess } from "@/lib/planGate";
+import type { Plan } from "@/types/database";
 
 type PortfolioContentEditorProps = {
   open: boolean;
@@ -31,7 +41,7 @@ type PortfolioContentEditorProps = {
   onAddSingleYear?: (year: number) => void;
   /** Delete an empty year block from state and DB. */
   onDeleteYear?: (year: number) => Promise<void>;
-  plan?: "free" | "pro";
+  plan?: Plan;
   /** When set, the editor jumps to this year's section on open. */
   openOnYear?: number | null;
 };
@@ -221,6 +231,38 @@ export function PortfolioContentEditor({
 
   const selected = achievements.find((a) => a.id === selectedId) ?? null;
 
+  const audioFileInputRef = useRef<HTMLInputElement>(null);
+  const [musicPreviewSrc, setMusicPreviewSrc] = useState<string | null>(null);
+  const [audioUploading, setAudioUploading] = useState(false);
+
+  useEffect(() => {
+    const m = selected?.musicUrl?.trim();
+    if (!m) {
+      setMusicPreviewSrc(null);
+      return;
+    }
+    if (m.startsWith("http") || m.startsWith("data:")) {
+      setMusicPreviewSrc(isDirectPlayableAudioUrl(m) ? m : null);
+      return;
+    }
+    const supabase = createBrowserSupabaseClient();
+    if (!supabase) {
+      setMusicPreviewSrc(null);
+      return;
+    }
+    let cancelled = false;
+    void supabase.storage
+      .from(BUCKET_EVENT_IMAGES)
+      .createSignedUrl(m, 60 * 60)
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        setMusicPreviewSrc(error ? null : data?.signedUrl ?? null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selected?.musicUrl]);
+
   const apply = useCallback(
     (next: YearBlock[]) => {
       onApplyTimeline(next);
@@ -346,6 +388,59 @@ export function PortfolioContentEditor({
     }
   };
 
+  const onPickAudio = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!selected || !canAccess(plan, "eventAudioUpload")) return;
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    const supabase = createBrowserSupabaseClient();
+    if (!supabase) {
+      window.alert("Supabase is not configured.");
+      return;
+    }
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+
+    setAudioUploading(true);
+    try {
+      const old = selected.musicUrl?.trim();
+      const oldPath =
+        old &&
+        !old.startsWith("http") &&
+        !old.startsWith("data:")
+          ? old
+          : null;
+
+      const { path, error } = await uploadEventAudio(
+        supabase,
+        user.id,
+        selected.id,
+        file,
+      );
+      if (error || !path) {
+        window.alert(error ?? "Could not upload audio.");
+        return;
+      }
+      if (oldPath) void deleteEventImage(supabase, oldPath);
+      patchAchievement(selected.id, { musicUrl: path });
+    } finally {
+      setAudioUploading(false);
+    }
+  };
+
+  const removeUploadedAudio = async () => {
+    if (!selected?.musicUrl) return;
+    const m = selected.musicUrl.trim();
+    if (m.startsWith("http") || m.startsWith("data:")) {
+      patchAchievement(selected.id, { musicUrl: undefined });
+      return;
+    }
+    const supabase = createBrowserSupabaseClient();
+    if (supabase) void deleteEventImage(supabase, m);
+    patchAchievement(selected.id, { musicUrl: undefined });
+  };
 
   const onPickHeroPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
@@ -911,44 +1006,108 @@ export function PortfolioContentEditor({
                 </div>
               </Field>
 
-              <Field label="Music link (Spotify / SoundCloud)">
-                <div className="flex gap-2">
-                  <input
-                    value={selected.musicUrl ?? ""}
-                    onChange={(e) =>
-                      patchAchievement(selected.id, {
-                        musicUrl: e.target.value || undefined,
-                      })
-                    }
-                    placeholder="https://open.spotify.com/track/…"
-                    className="min-w-0 flex-1 rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-2 text-sm text-parchment placeholder:text-parchment-muted/40"
-                  />
-                  <button
-                    type="button"
-                    title={plan === "pro" ? "Upload audio file (Pro)" : "Upgrade to Pro to upload audio files"}
-                    onClick={() => {
-                      if (plan !== "pro") {
-                        window.alert("Audio file uploads are a Pro feature. Upgrade to Pro to upload your own music or recordings.");
-                        return;
+              <Field label="Music (Spotify / SoundCloud / Pro upload)">
+                <input
+                  ref={audioFileInputRef}
+                  type="file"
+                  accept=".mp3,.wav,.m4a,.aac,.ogg,.opus,.flac,.webm,audio/*"
+                  className="hidden"
+                  onChange={onPickAudio}
+                />
+                <div className="flex flex-col gap-2">
+                  <div className="flex gap-2">
+                    <input
+                      value={
+                        selected.musicUrl &&
+                        (selected.musicUrl.startsWith("http") ||
+                          selected.musicUrl.startsWith("data:"))
+                          ? selected.musicUrl
+                          : ""
                       }
-                      window.alert("Audio upload coming soon. For now, paste a Spotify or SoundCloud link.");
-                    }}
-                    className={`flex shrink-0 items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition ${
-                      plan === "pro"
-                        ? "border-dusk-600 bg-dusk-850 text-parchment-muted hover:border-dusk-500 hover:text-parchment"
-                        : "border-umber-500/35 bg-umber-500/10 text-umber-300 hover:bg-umber-500/18"
-                    }`}
-                  >
-                    <svg viewBox="0 0 16 16" fill="currentColor" className="size-3.5 shrink-0" aria-hidden>
-                      <path d="M8 1a.75.75 0 0 1 .75.75v5.5h5.5a.75.75 0 0 1 0 1.5h-5.5v5.5a.75.75 0 0 1-1.5 0v-5.5H1.75a.75.75 0 0 1 0-1.5h5.5V1.75A.75.75 0 0 1 8 1Z" />
-                    </svg>
-                    {plan === "pro" ? "Upload" : (
-                      <span className="flex items-center gap-1">
-                        Upload
-                        <span className="rounded-full bg-umber-500/25 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-umber-200">Pro</span>
-                      </span>
-                    )}
-                  </button>
+                      onChange={(e) => {
+                        const v = e.target.value.trim();
+                        const prev = selected.musicUrl?.trim();
+                        if (
+                          prev &&
+                          !prev.startsWith("http") &&
+                          !prev.startsWith("data:")
+                        ) {
+                          const supabase = createBrowserSupabaseClient();
+                          if (supabase) void deleteEventImage(supabase, prev);
+                        }
+                        patchAchievement(selected.id, {
+                          musicUrl: v || undefined,
+                        });
+                      }}
+                      placeholder="https://open.spotify.com/track/… or SoundCloud"
+                      className="min-w-0 flex-1 rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-2 text-sm text-parchment placeholder:text-parchment-muted/40"
+                    />
+                    <button
+                      type="button"
+                      title={
+                        canAccess(plan, "eventAudioUpload")
+                          ? "Upload MP3, WAV, M4A, AAC, OGG, FLAC, or WebM"
+                          : "Upgrade to Pro to upload audio files"
+                      }
+                      disabled={audioUploading}
+                      onClick={() => {
+                        if (!canAccess(plan, "eventAudioUpload")) {
+                          window.alert(
+                            "Audio file uploads are a Pro feature. Upgrade to Pro to upload your own recordings.",
+                          );
+                          return;
+                        }
+                        audioFileInputRef.current?.click();
+                      }}
+                      className={`flex shrink-0 items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition disabled:opacity-50 ${
+                        canAccess(plan, "eventAudioUpload")
+                          ? "border-dusk-600 bg-dusk-850 text-parchment-muted hover:border-dusk-500 hover:text-parchment"
+                          : "border-umber-500/35 bg-umber-500/10 text-umber-300 hover:bg-umber-500/18"
+                      }`}
+                    >
+                      <svg viewBox="0 0 16 16" fill="currentColor" className="size-3.5 shrink-0" aria-hidden>
+                        <path d="M8 1a.75.75 0 0 1 .75.75v5.5h5.5a.75.75 0 0 1 0 1.5h-5.5v5.5a.75.75 0 0 1-1.5 0v-5.5H1.75a.75.75 0 0 1 0-1.5h5.5V1.75A.75.75 0 0 1 8 1Z" />
+                      </svg>
+                      {audioUploading
+                        ? "…"
+                        : canAccess(plan, "eventAudioUpload")
+                          ? "Upload"
+                          : (
+                              <span className="flex items-center gap-1">
+                                Upload
+                                <span className="rounded-full bg-umber-500/25 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-umber-200">
+                                  Pro
+                                </span>
+                              </span>
+                            )}
+                    </button>
+                  </div>
+                  {selected.musicUrl &&
+                  !selected.musicUrl.startsWith("http") &&
+                  !selected.musicUrl.startsWith("data:") ? (
+                    <div className="flex flex-wrap items-center gap-2 rounded-lg border border-dusk-700/80 bg-dusk-850/60 px-3 py-2 text-xs text-parchment-muted">
+                      <span>Uploaded audio file (saved with your portfolio)</span>
+                      <button
+                        type="button"
+                        onClick={() => void removeUploadedAudio()}
+                        className="text-red-400/90 underline decoration-red-500/40"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ) : null}
+                  {musicPreviewSrc ? (
+                    <audio
+                      controls
+                      preload="metadata"
+                      src={musicPreviewSrc}
+                      className="w-full rounded-lg border border-dusk-700/80 bg-dusk-900/40 p-2"
+                    />
+                  ) : null}
+                  <p className="text-[11px] text-parchment-muted/50">
+                    Pro: upload WAV, MP3, and more (max{" "}
+                    {Math.round(MAX_EVENT_AUDIO_BYTES / (1024 * 1024))} MB). Links stay free for everyone.
+                  </p>
                 </div>
               </Field>
 

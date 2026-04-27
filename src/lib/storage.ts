@@ -3,7 +3,7 @@
  * Both buckets are PRIVATE — images are served via signed URLs.
  *
  * Buckets must be created in the Supabase dashboard (public: false):
- *   - event-images
+ *   - event-images (also stores Pro-only event audio uploads)
  *   - profile-photos
  *
  * Storage RLS policies are defined in supabase/migrations/001_initial_schema.sql
@@ -45,6 +45,86 @@ export async function uploadEventImage(
   }
 
   return { url: data.signedUrl, path, error: null };
+}
+
+/** Max size for a single uploaded event audio file (Pro). */
+export const MAX_EVENT_AUDIO_BYTES = 30 * 1024 * 1024;
+
+const ALLOWED_AUDIO_MIME = new Set([
+  "audio/mpeg",
+  "audio/mp3",
+  "audio/wav",
+  "audio/wave",
+  "audio/x-wav",
+  "audio/mp4",
+  "audio/x-m4a",
+  "audio/m4a",
+  "audio/aac",
+  "audio/ogg",
+  "audio/opus",
+  "audio/webm",
+  "audio/flac",
+  "audio/x-flac",
+  "application/ogg",
+]);
+
+const ALLOWED_AUDIO_EXT = new Set([
+  "mp3",
+  "wav",
+  "m4a",
+  "aac",
+  "ogg",
+  "opus",
+  "flac",
+  "webm",
+]);
+
+export function isAllowedAudioFile(file: File): boolean {
+  const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+  if (ext && ALLOWED_AUDIO_EXT.has(ext)) return true;
+  if (file.type && ALLOWED_AUDIO_MIME.has(file.type)) return true;
+  return false;
+}
+
+/**
+ * Upload an audio file for an event (same private bucket as images).
+ * Returns the storage path to store in `events.music_url` (sign on read via getUserTimeline).
+ */
+export async function uploadEventAudio(
+  supabase: SupabaseClient,
+  userId: string,
+  eventId: string,
+  file: File,
+): Promise<{ path: string | null; error: string | null }> {
+  if (file.size > MAX_EVENT_AUDIO_BYTES) {
+    return {
+      path: null,
+      error: `Audio must be under ${Math.round(MAX_EVENT_AUDIO_BYTES / (1024 * 1024))} MB.`,
+    };
+  }
+  if (!isAllowedAudioFile(file)) {
+    return {
+      path: null,
+      error: "Unsupported format. Use MP3, WAV, M4A, AAC, OGG, Opus, FLAC, or WebM.",
+    };
+  }
+  const rawExt = file.name.split(".").pop()?.toLowerCase() ?? "mp3";
+  const safeExt = /^[a-z0-9]+$/i.test(rawExt) ? rawExt : "mp3";
+  const path = `${userId}/${eventId}/audio-${Date.now()}.${safeExt}`;
+  const contentType =
+    file.type ||
+    (safeExt === "mp3"
+      ? "audio/mpeg"
+      : safeExt === "wav"
+        ? "audio/wav"
+        : `audio/${safeExt}`);
+
+  const { error: uploadError } = await supabase.storage
+    .from(BUCKET_EVENT_IMAGES)
+    .upload(path, file, { upsert: false, contentType });
+
+  if (uploadError) return { path: null, error: uploadError.message };
+  return { path, error: null };
 }
 
 export async function uploadProfilePhoto(
