@@ -23,19 +23,18 @@ export default async function AnalyticsPage() {
 
   if (!user) redirect("/login?next=/timeline/analytics");
 
-  const [plan, analytics] = await Promise.all([
-    getUserPlan(supabase, user.id),
-    getAnalyticsSummary(supabase, user.id),
-  ]);
-
+  const plan = await getUserPlan(supabase, user.id);
   const name = displayNameFromUser(user);
 
-  // Pro gate
+  // Stats and counts are Pro-only; free users see this page as an upgrade path.
   if (plan === "free") {
     return (
       <div className="flex min-h-screen flex-col">
         <AppHeader userId={user.id} displayName={name} plan={plan} />
-        <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-20 text-center sm:px-6">
+        <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-10 text-center sm:px-6">
+          <div className="mb-6 text-left">
+            <BackToTimeline />
+          </div>
           <div className="mb-6 text-5xl opacity-50">📊</div>
           <h1 className="text-2xl font-semibold text-parchment">Analytics is a Pro feature</h1>
           <p className="mt-3 text-parchment-muted">
@@ -51,6 +50,8 @@ export default async function AnalyticsPage() {
       </div>
     );
   }
+
+  const analytics = await getAnalyticsSummary(supabase, user.id);
 
   const publicUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/p/${user.id}`;
 

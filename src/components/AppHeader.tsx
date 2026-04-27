@@ -69,14 +69,17 @@ export function AppHeader({ userId, displayName, plan }: AppHeaderProps) {
             Badges
           </Link>
 
-          {plan === "pro" && (
-            <Link
-              href="/timeline/analytics"
-              className="hidden text-sm font-medium text-parchment-muted transition hover:text-parchment sm:inline"
-            >
-              Analytics
-            </Link>
-          )}
+          <Link
+            href="/timeline/analytics"
+            className="hidden items-center gap-1.5 text-sm font-medium text-parchment-muted transition hover:text-parchment sm:inline-flex"
+          >
+            <span>Analytics</span>
+            {plan === "free" && (
+              <span className="rounded-full bg-umber-500/25 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-umber-200">
+                Pro
+              </span>
+            )}
+          </Link>
 
           <Link
             href="/pricing"
