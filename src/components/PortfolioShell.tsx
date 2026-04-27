@@ -28,13 +28,9 @@ import {
 } from "@/lib/draftTimeline";
 import { saveTimelineAction, saveProfileAction, deleteYearBlockAction } from "@/app/actions/portfolio";
 import { AchievementBadges } from "@/components/AchievementBadges";
+import { EventMusicPlayer } from "@/components/EventMusicPlayer";
 import { TimelineEmptyState } from "@/components/TimelineEmptyState";
-import {
-  isDirectPlayableAudioUrl,
-  musicUrlToEmbedSrc,
-  videoUrlToEmbedSrc,
-  withVideoAutoplay,
-} from "@/lib/embedUrls";
+import { videoUrlToEmbedSrc, withVideoAutoplay } from "@/lib/embedUrls";
 import type { Achievement, SiteIntro, YearBlock } from "@/data/timeline";
 import type { DraftProfileFields } from "@/lib/draftProfileIntro";
 
@@ -318,10 +314,6 @@ function AchievementCard({
         : [];
   const hasImages = gallery.length > 0;
   const prose = achievement.body ?? achievement.description;
-  const musicEmbed = achievement.musicUrl
-    ? musicUrlToEmbedSrc(achievement.musicUrl)
-    : null;
-
   return (
     <motion.article
       initial={{ opacity: 0, y: 14 }}
@@ -400,43 +392,7 @@ function AchievementCard({
           </p>
         ) : null}
         {achievement.musicUrl ? (
-          musicEmbed ? (
-            <div className="overflow-hidden rounded-xl border border-dusk-700/80 bg-black/30">
-              <iframe
-                title={`${achievement.title}: music`}
-                src={musicEmbed}
-                className="h-[180px] w-full sm:h-[232px]"
-                allow="autoplay; clipboard-write; encrypted-media; fullscreen"
-                loading="lazy"
-                referrerPolicy="strict-origin-when-cross-origin"
-              />
-            </div>
-          ) : isDirectPlayableAudioUrl(achievement.musicUrl) ? (
-            <div className="rounded-xl border border-dusk-700/80 bg-dusk-850/80 p-3">
-              <audio
-                controls
-                preload="metadata"
-                src={achievement.musicUrl}
-                className="w-full"
-              >
-                <a
-                  href={achievement.musicUrl}
-                  className="text-sm text-umber-300 underline"
-                >
-                  Download audio
-                </a>
-              </audio>
-            </div>
-          ) : (
-            <Link
-              href={achievement.musicUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex w-fit items-center gap-2 rounded-full border border-dusk-600 bg-dusk-850 px-4 py-2 text-sm font-medium text-parchment-muted transition hover:border-dusk-600 hover:text-parchment"
-            >
-              Open music link
-            </Link>
-          )
+          <EventMusicPlayer title={achievement.title} musicUrl={achievement.musicUrl} />
         ) : null}
         {achievement.categories && achievement.categories.length > 0 ? (
           <div className="flex flex-wrap gap-1.5 pt-1">
