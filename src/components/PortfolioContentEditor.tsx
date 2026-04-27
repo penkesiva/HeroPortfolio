@@ -4,6 +4,7 @@ import {
   startTransition,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -189,12 +190,18 @@ export function PortfolioContentEditor({
     setConfirmDeleteYear(false);
   }, [years.length, yearIndex]);
 
-  // Auto-revert to "hero" if all year blocks are gone to prevent a null crash
-  useEffect(() => {
+  // If all year blocks are removed, snap back to Hero before paint so we never render year UI without a block
+  useLayoutEffect(() => {
     if (section === "year" && years.length === 0) {
-      startTransition(() => setSection("hero"));
+      setSection("hero");
     }
   }, [section, years.length]);
+
+  const showHeroForm = section === "hero" || years.length === 0;
+  const clampedYearIndex =
+    years.length > 0
+      ? Math.min(Math.max(0, yearIndex), years.length - 1)
+      : 0;
 
   // When openOnYear is specified, jump to that year's section as the editor opens
   useEffect(() => {
@@ -208,8 +215,7 @@ export function PortfolioContentEditor({
     }
   }, [open, openOnYear, years]);
 
-  const block = years[yearIndex] ?? years[0];
-  const year = block?.year ?? new Date().getFullYear();
+  const block = years.length > 0 ? years[clampedYearIndex] : undefined;
   const heroFields: DraftProfileFields = {
     name: intro.name,
     heroLead: intro.heroLead ?? "",
@@ -271,18 +277,21 @@ export function PortfolioContentEditor({
   );
 
   const setTagline = (tagline: string) => {
-    apply(replaceYear(timeline, year, { tagline }));
+    if (!block) return;
+    apply(replaceYear(timeline, block.year, { tagline }));
   };
 
   const patchAchievement = (id: string, patch: Partial<Achievement>) => {
+    if (!block) return;
     const nextAch = achievements.map((a) =>
       a.id === id ? { ...a, ...patch } : a,
     );
-    apply(replaceYear(timeline, year, { achievements: nextAch }));
+    apply(replaceYear(timeline, block.year, { achievements: nextAch }));
   };
 
   const fixReplaceYear = (ach: Achievement[]) => {
-    apply(replaceYear(timeline, year, { achievements: ach }));
+    if (!block) return;
+    apply(replaceYear(timeline, block.year, { achievements: ach }));
   };
 
   const addEvent = () => {
@@ -554,7 +563,7 @@ export function PortfolioContentEditor({
             Section
           </label>
           <select
-            value={section === "hero" ? "hero" : String(yearIndex)}
+            value={showHeroForm ? "hero" : String(clampedYearIndex)}
             onChange={(e) => {
               const v = e.target.value;
               if (v === "hero") setSection("hero");
@@ -590,7 +599,11 @@ export function PortfolioContentEditor({
                 </button>
 
                 {/* Remove year — right side, empty years only */}
-                {section === "year" && achievements.length === 0 && onDeleteYear && (
+                {!showHeroForm &&
+                  section === "year" &&
+                  block &&
+                  achievements.length === 0 &&
+                  onDeleteYear && (
                   <button
                     type="button"
                     onClick={() => setConfirmDeleteYear(true)}
@@ -599,7 +612,7 @@ export function PortfolioContentEditor({
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="size-3">
                       <path fillRule="evenodd" d="M5 3.25V4H2.75a.75.75 0 0 0 0 1.5h.3l.815 8.15A1.5 1.5 0 0 0 5.357 15h5.285a1.5 1.5 0 0 0 1.493-1.35l.815-8.15h.3a.75.75 0 0 0 0-1.5H11v-.75A2.25 2.25 0 0 0 8.75 1h-1.5A2.25 2.25 0 0 0 5 3.25Zm2.25-.75a.75.75 0 0 0-.75.75V4h3v-.75a.75.75 0 0 0-.75-.75h-1.5ZM6.05 6a.75.75 0 0 1 .787.713l.275 5.5a.75.75 0 0 1-1.498.075l-.275-5.5A.75.75 0 0 1 6.05 6Zm3.9 0a.75.75 0 0 1 .712.787l-.275 5.5a.75.75 0 0 1-1.498-.075l.275-5.5A.75.75 0 0 1 9.95 6Z" clipRule="evenodd" />
                     </svg>
-                    Remove {block?.year}
+                    Remove {block.year}
                   </button>
                 )}
               </div>
@@ -646,7 +659,7 @@ export function PortfolioContentEditor({
             )}
           </div>
 
-          {section === "hero" ? (
+          {showHeroForm ? (
             <div className="mt-4 space-y-3 border-t border-dusk-700/60 pt-4">
               <Field label="Display name">
                 <input
@@ -717,7 +730,7 @@ export function PortfolioContentEditor({
           ) : (
             <>
               {/* Inline confirm for Remove year — above Year tagline */}
-              {confirmDeleteYear && onDeleteYear && (
+              {confirmDeleteYear && onDeleteYear && block && (
                 <div className="mt-2 flex items-center justify-between rounded-xl border border-dusk-600 bg-dusk-850 px-3 py-2.5">
                   <p className="text-xs text-parchment-muted">Remove {block.year} permanently?</p>
                   <div className="flex items-center gap-2">
@@ -746,7 +759,7 @@ export function PortfolioContentEditor({
                 Year tagline
               </label>
               <textarea
-                value={block.tagline}
+                value={block?.tagline ?? ""}
                 onChange={(e) => setTagline(e.target.value)}
                 rows={2}
                 className="mt-1 w-full resize-y rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-2 text-sm text-parchment placeholder:text-parchment-muted/50"
