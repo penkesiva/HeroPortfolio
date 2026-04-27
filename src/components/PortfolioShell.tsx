@@ -318,6 +318,7 @@ function AchievementCard({
         : [];
   const hasImages = gallery.length > 0;
   const prose = achievement.body ?? achievement.description;
+  const musicNotesPortalRef = useRef<HTMLDivElement>(null);
   return (
     <motion.article
       initial={{ opacity: 0, y: 14 }}
@@ -328,10 +329,10 @@ function AchievementCard({
         delay,
         ease: easeOutExpo,
       }}
-      className="overflow-hidden rounded-2xl border border-dusk-700/90 bg-dusk-900/60 shadow-[0_20px_50px_rgba(0,0,0,0.35)] backdrop-blur-sm"
+      className="relative overflow-hidden rounded-2xl border border-dusk-700/90 bg-dusk-900/60 shadow-[0_20px_50px_rgba(0,0,0,0.35)] backdrop-blur-sm"
     >
       {hasImages ? (
-        <div className="border-b border-dusk-700/80 bg-dusk-800">
+        <div className="relative z-0 border-b border-dusk-700/80 bg-dusk-800">
           <div
             className={
               gallery.length > 1
@@ -376,7 +377,18 @@ function AchievementCard({
           </div>
         </div>
       ) : null}
-      <div className="space-y-2 p-5 sm:space-y-3 sm:p-6">
+      {achievement.musicUrl ? (
+        <div
+          ref={musicNotesPortalRef}
+          className="pointer-events-none absolute inset-0 z-[1]"
+          aria-hidden
+        />
+      ) : null}
+      <div
+        className={`space-y-2 p-5 sm:space-y-3 sm:p-6 ${
+          achievement.musicUrl ? "relative z-[2]" : ""
+        }`}
+      >
         {!hasImages ? (
           <span className="inline-block rounded-full bg-dusk-850/90 px-2.5 py-1 text-xs font-medium text-parchment-muted ring-1 ring-dusk-600/80">
             {year}
@@ -396,7 +408,11 @@ function AchievementCard({
           </p>
         ) : null}
         {achievement.musicUrl ? (
-          <EventMusicPlayer title={achievement.title} musicUrl={achievement.musicUrl} />
+          <EventMusicPlayer
+            title={achievement.title}
+            musicUrl={achievement.musicUrl}
+            floatingNotesPortalRef={musicNotesPortalRef}
+          />
         ) : null}
         {achievement.categories && achievement.categories.length > 0 ? (
           <div className="flex flex-wrap gap-1.5 pt-1">
