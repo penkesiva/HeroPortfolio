@@ -39,12 +39,6 @@ function gradeLabel(year: number, currentGrade: number): string {
   return "";
 }
 
-/** US-style school year that contains most of `calendarYear` (Aug–Jun), e.g. 2026 → Aug ’25–Jun ’26 */
-function schoolYearSpanForCalendarYear(calendarYear: number): string {
-  const yy = (y: number) => String(y).slice(-2).padStart(2, "0");
-  return `Aug ’${yy(calendarYear - 1)}–Jun ’${yy(calendarYear)}`;
-}
-
 export function TimelineEmptyState({
   onAddYear,
   onOpenEditor,
@@ -157,21 +151,17 @@ export function TimelineEmptyState({
           >
             {yearOptions.map((y) => {
               const label = gradeLabel(y, currentGrade);
-              const schoolSpan = y === CURRENT_YEAR ? ` · ${schoolYearSpanForCalendarYear(y)}` : "";
               return (
                 <option key={y} value={y}>
                   {y}
                   {label ? `  ·  ${label}` : ""}
-                  {schoolSpan}
                 </option>
               );
             })}
           </select>
           <p className="mt-2 text-[11px] leading-snug text-parchment-muted/70">
             The grade you chose above is tied to the <span className="text-parchment-muted">{CURRENT_YEAR}</span> section.
-            U.S. school years often start the previous fall; for example, a typical schedule for this row is{" "}
-            <span className="whitespace-nowrap text-parchment-muted">{schoolYearSpanForCalendarYear(CURRENT_YEAR)}</span>{" "}
-            (one grade level—your activities for this school year still live under calendar year {CURRENT_YEAR}).
+            A school year that started last fall still belongs in that calendar year&apos;s row.
           </p>
         </div>
 
