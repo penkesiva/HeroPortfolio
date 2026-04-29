@@ -889,7 +889,7 @@ export function PortfolioContentEditor({
                   >
                     {linkLoading ? (
                       <DotLottieReact
-                        src="/animations/loading.lottie"
+                        src="/animations/sandy_loading.lottie"
                         autoplay
                         loop
                         className="h-4 w-4"

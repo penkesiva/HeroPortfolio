@@ -1454,8 +1454,8 @@ export function PortfolioShell({
                     <DotLottieReact
                       src={
                         block.year % 2 === 0
-                          ? "/animations/cat_playing_idle.lottie"
-                          : "/animations/loader_cat_idle.lottie"
+                          ? "/animations/trophy.lottie"
+                          : "/animations/hero_rocket.lottie"
                       }
                       autoplay
                       loop
