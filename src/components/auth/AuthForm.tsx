@@ -7,7 +7,7 @@ import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
 type Mode = "login" | "signup";
-type Method = null | "google" | "email" | "magic";
+type Method = null | "google" | "email";
 
 function authCallbackWithNext(origin: string, nextPath: string) {
   return `${origin}/auth/callback?next=${encodeURIComponent(nextPath)}`;
@@ -33,26 +33,16 @@ function MailIcon() {
   );
 }
 
-function LinkIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="currentColor" className="size-5 text-parchment-muted" aria-hidden>
-      <path fillRule="evenodd" d="M12.586 4.586a2 2 0 1 1 2.828 2.828l-3 3a2 2 0 0 1-2.828 0 1 1 0 0 0-1.414 1.414 4 4 0 0 0 5.656 0l3-3a4 4 0 0 0-5.656-5.656l-1.5 1.5a1 1 0 1 0 1.414 1.414l1.5-1.5Zm-5 5a2 2 0 0 1 2.828 0 1 1 0 1 0 1.414-1.414 4 4 0 0 0-5.656 0l-3 3a4 4 0 1 0 5.656 5.656l1.5-1.5a1 1 0 1 0-1.414-1.414l-1.5 1.5a2 2 0 1 1-2.828-2.828l3-3Z" clipRule="evenodd" />
-    </svg>
-  );
-}
-
 export function AuthForm({ mode, redirectAfterAuth }: { mode: Mode; redirectAfterAuth: string }) {
-  const [method, setMethod] = useState<Method>(null);
+  const [method, setMethod] = useState<Method>(mode === "signup" ? "email" : null);
 
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [pwStatus, setPwStatus] = useState<"idle" | "loading" | "error">("idle");
   const [pwMessage, setPwMessage] = useState<string | null>(null);
-
-  const [magicEmail, setMagicEmail] = useState("");
-  const [magicStatus, setMagicStatus] = useState<"idle" | "loading" | "sent" | "error">("idle");
-  const [magicMessage, setMagicMessage] = useState<string | null>(null);
 
   const [oauthLoading, setOauthLoading] = useState(false);
   const configured = isSupabaseConfigured();
@@ -66,7 +56,6 @@ export function AuthForm({ mode, redirectAfterAuth }: { mode: Mode; redirectAfte
   function selectMethod(m: Method) {
     setMethod((prev) => (prev === m ? null : m));
     setPwMessage(null);
-    setMagicMessage(null);
   }
 
   async function onGoogle() {
@@ -111,6 +100,10 @@ export function AuthForm({ mode, redirectAfterAuth }: { mode: Mode; redirectAfte
   async function onPasswordSubmit(e: React.FormEvent) {
     e.preventDefault();
     setPwMessage(null);
+    if (mode === "signup") {
+      if (!firstName.trim()) { setPwStatus("error"); setPwMessage("Enter your first name."); return; }
+      if (!lastName.trim()) { setPwStatus("error"); setPwMessage("Enter your last name."); return; }
+    }
     if (!email.trim()) { setPwStatus("error"); setPwMessage("Enter your email address."); return; }
     if (password.length < 6) { setPwStatus("error"); setPwMessage("Password must be at least 6 characters."); return; }
     if (mode === "signup" && password !== confirm) { setPwStatus("error"); setPwMessage("Passwords do not match."); return; }
@@ -126,7 +119,19 @@ export function AuthForm({ mode, redirectAfterAuth }: { mode: Mode; redirectAfte
       return;
     }
 
-    const { data, error } = await supabase.auth.signUp({ email: email.trim(), password, options: { emailRedirectTo: callbackUrl() } });
+    const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
+    const { data, error } = await supabase.auth.signUp({
+      email: email.trim(),
+      password,
+      options: {
+        emailRedirectTo: callbackUrl(),
+        data: {
+          full_name: fullName,
+          first_name: firstName.trim(),
+          last_name: lastName.trim(),
+        },
+      },
+    });
     if (error) { setPwStatus("error"); setPwMessage(error.message); return; }
     if (data.session) { window.location.href = redirectAfterAuth; return; }
 
@@ -145,22 +150,6 @@ export function AuthForm({ mode, redirectAfterAuth }: { mode: Mode; redirectAfte
     );
   }
 
-  async function onMagicSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setMagicMessage(null);
-    if (!magicEmail.trim()) { setMagicStatus("error"); setMagicMessage("Enter your email address."); return; }
-    const supabase = createBrowserSupabaseClient();
-    if (!supabase) { setMagicStatus("error"); setMagicMessage("Supabase is not configured."); return; }
-    setMagicStatus("loading");
-    const { error } = await supabase.auth.signInWithOtp({
-      email: magicEmail.trim(),
-      options: { emailRedirectTo: callbackUrl(), shouldCreateUser: mode === "signup" },
-    });
-    if (error) { setMagicStatus("error"); setMagicMessage(error.message); return; }
-    setMagicStatus("sent");
-    setMagicMessage("Check your inbox for a magic link.");
-  }
-
   if (!configured) {
     return (
       <div className="rounded-xl border border-dusk-700/80 bg-dusk-900/50 p-6 text-sm text-parchment-muted">
@@ -173,11 +162,17 @@ export function AuthForm({ mode, redirectAfterAuth }: { mode: Mode; redirectAfte
   const btnBase = "flex w-full items-center gap-3 rounded-xl border px-4 py-3.5 text-sm font-medium transition text-left";
   const btnIdle = "border-dusk-600 bg-dusk-850 text-parchment hover:border-dusk-500 hover:bg-dusk-800";
   const btnActive = "border-umber-500/50 bg-umber-500/12 text-parchment";
+  const btnIdleSignup =
+    "border-sky-700/60 bg-dusk-850 text-parchment hover:border-sky-600/55 hover:bg-dusk-800";
+  const btnActiveSignup = "border-sky-500/55 bg-sky-500/18 text-parchment";
+  const isSignup = mode === "signup";
+  const googleCta = mode === "login" ? "Sign in with Google" : "Sign up with Google";
+  const emailCta = "Email and password";
 
   return (
     <div>
       <h1 className="text-3xl font-semibold tracking-tight text-parchment">
-        {mode === "login" ? "Log in" : "Create account"}
+        {mode === "login" ? "Log in" : "Create your account"}
       </h1>
       <p className="mt-1.5 text-sm text-parchment-muted/70">
         {mode === "login" ? "Welcome back." : "Free forever. No credit card needed."}
@@ -202,10 +197,14 @@ export function AuthForm({ mode, redirectAfterAuth }: { mode: Mode; redirectAfte
           type="button"
           onClick={() => { selectMethod("google"); void onGoogle(); }}
           disabled={oauthLoading}
-          className={`${btnBase} ${method === "google" ? btnActive : btnIdle} disabled:opacity-60`}
+          className={`${btnBase} ${
+            method === "google"
+              ? isSignup ? btnActiveSignup : btnActive
+              : isSignup ? btnIdleSignup : btnIdle
+          } disabled:opacity-60`}
         >
           <GoogleIcon className="size-5 shrink-0" />
-          <span className="flex-1">{oauthLoading ? "Redirecting…" : "Continue with Google"}</span>
+          <span className="flex-1">{oauthLoading ? "Redirecting…" : googleCta}</span>
         </button>
 
         {/* Email + password */}
@@ -213,34 +212,73 @@ export function AuthForm({ mode, redirectAfterAuth }: { mode: Mode; redirectAfte
           <button
             type="button"
             onClick={() => selectMethod("email")}
-            className={`${btnBase} ${method === "email" ? btnActive : btnIdle}`}
+            className={`${btnBase} ${
+              method === "email"
+                ? isSignup ? btnActiveSignup : btnActive
+                : isSignup ? btnIdleSignup : btnIdle
+            }`}
           >
             <MailIcon />
-            <span className="flex-1">Continue with email</span>
+            <span className="flex-1">{emailCta}</span>
             <svg viewBox="0 0 16 16" fill="currentColor" className={`size-3.5 shrink-0 text-parchment-muted/50 transition-transform duration-200 ${method === "email" ? "rotate-180" : ""}`} aria-hidden>
               <path fillRule="evenodd" d="M4.22 6.22a.75.75 0 0 1 1.06 0L8 8.94l2.72-2.72a.75.75 0 1 1 1.06 1.06l-3.25 3.25a.75.75 0 0 1-1.06 0L4.22 7.28a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" />
             </svg>
           </button>
           {method === "email" && (
-            <form onSubmit={onPasswordSubmit} className="mt-2 space-y-3 rounded-xl border border-dusk-700/60 bg-dusk-900/50 p-4">
+            <form
+              onSubmit={onPasswordSubmit}
+              className="mt-2 space-y-3 rounded-xl border border-dusk-700/60 bg-dusk-900/50 p-4"
+            >
+              {isSignup && (
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    type="text"
+                    autoComplete="given-name"
+                    required
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    disabled={pwStatus === "loading"}
+                    placeholder="First name"
+                    className="w-full rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-2.5 text-sm text-parchment outline-none placeholder:text-parchment-muted/40 focus:border-sky-600 focus:ring-2 focus:ring-sky-600/35 disabled:opacity-60"
+                  />
+                  <input
+                    type="text"
+                    autoComplete="family-name"
+                    required
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    disabled={pwStatus === "loading"}
+                    placeholder="Last name"
+                    className="w-full rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-2.5 text-sm text-parchment outline-none placeholder:text-parchment-muted/40 focus:border-sky-600 focus:ring-2 focus:ring-sky-600/35 disabled:opacity-60"
+                  />
+                </div>
+              )}
               <input
                 type="email" autoComplete="email" required value={email}
                 onChange={(e) => setEmail(e.target.value)} disabled={pwStatus === "loading"}
                 placeholder="you@example.com"
-                className="w-full rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-2.5 text-sm text-parchment outline-none placeholder:text-parchment-muted/40 focus:border-umber-400/50 focus:ring-2 focus:ring-umber-400/20 disabled:opacity-60"
+                className={`w-full rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-2.5 text-sm text-parchment outline-none placeholder:text-parchment-muted/40 disabled:opacity-60 ${
+                  isSignup
+                    ? "focus:border-sky-600 focus:ring-2 focus:ring-sky-600/35"
+                    : "focus:border-umber-400/50 focus:ring-2 focus:ring-umber-400/20"
+                }`}
               />
               <input
                 type="password" autoComplete={mode === "login" ? "current-password" : "new-password"}
                 required value={password} onChange={(e) => setPassword(e.target.value)}
                 disabled={pwStatus === "loading"} placeholder="Password (min 6 chars)" minLength={6}
-                className="w-full rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-2.5 text-sm text-parchment outline-none placeholder:text-parchment-muted/40 focus:border-umber-400/50 focus:ring-2 focus:ring-umber-400/20 disabled:opacity-60"
+                className={`w-full rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-2.5 text-sm text-parchment outline-none placeholder:text-parchment-muted/40 disabled:opacity-60 ${
+                  isSignup
+                    ? "focus:border-sky-600 focus:ring-2 focus:ring-sky-600/35"
+                    : "focus:border-umber-400/50 focus:ring-2 focus:ring-umber-400/20"
+                }`}
               />
               {mode === "signup" && (
                 <input
                   type="password" autoComplete="new-password" required value={confirm}
                   onChange={(e) => setConfirm(e.target.value)} disabled={pwStatus === "loading"}
                   placeholder="Confirm password" minLength={6}
-                  className="w-full rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-2.5 text-sm text-parchment outline-none placeholder:text-parchment-muted/40 focus:border-umber-400/50 focus:ring-2 focus:ring-umber-400/20 disabled:opacity-60"
+                  className="w-full rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-2.5 text-sm text-parchment outline-none placeholder:text-parchment-muted/40 focus:border-sky-600 focus:ring-2 focus:ring-sky-600/35 disabled:opacity-60"
                 />
               )}
               {mode === "login" && (
@@ -252,7 +290,11 @@ export function AuthForm({ mode, redirectAfterAuth }: { mode: Mode; redirectAfte
               )}
               <button
                 type="submit" disabled={pwStatus === "loading"}
-                className="w-full rounded-lg border border-umber-500/50 bg-umber-500/20 py-2.5 text-sm font-semibold text-umber-100 transition hover:bg-umber-500/30 disabled:opacity-60"
+                className={
+                  isSignup
+                    ? "w-full rounded-lg border border-rose-500/50 bg-rose-600/28 py-2.5 text-sm font-semibold text-rose-50 shadow-[0_0_24px_-8px_rgba(244,63,94,0.35)] transition hover:bg-rose-600/40 disabled:opacity-60"
+                    : "w-full rounded-lg border border-umber-500/50 bg-umber-500/20 py-2.5 text-sm font-semibold text-umber-100 transition hover:bg-umber-500/30 disabled:opacity-60"
+                }
               >
                 {pwStatus === "loading" ? (
                   <span className="flex items-center justify-center gap-2">
@@ -264,49 +306,6 @@ export function AuthForm({ mode, redirectAfterAuth }: { mode: Mode; redirectAfte
             </form>
           )}
         </div>
-
-        {/* Magic link */}
-        <div>
-          <button
-            type="button"
-            onClick={() => selectMethod("magic")}
-            className={`${btnBase} ${method === "magic" ? btnActive : btnIdle}`}
-          >
-            <LinkIcon />
-            <span className="flex-1">Email me a link</span>
-            <svg viewBox="0 0 16 16" fill="currentColor" className={`size-3.5 shrink-0 text-parchment-muted/50 transition-transform duration-200 ${method === "magic" ? "rotate-180" : ""}`} aria-hidden>
-              <path fillRule="evenodd" d="M4.22 6.22a.75.75 0 0 1 1.06 0L8 8.94l2.72-2.72a.75.75 0 1 1 1.06 1.06l-3.25 3.25a.75.75 0 0 1-1.06 0L4.22 7.28a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" />
-            </svg>
-          </button>
-          {method === "magic" && (
-            <form onSubmit={onMagicSubmit} className="mt-2 space-y-3 rounded-xl border border-dusk-700/60 bg-dusk-900/50 p-4">
-              <p className="text-xs text-parchment-muted/70">No password needed. We send a one-time link to your inbox.</p>
-              <input
-                type="email" autoComplete="email" required value={magicEmail}
-                onChange={(e) => setMagicEmail(e.target.value)}
-                disabled={magicStatus === "loading" || magicStatus === "sent"}
-                placeholder="you@example.com"
-                className="w-full rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-2.5 text-sm text-parchment outline-none placeholder:text-parchment-muted/40 focus:border-umber-400/50 focus:ring-2 focus:ring-umber-400/20 disabled:opacity-60"
-              />
-              <button
-                type="submit" disabled={magicStatus === "loading" || magicStatus === "sent"}
-                className="w-full rounded-lg border border-dusk-500 bg-dusk-850 py-2.5 text-sm font-medium text-parchment transition hover:bg-dusk-800 disabled:opacity-60"
-              >
-                {magicStatus === "loading" ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <DotLottieReact src="/animations/sandy_loading.lottie" autoplay loop className="h-5 w-5" />
-                    Sending
-                  </span>
-                ) : magicStatus === "sent" ? "Link sent ✓" : "Send link"}
-              </button>
-              {magicMessage && (
-                <p className={`text-center text-xs ${magicStatus === "error" ? "text-red-300/90" : "text-parchment-muted"}`} role={magicStatus === "error" ? "alert" : "status"}>
-                  {magicMessage}
-                </p>
-              )}
-            </form>
-          )}
-        </div>
       </div>
 
       {/* Footer links */}
@@ -314,7 +313,7 @@ export function AuthForm({ mode, redirectAfterAuth }: { mode: Mode; redirectAfte
         {mode === "login" ? (
           <>New here?{" "}<Link href={`/signup${nextQuery}`} className="font-medium text-umber-300 underline decoration-umber-500/40 underline-offset-2 hover:text-umber-200">Create an account</Link></>
         ) : (
-          <>Already have an account?{" "}<Link href={`/login${nextQuery}`} className="font-medium text-umber-300 underline decoration-umber-500/40 underline-offset-2 hover:text-umber-200">Log in</Link></>
+          <>Already have an account?{" "}<Link href={`/login${nextQuery}`} className="signup-footer-link font-medium underline underline-offset-2">Log in</Link></>
         )}
       </p>
     </div>

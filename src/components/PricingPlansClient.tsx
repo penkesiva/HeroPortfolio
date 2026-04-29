@@ -35,7 +35,13 @@ export function PricingPlansClient({
   const checkoutBusy = checkoutTier !== null;
   const anyBillingBusy = checkoutBusy || portalLoading;
 
+  const signupForPricingHref = `/signup?next=${encodeURIComponent("/pricing")}`;
+
   const handleUpgrade = async (tier: "pro" | "family" = "pro") => {
+    if (!isLoggedIn) {
+      router.push(signupForPricingHref);
+      return;
+    }
     setCheckoutTier(tier);
     setError(null);
     try {
@@ -58,6 +64,10 @@ export function PricingPlansClient({
   };
 
   const handleManage = async () => {
+    if (!isLoggedIn) {
+      router.push(signupForPricingHref);
+      return;
+    }
     setPortalLoading(true);
     setError(null);
     try {
@@ -158,7 +168,7 @@ export function PricingPlansClient({
             </p>
           ) : userPlan === "free" ? (
             <Link
-              href="/signup"
+              href={signupForPricingHref}
               className="mt-6 block w-full rounded-full border border-dusk-600 bg-dusk-850 py-2.5 text-center text-sm font-semibold text-parchment transition hover:border-umber-500/45 hover:bg-dusk-800"
             >
               Start free

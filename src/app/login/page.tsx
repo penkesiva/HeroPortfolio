@@ -7,7 +7,7 @@ import { sanitizeAuthRedirect } from "@/lib/auth/redirect";
 export const metadata: Metadata = {
   title: "Log in · HeroPortfolio.com",
   description:
-    "Log in to HeroPortfolio.com with Google, email and password, or a magic link.",
+    "Log in to HeroPortfolio.com with Google or email and password.",
 };
 
 type Props = { searchParams: Promise<{ next?: string }> };
@@ -17,12 +17,12 @@ export default async function LoginPage({ searchParams }: Props) {
   const next = sanitizeAuthRedirect(q.next, "/timeline");
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen flex-col bg-dusk-950 lg:flex-row">
       <AuthLeftPanel mode="login" />
 
-      {/* Right — form panel */}
-      <main className="flex flex-1 flex-col items-center justify-center px-8 py-12 lg:px-16">
-        <div className="w-full max-w-[400px]">
+      {/* Form panel — warm umber frame, panel on the left on large screens */}
+      <main className="flex flex-1 flex-col items-center justify-center border-dusk-800/80 px-8 py-12 lg:border-l lg:bg-dusk-950 lg:px-16">
+        <div className="w-full max-w-[400px] rounded-2xl border border-dusk-700/50 bg-dusk-900/30 p-6 shadow-lg shadow-black/20 sm:p-8">
           <AuthForm mode="login" redirectAfterAuth={next} />
 
           <p className="mt-8 text-xs text-parchment-muted/50">

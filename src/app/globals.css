@@ -108,6 +108,39 @@ html[data-theme="light"] ::selection {
   color: #fff;
 }
 
+/* Auth: sky accents readable on cream (light) and on dusk (dark) */
+html[data-theme="light"] .signup-footer-link {
+  color: #0369a1;
+  text-decoration-color: rgb(3 105 161 / 0.55);
+}
+html[data-theme="light"] .signup-footer-link:hover {
+  color: #0c4a6e;
+  text-decoration-color: rgb(12 74 110 / 0.65);
+}
+html[data-theme="dark"] .signup-footer-link,
+html:not([data-theme="light"]) .signup-footer-link {
+  color: #38bdf8;
+  text-decoration-color: rgb(56 189 248 / 0.55);
+}
+html[data-theme="dark"] .signup-footer-link:hover,
+html:not([data-theme="light"]) .signup-footer-link:hover {
+  color: #7dd3fc;
+}
+
+html[data-theme="light"] .auth-badge-sky {
+  background: rgb(2 132 199 / 0.2);
+  color: #0c4a6e;
+}
+html[data-theme="dark"] .auth-badge-sky,
+html:not([data-theme="light"]) .auth-badge-sky {
+  background: rgb(56 189 248 / 0.22);
+  color: #e0f2fe;
+}
+
+html[data-theme="light"] .signup-form-card {
+  border-color: rgb(2 132 199 / 0.5);
+}
+
 /* ── Auth page animations ─────────────────────────────────── */
 @keyframes cape-wave {
   0%   { transform: skewX(-4deg) rotate(-2deg) scaleX(0.97); }

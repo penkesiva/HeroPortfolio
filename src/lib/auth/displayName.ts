@@ -7,8 +7,16 @@ export function displayNameFromUser(user: User): string {
     const v = m[k];
     return typeof v === "string" && v.trim() ? v.trim() : "";
   };
+  const fromParts = () => {
+    const a = pick("first_name");
+    const b = pick("last_name");
+    const combined = `${a} ${b}`.trim();
+    return combined || "";
+  };
+
   return (
     pick("full_name") ||
+    fromParts() ||
     pick("name") ||
     pick("display_name") ||
     pick("preferred_username") ||

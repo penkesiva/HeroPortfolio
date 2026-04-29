@@ -19,7 +19,7 @@ export default async function AuthCodeErrorPage({ searchParams }: Props) {
         </h1>
         <p className="mt-2 text-sm text-parchment-muted">
           The sign-in link may have expired or already been used. Try logging in
-          again with Google, email and password, or a new magic link.
+          again with Google or email and password.
         </p>
         {reason ? (
           <p className="mt-3 rounded-lg bg-dusk-850 px-3 py-2 font-mono text-[11px] text-red-300/90">
