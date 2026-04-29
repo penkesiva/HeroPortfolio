@@ -1,5 +1,8 @@
 export type Plan = "free" | "pro";
 
+/** Set once at /onboarding/who; null means the user still needs to choose. */
+export type AccountKind = "self" | "guardian";
+
 export type DbProfile = {
   id: string;
   display_name: string | null;
@@ -12,6 +15,7 @@ export type DbProfile = {
   /** BadgeCategory keys that have already triggered the unlock celebration. */
   celebrated_badge_categories?: string[];
   plan: Plan;
+  account_kind: AccountKind | null;
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
   ai_uses_this_month: number;

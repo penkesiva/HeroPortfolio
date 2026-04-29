@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { AnalyticsFreeUpgradeCta } from "@/components/AnalyticsFreeUpgradeCta";
 import { AppHeader } from "@/components/AppHeader";
 import { BackToTimeline } from "@/components/BackToTimeline";
+import { mustHaveAccountKindOrRedirect } from "@/lib/auth/accountSetup";
 import { displayNameFromUser } from "@/lib/auth/displayName";
 import {
   dbProfileToSiteIntro,
@@ -27,6 +28,8 @@ export default async function AnalyticsPage() {
   } = await supabase.auth.getUser();
 
   if (!user) redirect("/login?next=/timeline/analytics");
+
+  await mustHaveAccountKindOrRedirect(supabase, user.id, "/timeline/analytics");
 
   const [plan, profile] = await Promise.all([
     getUserPlan(supabase, user.id),

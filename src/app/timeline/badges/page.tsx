@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { AppHeader } from "@/components/AppHeader";
 import { BackToTimeline } from "@/components/BackToTimeline";
 import { BadgesClient } from "@/components/BadgesClient";
+import { mustHaveAccountKindOrRedirect } from "@/lib/auth/accountSetup";
 import { displayNameFromUser } from "@/lib/auth/displayName";
 import { dbProfileToSiteIntro, getProfile, getUserPlan, getUserTimeline } from "@/lib/db/portfolio";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
@@ -23,6 +24,8 @@ export default async function BadgesPage() {
   } = await supabase.auth.getUser();
 
   if (!user) redirect("/login?next=/timeline/badges");
+
+  await mustHaveAccountKindOrRedirect(supabase, user.id, "/timeline/badges");
 
   const name = displayNameFromUser(user);
   const [profile, timeline, plan] = await Promise.all([

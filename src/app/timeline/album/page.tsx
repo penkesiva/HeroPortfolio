@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { AppHeader } from "@/components/AppHeader";
 import { AlbumGrid } from "@/components/AlbumGrid";
 import { BackToTimeline } from "@/components/BackToTimeline";
+import { mustHaveAccountKindOrRedirect } from "@/lib/auth/accountSetup";
 import { displayNameFromUser } from "@/lib/auth/displayName";
 import {
   dbProfileToSiteIntro,
@@ -27,6 +28,8 @@ export default async function AlbumPage() {
   } = await supabase.auth.getUser();
 
   if (!user) redirect("/login?next=/timeline/album");
+
+  await mustHaveAccountKindOrRedirect(supabase, user.id, "/timeline/album");
 
   const name = displayNameFromUser(user);
   const [profile, timeline, plan] = await Promise.all([

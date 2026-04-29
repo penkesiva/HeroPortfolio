@@ -4,6 +4,7 @@ import { AppHeader } from "@/components/AppHeader";
 import { BackToTimeline } from "@/components/BackToTimeline";
 import { PricingPlansClient } from "@/components/PricingPlansClient";
 import { SiteBrandLink } from "@/components/SiteBrandLink";
+import { mustHaveAccountKindOrRedirect } from "@/lib/auth/accountSetup";
 import { displayNameFromUser } from "@/lib/auth/displayName";
 import { dbProfileToSiteIntro, getProfile } from "@/lib/db/portfolio";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
@@ -30,6 +31,7 @@ export default async function PricingPage() {
         data: { user },
       } = await supabase.auth.getUser();
       if (user) {
+        await mustHaveAccountKindOrRedirect(supabase, user.id, "/pricing");
         isLoggedIn = true;
         userId = user.id;
         displayName = displayNameFromUser(user);

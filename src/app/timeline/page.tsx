@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { PortfolioShell } from "@/components/PortfolioShell";
+import { mustHaveAccountKindOrRedirect } from "@/lib/auth/accountSetup";
 import { displayNameFromUser } from "@/lib/auth/displayName";
 import { getUserTimeline, getProfile, dbProfileToSiteIntro } from "@/lib/db/portfolio";
 import { getUserPlan } from "@/lib/db/portfolio";
@@ -31,6 +32,8 @@ export default async function TimelinePage({
   if (!user) {
     redirect("/login?next=/timeline");
   }
+
+  await mustHaveAccountKindOrRedirect(supabase, user.id, "/timeline");
 
   const name = displayNameFromUser(user);
 

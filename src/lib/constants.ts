@@ -20,6 +20,19 @@ export const PRICES = {
   },
 } as const;
 
+// ── Onboarding: who is the portfolio for? (once per account) ─────────────────
+export const ONBOARDING_ACCOUNT_KIND_EYEBROW = "Important — please choose";
+export const ONBOARDING_ACCOUNT_KIND_HEADLINE =
+  "Setting this up for yourself or for your child(ren)?";
+export const ONBOARDING_ACCOUNT_KIND_SUBHEAD =
+  "This is a one-time step so we can show the right experience. You can still change details in your portfolio later.";
+export const ONBOARDING_ACCOUNT_KIND_SELF_TITLE = "For myself";
+export const ONBOARDING_ACCOUNT_KIND_SELF_BODY =
+  "One login, one portfolio — your achievements and timeline.";
+export const ONBOARDING_ACCOUNT_KIND_GUARDIAN_TITLE = "For my child (or children)";
+export const ONBOARDING_ACCOUNT_KIND_GUARDIAN_BODY =
+  "One login to manage your kids’ portfolios (child profiles and parent dashboard are rolling out next).";
+
 // ── Contact / mailto ──────────────────────────────────────────────────────────
 export const SUPPORT_EMAIL = "hello@heroportfolio.com";
 export const FAMILY_PLAN_MAILTO = `mailto:${SUPPORT_EMAIL}?subject=Family%20Plan%20Interest&body=Hi%2C%20I%27d%20like%20to%20set%20up%20a%20Family%20plan%20for%20my%20household.`;
