@@ -10,19 +10,21 @@ Year-by-year achievement portfolios for students—timeline, events, photos, bad
 
 Use this table as the **working comparison** for positioning; tune copy and numbers from a business angle anytime. **Authoritative limits in code** live in `src/lib/planGate.ts` (caps + feature flags) and `src/lib/constants.ts` (AI free tier + prices)—update those first, then align this README.
 
+Rows are grouped: **timeline & storage** → **exports** (together) → **AI & analytics** → **rich media** → **every plan**.
+
 | Feature | Basic (Free) | Pro |
-|--------|----------------|-----|
+|---------|--------------|-----|
 | **Events per school year** | Up to **12** | **Unlimited** |
 | **Photos per event** | Up to **3** | **Unlimited** |
 | **Total portfolio storage** | **500 MB** | **10 GB** |
 | **Cross-year album / masonry gallery** | Standard per-event gallery (within photo limits) | **Full album** across all years |
-| **AI Smart Import** (link → draft event) | **2 uses / calendar month** | **Unlimited** |
-| **PDF Achievement Book** | — | **Included** |
+| **JSON export** (backup) | **Included** | **Included** |
 | **CSV export** | — | **Included** |
+| **PDF Achievement Book** | — | **Included** |
+| **AI Smart Import** (link → draft event) | **2 uses / calendar month** | **Unlimited** |
 | **Profile analytics** (views, referrers) | — | **Included** |
 | **Video on events** | **YouTube / Vimeo links** | Links + **file upload** (UI gated Pro; upload wiring as shipped) |
 | **Music on events** | **Spotify / SoundCloud / URL embeds** | Embeds + **audio file upload** (e.g. MP3, WAV, …) |
-| **JSON export** (backup) | **Included** | **Included** |
 | **Milestone badges** | **Included** | **Included** |
 | **Themes** | Light & dark | Light & dark |
 | **Public portfolio** | **1** shareable profile | **1** shareable profile |
