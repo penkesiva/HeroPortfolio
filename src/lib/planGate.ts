@@ -1,3 +1,4 @@
+import { FREE_AI_USES_PER_MONTH } from "@/lib/constants";
 import type { Plan } from "@/types/database";
 
 export const PLAN_LIMITS = {
@@ -5,7 +6,7 @@ export const PLAN_LIMITS = {
     eventsPerYear: 12,
     imagesPerEvent: 3,
     totalStorageMb: 500,
-    aiUsesPerMonth: 3,
+    aiUsesPerMonth: FREE_AI_USES_PER_MONTH,
     pdfExport: false,
     csvExport: false,
     analytics: false,
