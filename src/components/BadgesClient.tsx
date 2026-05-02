@@ -258,13 +258,13 @@ function BadgeCard({ badge }: { badge: Badge }) {
                 <img
                   src={badge.icon}
                   alt={badge.name}
-                  width={56}
-                  height={56}
+                  width={68}
+                  height={68}
                   style={{
                     position: "relative",
                     zIndex: 1,
-                    width: 56,
-                    height: 56,
+                    width: 68,
+                    height: 68,
                     objectFit: "contain",
                     filter: badge.earned ? "none" : "grayscale(1) opacity(0.4)",
                   }}
