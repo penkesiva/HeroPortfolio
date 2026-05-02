@@ -221,7 +221,7 @@ function BadgeCard({ badge }: { badge: Badge }) {
         </svg>
 
         {/* 3D badge disk — sways by default, full spin on hover */}
-        <div style={{ perspective: "520px" }}>
+        <div style={{ perspective: "520px", filter: badge.earned ? "none" : "grayscale(1)" }}>
           <div
             onAnimationEnd={handleAnimationEnd}
             style={{
