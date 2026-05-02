@@ -227,14 +227,14 @@ html[data-theme="light"] {
 }
 
 @keyframes badge-sway {
-  0%   { transform: rotateZ(-15deg); }
-  50%  { transform: rotateZ(15deg); }
-  100% { transform: rotateZ(-15deg); }
+  0%   { transform: rotateY(-40deg); }
+  50%  { transform: rotateY(40deg); }
+  100% { transform: rotateY(-40deg); }
 }
 
 @keyframes badge-spin-full {
-  0%   { transform: rotateZ(0deg) rotateY(0deg); }
-  100% { transform: rotateZ(0deg) rotateY(360deg); }
+  from { transform: rotateY(0deg); }
+  to   { transform: rotateY(360deg); }
 }
 
 @keyframes confetti-float {
