@@ -99,22 +99,30 @@ function BadgeCard({ badge }: { badge: Badge }) {
   const tierMeta = TIER_META[badge.tier];
   const [confettiKey, setConfettiKey] = useState(0);
   const [showConfetti, setShowConfetti] = useState(false);
-  const [hovered, setHovered] = useState(false);
+  const [spinning, setSpinning] = useState(false);
 
   function handleMouseEnter() {
-    setHovered(true);
     if (!badge.earned) return;
     setConfettiKey((k) => k + 1);
     setShowConfetti(true);
     playConfettiSound();
+    setSpinning(true);
   }
 
   function handleMouseLeave() {
-    setHovered(false);
     setShowConfetti(false);
   }
 
-  const spinDuration = hovered ? "3s" : "10s";
+  // After the full spin completes (0.75s), return to sway
+  function handleAnimationEnd() {
+    if (spinning) setSpinning(false);
+  }
+
+  const diskAnimation = !badge.earned
+    ? "none"
+    : spinning
+      ? "badge-spin-full 0.75s ease-in-out forwards"
+      : "badge-sway 3s ease-in-out infinite";
 
   // Dome gradient for front face — radial highlight top-left → dark edge
   const frontGradient = badge.earned
@@ -212,18 +220,16 @@ function BadgeCard({ badge }: { badge: Badge }) {
           )}
         </svg>
 
-        {/* 3D spinning badge disk */}
+        {/* 3D badge disk — sways by default, full spin on hover */}
         <div style={{ perspective: "520px" }}>
           <div
+            onAnimationEnd={handleAnimationEnd}
             style={{
               width: 80,
               height: 80,
               position: "relative",
               transformStyle: "preserve-3d",
-              animation: badge.earned
-                ? `badge-spin-3d ${spinDuration} linear infinite`
-                : "none",
-              transition: "animation-duration 0.6s ease",
+              animation: diskAnimation,
             }}
           >
 

@@ -226,7 +226,13 @@ html[data-theme="light"] {
   50%       { opacity: 1; }
 }
 
-@keyframes badge-spin-3d {
+@keyframes badge-sway {
+  0%   { transform: rotateY(-45deg); }
+  50%  { transform: rotateY(45deg); }
+  100% { transform: rotateY(-45deg); }
+}
+
+@keyframes badge-spin-full {
   from { transform: rotateY(0deg); }
   to   { transform: rotateY(360deg); }
 }
