@@ -383,7 +383,12 @@ export function FirstContributionParty({
                   }}
                   className="relative flex h-20 w-20 items-center justify-center rounded-2xl border-2 border-amber-400/50 bg-gradient-to-br from-dusk-800 to-dusk-900 text-4xl shadow-lg"
                 >
-                  {heroBadge?.icon ?? primaryUnlock?.icon ?? "🌟"}
+                  {(() => {
+                    const icon = heroBadge?.icon ?? primaryUnlock?.icon ?? "🌟";
+                    return icon.startsWith("/") ? (
+                      <img src={icon} alt={heroBadge?.name ?? primaryUnlock?.name ?? "Badge"} width={56} height={56} style={{ width: 56, height: 56, objectFit: "contain" }} />
+                    ) : icon;
+                  })()}
                 </motion.div>
               </AnimatePresence>
             </div>
