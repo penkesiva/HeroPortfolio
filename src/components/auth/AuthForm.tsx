@@ -124,7 +124,6 @@ export function AuthForm({ mode, redirectAfterAuth }: { mode: Mode; redirectAfte
       email: email.trim(),
       password,
       options: {
-        emailRedirectTo: callbackUrl(),
         data: {
           full_name: fullName,
           first_name: firstName.trim(),
@@ -135,19 +134,13 @@ export function AuthForm({ mode, redirectAfterAuth }: { mode: Mode; redirectAfte
     if (error) { setPwStatus("error"); setPwMessage(error.message); return; }
     if (data.session) { window.location.href = redirectAfterAuth; return; }
 
-    const { data: sessionWrap } = await supabase.auth.getSession();
-    if (sessionWrap.session) { window.location.href = redirectAfterAuth; return; }
-
+    // No session yet — try signing in immediately (handles edge cases where
+    // Supabase requires confirmation even though the setting is off).
     const { error: signInError } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     if (!signInError) { window.location.href = redirectAfterAuth; return; }
 
     setPwStatus("error");
-    const msg = signInError.message.toLowerCase();
-    setPwMessage(
-      msg.includes("confirm") || msg.includes("verified") || msg.includes("not confirmed")
-        ? "Check your inbox to confirm your email, then sign in."
-        : "Account may be created. Check your email, then sign in.",
-    );
+    setPwMessage("Account created. Try signing in.");
   }
 
   if (!configured) {
