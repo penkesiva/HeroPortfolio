@@ -28,8 +28,9 @@ export function AppHeader({
 }: AppHeaderProps) {
   const pathname = usePathname();
   return (
-    <header className="sticky top-0 z-40 border-b border-dusk-700/80 bg-dusk-950/85 px-4 py-3 backdrop-blur-md sm:px-6">
-      <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3">
+    <header className="sticky top-0 z-40 border-b border-dusk-700/80 bg-dusk-950/85 backdrop-blur-md">
+      {/* Main row */}
+      <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
         <SiteBrandLink
           href="/timeline"
           ariaLabel="HeroPortfolio.com: your timeline"
@@ -78,6 +79,58 @@ export function AppHeader({
           />
         </div>
       </div>
+
+      {/* Mobile sub-nav: visible only on small screens */}
+      <nav
+        aria-label="Section navigation"
+        className="flex items-center gap-1 overflow-x-auto border-t border-dusk-800/60 px-4 pb-2 pt-1 sm:hidden"
+      >
+        <Link
+          href="/timeline"
+          className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition ${
+            pathname === "/timeline"
+              ? "bg-dusk-800 text-parchment"
+              : "text-parchment-muted hover:text-parchment"
+          }`}
+        >
+          Timeline
+        </Link>
+        <Link
+          href="/timeline/album"
+          className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition ${
+            pathname === "/timeline/album"
+              ? "bg-dusk-800 text-parchment"
+              : "text-parchment-muted hover:text-parchment"
+          }`}
+        >
+          Album
+        </Link>
+        <Link
+          href="/timeline/badges"
+          className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition ${
+            pathname === "/timeline/badges"
+              ? "bg-dusk-800 text-parchment"
+              : "text-parchment-muted hover:text-parchment"
+          }`}
+        >
+          Badges
+        </Link>
+        <Link
+          href="/timeline/analytics"
+          className={`inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium transition ${
+            pathname === "/timeline/analytics"
+              ? "bg-dusk-800 text-parchment"
+              : "text-parchment-muted hover:text-parchment"
+          }`}
+        >
+          Analytics
+          {plan === "free" && (
+            <span className="rounded-full bg-umber-500/25 px-1 py-px text-[8px] font-bold uppercase tracking-wide text-umber-200">
+              Pro
+            </span>
+          )}
+        </Link>
+      </nav>
     </header>
   );
 }

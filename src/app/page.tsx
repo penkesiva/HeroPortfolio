@@ -85,7 +85,7 @@ export default async function HomePage() {
           <nav className="flex items-center gap-1 sm:gap-2">
             <Link
               href="/pricing"
-              className="rounded-full px-3 py-2 text-sm font-medium text-umber-300/90 transition hover:text-umber-200 sm:px-4"
+              className="hidden rounded-full px-3 py-2 text-sm font-medium text-umber-300/90 transition hover:text-umber-200 sm:inline-flex sm:px-4"
             >
               Plans
             </Link>
@@ -97,53 +97,53 @@ export default async function HomePage() {
             </Link>
             <Link
               href="/signup"
-              className="rounded-full border border-umber-500/45 bg-umber-500/15 px-4 py-2 text-sm font-medium text-umber-200 transition hover:bg-umber-500/25"
+              className="whitespace-nowrap rounded-full border border-umber-500/45 bg-umber-500/15 px-4 py-2 text-sm font-medium text-umber-200 transition hover:bg-umber-500/25"
             >
-              Sign up free
+              Sign up
             </Link>
           </nav>
         </div>
       </header>
 
       {/* ─── Hero ───────────────────────────────────────────────────────────── */}
-      <main className="mx-auto grid w-full max-w-6xl flex-1 grid-cols-1 items-center gap-10 px-4 py-12 sm:px-6 lg:grid-cols-2 lg:gap-16 lg:px-8 lg:py-16">
-        {/* Left — copy */}
-        <div className="order-2 flex flex-col lg:order-1">
+      <main className="mx-auto grid w-full max-w-6xl flex-1 grid-cols-1 items-center gap-6 px-4 py-8 sm:gap-10 sm:px-6 sm:py-12 lg:grid-cols-2 lg:gap-16 lg:px-8 lg:py-16">
+        {/* Left — copy: show first on mobile */}
+        <div className="order-1 flex flex-col lg:order-1">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-umber-400">
             For students
           </p>
-          <h1 className="mt-4 text-4xl font-semibold tracking-tight text-parchment sm:text-5xl sm:leading-tight lg:text-[2.9rem] lg:leading-tight">
+          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-parchment sm:mt-4 sm:text-5xl sm:leading-tight lg:text-[2.9rem] lg:leading-tight">
             Your achievements,{" "}
             <span className="text-parchment-muted">year by year.</span>
           </h1>
-          <p className="mt-5 max-w-xl text-base leading-relaxed text-parchment-muted sm:text-[17px]">
+          <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-parchment-muted sm:mt-5 sm:text-[17px]">
             HeroPortfolio is a free timeline for students. Capture competitions,
             projects, leadership, and growth. Organized by school year and
             shareable with anyone.
           </p>
 
           {/* CTAs */}
-          <div className="mt-8 flex flex-wrap items-center gap-3">
+          <div className="mt-6 flex flex-wrap items-center gap-3 sm:mt-8">
             <Link
               href="/signup"
-              className="inline-flex items-center justify-center rounded-full border border-umber-500/50 bg-umber-500/20 px-6 py-3 text-sm font-semibold text-umber-100 transition hover:bg-umber-500/30"
+              className="inline-flex items-center justify-center whitespace-nowrap rounded-full border border-umber-500/50 bg-umber-500/20 px-6 py-2.5 text-sm font-semibold text-umber-100 transition hover:bg-umber-500/30 sm:py-3"
             >
               Start for free
             </Link>
             <Link
               href="/login"
-              className="inline-flex items-center justify-center rounded-full border border-dusk-600 bg-dusk-850/80 px-6 py-3 text-sm font-medium text-parchment-muted transition hover:border-dusk-500 hover:text-parchment"
+              className="inline-flex items-center justify-center whitespace-nowrap rounded-full border border-dusk-600 bg-dusk-850/80 px-6 py-2.5 text-sm font-medium text-parchment-muted transition hover:border-dusk-500 hover:text-parchment sm:py-3"
             >
               Log in
             </Link>
           </div>
 
           {/* Feature pills */}
-          <div className="mt-10 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="mt-8 grid grid-cols-2 gap-2 sm:mt-10 sm:gap-3">
             {features.map((f) => (
               <div
                 key={f.label}
-                className="flex items-start gap-3 rounded-xl border border-dusk-700/60 bg-dusk-900/40 px-4 py-3"
+                className="flex items-start gap-2.5 rounded-xl border border-dusk-700/60 bg-dusk-900/40 px-3 py-2.5 sm:gap-3 sm:px-4 sm:py-3"
               >
                 <span className="mt-0.5 shrink-0 text-umber-400">{f.icon}</span>
                 <div>
@@ -155,9 +155,9 @@ export default async function HomePage() {
           </div>
         </div>
 
-        {/* Right — Lottie trophy */}
-        <div className="order-1 flex items-center justify-center lg:order-2 lg:justify-end">
-          <div className="relative flex h-[300px] w-[300px] items-center justify-center sm:h-[360px] sm:w-[360px] lg:h-[420px] lg:w-[420px]">
+        {/* Right — Lottie trophy: show second on mobile, smaller */}
+        <div className="order-2 flex items-center justify-center lg:order-2 lg:justify-end">
+          <div className="relative flex h-[220px] w-[220px] items-center justify-center sm:h-[320px] sm:w-[320px] lg:h-[420px] lg:w-[420px]">
             <HomeLottie />
           </div>
         </div>

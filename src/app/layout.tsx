@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Script from "next/script";
 import { getThemeInitScript } from "@/lib/themePreference";
@@ -21,6 +21,13 @@ export const metadata: Metadata = {
   },
   description:
     "HeroPortfolio.com: portfolio timelines, achievements, and account sign-in.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  // Prevents iOS from auto-zooming on form inputs without disabling user scaling
+  maximumScale: 5,
 };
 
 export default function RootLayout({

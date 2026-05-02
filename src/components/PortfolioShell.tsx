@@ -1032,14 +1032,14 @@ export function PortfolioShell({
 
       <section
         aria-label="Introduction"
-        className="relative flex min-h-[calc(100dvh-3.5rem)] flex-col justify-center border-b border-dusk-700/70"
+        className="relative flex min-h-[70dvh] flex-col justify-center border-b border-dusk-700/70 sm:min-h-[calc(100dvh-3.5rem)]"
       >
-        <div className="mx-auto grid w-full max-w-6xl flex-1 grid-cols-1 items-center gap-10 px-4 py-8 sm:px-6 lg:grid-cols-2 lg:gap-14 lg:px-8">
+        <div className="mx-auto grid w-full max-w-6xl flex-1 grid-cols-1 items-center gap-6 px-4 py-6 sm:gap-10 sm:px-6 sm:py-8 lg:grid-cols-2 lg:gap-14 lg:px-8">
           <motion.div
             variants={heroContainer}
             initial="hidden"
             animate="show"
-            className="order-2 flex flex-col justify-center lg:order-1"
+            className="order-1 flex flex-col justify-center lg:order-1"
           >
             <motion.p
               variants={heroItem}
@@ -1049,7 +1049,7 @@ export function PortfolioShell({
             </motion.p>
             <motion.h1
               variants={heroItem}
-              className="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl lg:text-[2.75rem] lg:leading-tight"
+              className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl lg:text-[2.75rem] lg:leading-tight"
             >
               {intro.heroLead ? (
                 <span className="block text-parchment-muted">
@@ -1084,7 +1084,7 @@ export function PortfolioShell({
             >
               <a
                 href="#timeline-start"
-                className="inline-flex items-center gap-2 rounded-full border border-umber-500/45 bg-umber-500/10 px-5 py-2.5 text-sm font-medium text-umber-300 transition hover:border-umber-400/65 hover:bg-umber-500/18"
+                className="inline-flex items-center gap-2 whitespace-nowrap rounded-full border border-umber-500/45 bg-umber-500/10 px-5 py-2.5 text-sm font-medium text-umber-300 transition hover:border-umber-400/65 hover:bg-umber-500/18"
               >
                 View timeline
                 <span aria-hidden className="text-xs">
@@ -1098,9 +1098,9 @@ export function PortfolioShell({
             initial={{ opacity: 0, scale: 0.98, y: 12 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ duration: 0.55, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
-            className="order-1 flex items-center justify-center lg:order-2 lg:justify-end"
+            className="order-2 flex items-center justify-center lg:order-2 lg:justify-end"
           >
-            <div className="relative aspect-[3/4] w-full max-w-[300px] overflow-hidden rounded-3xl border border-dusk-700/90 bg-dusk-900/50 shadow-[0_28px_80px_rgba(0,0,0,0.45)] sm:max-w-[340px]">
+            <div className="relative aspect-[3/4] w-full max-w-[220px] overflow-hidden rounded-3xl border border-dusk-700/90 bg-dusk-900/50 shadow-[0_28px_80px_rgba(0,0,0,0.45)] sm:max-w-[300px] lg:max-w-[340px]">
               <Image
                 src={intro.photoSrc}
                 alt={photoAlt}
@@ -1345,13 +1345,13 @@ export function PortfolioShell({
                   <button
                     type="button"
                     onClick={() => setMediaAndUrl("photos")}
-                    className={`rounded-full border px-3.5 py-1.5 text-sm font-medium transition ${
+                    className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 py-1.5 text-sm font-medium transition ${
                       mediaFilter === "photos"
                         ? "border-umber-400/60 bg-umber-500/15 text-parchment"
                         : "border-dusk-600 bg-dusk-850 text-parchment-muted hover:border-dusk-600 hover:text-parchment"
                     }`}
                   >
-                    Photos{" "}
+                    Photos
                     <span className="tabular-nums opacity-80">
                       {mediaCountsForCapsules.photos}
                     </span>
@@ -1359,13 +1359,13 @@ export function PortfolioShell({
                   <button
                     type="button"
                     onClick={() => setMediaAndUrl("videos")}
-                    className={`rounded-full border px-3.5 py-1.5 text-sm font-medium transition ${
+                    className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 py-1.5 text-sm font-medium transition ${
                       mediaFilter === "videos"
                         ? "border-umber-400/60 bg-umber-500/15 text-parchment"
                         : "border-dusk-600 bg-dusk-850 text-parchment-muted hover:border-dusk-600 hover:text-parchment"
                     }`}
                   >
-                    Videos{" "}
+                    Videos
                     <span className="tabular-nums opacity-80">
                       {mediaCountsForCapsules.videos}
                     </span>
@@ -1373,13 +1373,13 @@ export function PortfolioShell({
                   <button
                     type="button"
                     onClick={() => setMediaAndUrl("audios")}
-                    className={`rounded-full border px-3.5 py-1.5 text-sm font-medium transition ${
+                    className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 py-1.5 text-sm font-medium transition ${
                       mediaFilter === "audios"
                         ? "border-umber-400/60 bg-umber-500/15 text-parchment"
                         : "border-dusk-600 bg-dusk-850 text-parchment-muted hover:border-dusk-600 hover:text-parchment"
                     }`}
                   >
-                    Audios{" "}
+                    Audios
                     <span className="tabular-nums opacity-80">
                       {mediaCountsForCapsules.audios}
                     </span>
@@ -1510,7 +1510,7 @@ export function PortfolioShell({
           <button
             type="button"
             onClick={() => openEditor()}
-            className="fixed bottom-5 right-5 z-[80] rounded-full border border-umber-500/50 bg-umber-500/20 px-4 py-2.5 text-sm font-medium text-umber-200 shadow-lg backdrop-blur transition hover:bg-umber-500/30"
+            className="fixed bottom-5 right-4 z-[80] rounded-full border border-umber-500/50 bg-umber-500/20 px-4 py-2.5 text-sm font-medium text-umber-200 shadow-lg backdrop-blur transition hover:bg-umber-500/30 sm:bottom-5 sm:right-5"
           >
             Edit content
           </button>

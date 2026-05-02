@@ -11,17 +11,20 @@ const supabaseHost = (() => {
 })();
 
 const nextConfig: NextConfig = {
-  images: supabaseHost
-    ? {
-        remotePatterns: [
-          {
-            protocol: "https",
-            hostname: supabaseHost,
-            pathname: "/storage/v1/**",
-          },
-        ],
-      }
-    : undefined,
+  images: {
+    formats: ["image/avif", "image/webp"],
+    ...(supabaseHost
+      ? {
+          remotePatterns: [
+            {
+              protocol: "https",
+              hostname: supabaseHost,
+              pathname: "/storage/v1/**",
+            },
+          ],
+        }
+      : {}),
+  },
 };
 
 export default nextConfig;

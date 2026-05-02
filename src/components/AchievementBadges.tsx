@@ -100,7 +100,7 @@ function BadgeChip({
       }`}
     >
       <span>{badge.icon}</span>
-      <span className="hidden sm:inline">{badge.name}</span>
+      <span>{badge.name}</span>
     </motion.button>
   );
 }

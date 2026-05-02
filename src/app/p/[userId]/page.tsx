@@ -74,24 +74,24 @@ export default async function PublicProfilePage({ params }: Props) {
       <header className="sticky top-0 z-40 border-b border-dusk-700/80 bg-dusk-950/85 px-4 py-3 backdrop-blur-md sm:px-6">
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3">
           <SiteBrandLink href="/" ariaLabel="HeroPortfolio home" />
-          <div className="flex flex-wrap items-center justify-end gap-2 text-xs text-parchment-muted sm:gap-3">
+          <div className="flex items-center gap-1.5 text-xs text-parchment-muted sm:gap-3">
             <Link
               href="/pricing"
-              className="rounded-full px-2 py-1.5 font-medium text-umber-300/95 hover:text-umber-200 sm:px-3"
+              className="hidden rounded-full px-2 py-1.5 font-medium text-umber-300/95 hover:text-umber-200 sm:inline-flex sm:px-3"
             >
               Plans &amp; Pro
-            </Link>
-            <Link
-              href="/signup"
-              className="rounded-full border border-umber-500/35 bg-umber-500/10 px-3 py-1.5 font-medium text-umber-200 transition hover:bg-umber-500/20"
-            >
-              Sign up free
             </Link>
             <Link
               href="/login?next=%2Ftimeline"
               className="rounded-full px-2 py-1.5 font-medium text-parchment-muted hover:text-parchment"
             >
               Log in
+            </Link>
+            <Link
+              href="/signup"
+              className="whitespace-nowrap rounded-full border border-umber-500/35 bg-umber-500/10 px-3 py-1.5 font-medium text-umber-200 transition hover:bg-umber-500/20"
+            >
+              Sign up
             </Link>
           </div>
         </div>
