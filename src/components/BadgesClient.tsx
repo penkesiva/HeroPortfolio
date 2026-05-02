@@ -121,8 +121,8 @@ function BadgeCard({ badge }: { badge: Badge }) {
   const diskAnimation = !badge.earned
     ? "none"
     : spinning
-      ? "badge-spin-full 0.75s ease-in-out forwards"
-      : "badge-sway 3s ease-in-out infinite";
+      ? "badge-spin-full 0.7s cubic-bezier(0.4,0,0.2,1) forwards"
+      : "badge-sway 2.4s ease-in-out infinite";
 
   // Dome gradient for front face — radial highlight top-left → dark edge
   const frontGradient = badge.earned
