@@ -254,9 +254,26 @@ function BadgeCard({ badge }: { badge: Badge }) {
                 filter: "blur(5px)",
                 pointerEvents: "none",
               }} />
-              <span style={{ fontSize: 28, lineHeight: 1, position: "relative", zIndex: 1 }} aria-hidden>
-                {badge.icon}
-              </span>
+              {badge.icon.startsWith("/") ? (
+                <img
+                  src={badge.icon}
+                  alt={badge.name}
+                  width={40}
+                  height={40}
+                  style={{
+                    position: "relative",
+                    zIndex: 1,
+                    width: 40,
+                    height: 40,
+                    objectFit: "contain",
+                    filter: badge.earned ? "none" : "grayscale(1) opacity(0.4)",
+                  }}
+                />
+              ) : (
+                <span style={{ fontSize: 28, lineHeight: 1, position: "relative", zIndex: 1 }} aria-hidden>
+                  {badge.icon}
+                </span>
+              )}
               {!badge.earned && (
                 <span style={{ fontSize: 11, position: "absolute", bottom: 12, opacity: 0.35 }}>🔒</span>
               )}

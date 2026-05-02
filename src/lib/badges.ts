@@ -97,7 +97,7 @@ export function computeBadges(timeline: YearBlock[]): Badge[] {
     // ── Milestone ────────────────────────────────────────────────────────────
     {
       id: "first_achievement",
-      icon: "🌟",
+      icon: "/badges/badge1.webp",
       name: "First Achievement",
       description: "Logged your very first achievement.",
       category: "milestone",

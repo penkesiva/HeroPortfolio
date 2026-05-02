@@ -99,7 +99,11 @@ function BadgeChip({
           : "border-dusk-700/40 bg-dusk-900/20 text-parchment-muted/40 cursor-default"
       }`}
     >
-      <span>{badge.icon}</span>
+      {badge.icon.startsWith("/") ? (
+        <img src={badge.icon} alt="" aria-hidden width={14} height={14} className="size-3.5 object-contain" />
+      ) : (
+        <span aria-hidden>{badge.icon}</span>
+      )}
       <span>{badge.name}</span>
     </motion.button>
   );
