@@ -1032,7 +1032,7 @@ export function PortfolioShell({
 
       <section
         aria-label="Introduction"
-        className="relative flex min-h-[100dvh] flex-col justify-center border-b border-dusk-700/70"
+        className="relative flex min-h-[calc(100dvh-3.5rem)] flex-col justify-center border-b border-dusk-700/70"
       >
         <div className="mx-auto grid w-full max-w-6xl flex-1 grid-cols-1 items-center gap-10 px-4 py-8 sm:px-6 lg:grid-cols-2 lg:gap-14 lg:px-8">
           <motion.div
