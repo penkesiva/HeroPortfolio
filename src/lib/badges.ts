@@ -106,7 +106,7 @@ export function computeBadges(timeline: YearBlock[]): Badge[] {
     },
     {
       id: "five_events",
-      icon: "🔥",
+      icon: "/badges/badge2.webp",
       name: "On a Roll",
       description: "Logged 5 achievements.",
       category: "milestone",
@@ -115,7 +115,7 @@ export function computeBadges(timeline: YearBlock[]): Badge[] {
     },
     {
       id: "ten_events",
-      icon: "💪",
+      icon: "/badges/badge3.webp",
       name: "Achievement Hunter",
       description: "Logged 10 achievements across your timeline.",
       category: "milestone",
@@ -124,7 +124,7 @@ export function computeBadges(timeline: YearBlock[]): Badge[] {
     },
     {
       id: "twenty_five_events",
-      icon: "🏆",
+      icon: "/badges/badge4.webp",
       name: "Portfolio Champion",
       description: "Logged 25 achievements. That is a serious portfolio.",
       category: "milestone",
@@ -133,7 +133,7 @@ export function computeBadges(timeline: YearBlock[]): Badge[] {
     },
     {
       id: "fifty_events",
-      icon: "👑",
+      icon: "/badges/badge5.webp",
       name: "Legend",
       description: "50 achievements logged. You are an inspiration.",
       category: "milestone",
@@ -142,7 +142,7 @@ export function computeBadges(timeline: YearBlock[]): Badge[] {
     },
     {
       id: "two_year_streak",
-      icon: "📅",
+      icon: "/badges/badge6.webp",
       name: "Consistent",
       description: "Logged achievements in 2 consecutive years.",
       category: "milestone",
@@ -151,7 +151,7 @@ export function computeBadges(timeline: YearBlock[]): Badge[] {
     },
     {
       id: "three_year_streak",
-      icon: "🗓️",
+      icon: "/badges/badge7.webp",
       name: "3-Year Streak",
       description: "Logged achievements in 3 consecutive years.",
       category: "milestone",
@@ -160,7 +160,7 @@ export function computeBadges(timeline: YearBlock[]): Badge[] {
     },
     {
       id: "five_year_streak",
-      icon: "🔁",
+      icon: "/badges/badge8.webp",
       name: "5-Year Streak",
       description: "Logged achievements in 5 consecutive years.",
       category: "milestone",
@@ -169,7 +169,7 @@ export function computeBadges(timeline: YearBlock[]): Badge[] {
     },
     {
       id: "star_performer",
-      icon: "⭐",
+      icon: "/badges/badge9.webp",
       name: "Star Performer",
       description: "10 or more achievements in a single year.",
       category: "milestone",
@@ -180,7 +180,7 @@ export function computeBadges(timeline: YearBlock[]): Badge[] {
     // ── Academic ─────────────────────────────────────────────────────────────
     {
       id: "academic_bronze",
-      icon: "📚",
+      icon: "/badges/badge10.webp",
       name: "Studious",
       description: "Logged your first academic achievement.",
       category: "academic",
@@ -189,7 +189,7 @@ export function computeBadges(timeline: YearBlock[]): Badge[] {
     },
     {
       id: "academic_silver",
-      icon: "🎓",
+      icon: "/badges/badge11.webp",
       name: "Scholar",
       description: "Logged 3 academic achievements.",
       category: "academic",
@@ -198,7 +198,7 @@ export function computeBadges(timeline: YearBlock[]): Badge[] {
     },
     {
       id: "academic_gold",
-      icon: "🏅",
+      icon: "/badges/badge12.webp",
       name: "Honor Student",
       description: "Logged 5 or more academic achievements.",
       category: "academic",
@@ -209,7 +209,7 @@ export function computeBadges(timeline: YearBlock[]): Badge[] {
     // ── Sports ───────────────────────────────────────────────────────────────
     {
       id: "sports_bronze",
-      icon: "🏃",
+      icon: "/badges/badge13.webp",
       name: "Athlete",
       description: "Logged your first sports achievement.",
       category: "sports",
@@ -218,7 +218,7 @@ export function computeBadges(timeline: YearBlock[]): Badge[] {
     },
     {
       id: "sports_silver",
-      icon: "🥈",
+      icon: "/badges/badge14.webp",
       name: "Varsity",
       description: "Logged 3 sports achievements.",
       category: "sports",
@@ -227,7 +227,7 @@ export function computeBadges(timeline: YearBlock[]): Badge[] {
     },
     {
       id: "sports_gold",
-      icon: "🥇",
+      icon: "/badges/badge15.webp",
       name: "Champion",
       description: "Logged 5 or more sports achievements.",
       category: "sports",
@@ -238,7 +238,7 @@ export function computeBadges(timeline: YearBlock[]): Badge[] {
     // ── Arts ─────────────────────────────────────────────────────────────────
     {
       id: "arts_bronze",
-      icon: "🎨",
+      icon: "/badges/badge16.webp",
       name: "Performer",
       description: "Logged your first arts or music achievement.",
       category: "arts",
@@ -247,7 +247,7 @@ export function computeBadges(timeline: YearBlock[]): Badge[] {
     },
     {
       id: "arts_silver",
-      icon: "🎭",
+      icon: "/badges/badge17.webp",
       name: "Artist",
       description: "Logged 3 arts or music achievements.",
       category: "arts",
@@ -256,7 +256,7 @@ export function computeBadges(timeline: YearBlock[]): Badge[] {
     },
     {
       id: "arts_gold",
-      icon: "🎬",
+      icon: "/badges/badge18.webp",
       name: "Creative Lead",
       description: "Logged 5 or more arts or music achievements.",
       category: "arts",
@@ -267,7 +267,7 @@ export function computeBadges(timeline: YearBlock[]): Badge[] {
     // ── STEM ─────────────────────────────────────────────────────────────────
     {
       id: "stem_bronze",
-      icon: "🔬",
+      icon: "/badges/badge19.webp",
       name: "Builder",
       description: "Logged your first STEM achievement.",
       category: "stem",
@@ -276,7 +276,7 @@ export function computeBadges(timeline: YearBlock[]): Badge[] {
     },
     {
       id: "stem_silver",
-      icon: "⚙️",
+      icon: "/badges/badge20.webp",
       name: "Engineer",
       description: "Logged 3 STEM achievements.",
       category: "stem",
@@ -285,7 +285,7 @@ export function computeBadges(timeline: YearBlock[]): Badge[] {
     },
     {
       id: "stem_gold",
-      icon: "🚀",
+      icon: "/badges/badge21.webp",
       name: "Innovator",
       description: "Logged 5 or more STEM achievements.",
       category: "stem",
@@ -296,7 +296,7 @@ export function computeBadges(timeline: YearBlock[]): Badge[] {
     // ── Leadership ───────────────────────────────────────────────────────────
     {
       id: "leadership_bronze",
-      icon: "🙋",
+      icon: "/badges/badge22.webp",
       name: "Rising Leader",
       description: "Logged your first leadership achievement.",
       category: "leadership",
@@ -305,7 +305,7 @@ export function computeBadges(timeline: YearBlock[]): Badge[] {
     },
     {
       id: "leadership_silver",
-      icon: "🗣️",
+      icon: "/badges/badge23.webp",
       name: "Team Leader",
       description: "Logged 3 leadership achievements.",
       category: "leadership",
@@ -314,7 +314,7 @@ export function computeBadges(timeline: YearBlock[]): Badge[] {
     },
     {
       id: "leadership_gold",
-      icon: "🎯",
+      icon: "/badges/badge24.webp",
       name: "Visionary",
       description: "Logged 5 or more leadership achievements.",
       category: "leadership",
@@ -325,7 +325,7 @@ export function computeBadges(timeline: YearBlock[]): Badge[] {
     // ── Community ────────────────────────────────────────────────────────────
     {
       id: "community_bronze",
-      icon: "🤝",
+      icon: "/badges/badge25.webp",
       name: "Community Starter",
       description: "Logged your first community service achievement.",
       category: "community",
