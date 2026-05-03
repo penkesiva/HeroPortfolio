@@ -386,7 +386,7 @@ export function FirstContributionParty({
                   {(() => {
                     const icon = heroBadge?.icon ?? primaryUnlock?.icon ?? "🌟";
                     return icon.startsWith("/") ? (
-                      <img src={icon} alt={heroBadge?.name ?? primaryUnlock?.name ?? "Badge"} width={56} height={56} style={{ width: 56, height: 56, objectFit: "contain" }} />
+                      <img src={icon} alt={heroBadge?.name ?? primaryUnlock?.name ?? "Badge"} width={56} height={56} style={{ width: 56, height: 56, objectFit: "cover", borderRadius: "50%", clipPath: "circle(50%)" }} />
                     ) : icon;
                   })()}
                 </motion.div>

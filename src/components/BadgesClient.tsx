@@ -271,7 +271,9 @@ function BadgeCard({ badge }: { badge: Badge }) {
                     zIndex: 1,
                     width: 68,
                     height: 68,
-                    objectFit: "contain",
+                    objectFit: "cover",
+                    borderRadius: "50%",
+                    clipPath: "circle(50%)",
                     filter: badge.earned ? "none" : "grayscale(1) opacity(0.4)",
                   }}
                 />
