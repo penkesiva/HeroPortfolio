@@ -68,15 +68,6 @@ function playConfettiSound() {
   } catch { /* ignore — audio not available */ }
 }
 
-const LOCKED_HINTS = [
-  "Keep logging to unlock this.",
-  "You are closer than you think.",
-  "Every achievement counts.",
-  "Log more to reveal this badge.",
-  "Your next milestone is waiting.",
-  "One step at a time.",
-  "Keep going, hero.",
-];
 
 const RING_RADIUS = 44;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS; // ≈ 276.46
@@ -282,9 +273,6 @@ function BadgeCard({ badge }: { badge: Badge }) {
                   {badge.icon}
                 </span>
               )}
-              {!badge.earned && (
-                <span style={{ fontSize: 11, position: "absolute", bottom: 12, opacity: 0.35 }}>🔒</span>
-              )}
             </div>
 
             {/* ── Back face ── */}
@@ -304,16 +292,34 @@ function BadgeCard({ badge }: { badge: Badge }) {
                 justifyContent: "center",
               }}
             >
-              <span style={{
-                fontSize: 9,
-                fontWeight: 800,
-                letterSpacing: "0.15em",
-                textTransform: "uppercase",
-                color: rimColor,
-                opacity: badge.earned ? 0.75 : 0.3,
-              }}>
-                {catMeta.label.slice(0, 3)}
-              </span>
+              {badge.earned ? (
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+                  <span style={{ fontSize: 18, lineHeight: 1 }}>✓</span>
+                  <span style={{
+                    fontSize: 8,
+                    fontWeight: 800,
+                    letterSpacing: "0.12em",
+                    textTransform: "uppercase",
+                    color: tierMeta.color,
+                    opacity: 0.9,
+                  }}>
+                    {tierMeta.label}
+                  </span>
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+                  <span style={{ fontSize: 16, lineHeight: 1, opacity: 0.4 }}>🔒</span>
+                  <span style={{
+                    fontSize: 7,
+                    fontWeight: 700,
+                    letterSpacing: "0.1em",
+                    textTransform: "uppercase",
+                    color: "#6b6560",
+                  }}>
+                    Not yet
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -341,9 +347,7 @@ function BadgeCard({ badge }: { badge: Badge }) {
           {badge.name}
         </p>
         <p className={`text-[11px] leading-snug ${badge.earned ? "text-parchment-muted" : "text-parchment-muted/40"}`}>
-          {badge.earned
-            ? badge.description
-            : LOCKED_HINTS[Math.abs(badge.id.charCodeAt(0) + badge.id.charCodeAt(badge.id.length - 1)) % LOCKED_HINTS.length]}
+          {badge.description}
         </p>
       </div>
 
