@@ -109,6 +109,7 @@ export function TimelineEmptyState({
       {launched ? (
         <DotLottieReact
           src="/animations/rocket_launch.lottie"
+          autoplay
           loop={false}
           className="h-40 w-40"
           dotLottieRefCallback={onRocketLoad}

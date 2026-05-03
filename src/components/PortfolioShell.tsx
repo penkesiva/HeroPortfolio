@@ -650,7 +650,9 @@ export function PortfolioShell({
           setTimeline(d);
         }
       } else if (d?.length && serverTimeline.length === 0) {
-        clearDraftTimeline(userId);
+        // Server is empty but draft has years — keep draft so unsaved scaffold
+        // survives page reloads (e.g. after "Let's go" before a manual Save).
+        setTimeline(d);
       }
       setDraftHydrated(true);
     });
@@ -739,7 +741,9 @@ export function PortfolioShell({
       //  2. Discard reverts to this scaffolded state, not to an empty timeline.
       if (userId) {
         lastSavedTimeline.current = next;
-        void saveTimelineAction(next, userId).catch(() => {});
+        void saveTimelineAction(next, userId).catch((err) => {
+          console.error("[handleAddYear] save failed:", err);
+        });
       }
       // Snapshot the scaffolded state as the panel-open baseline so Discard
       // after onboarding reverts to the scaffolded years, not an empty timeline.
