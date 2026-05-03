@@ -274,6 +274,8 @@ export function PortfolioContentEditor({
   const selected = achievements.find((a) => a.id === selectedId) ?? null;
 
   const audioFileInputRef = useRef<HTMLInputElement>(null);
+  const imageFileInputRef = useRef<HTMLInputElement>(null);
+  const [imageUrlInput, setImageUrlInput] = useState("");
   const [musicPreviewSrc, setMusicPreviewSrc] = useState<string | null>(null);
   const [audioUploading, setAudioUploading] = useState(false);
 
@@ -602,32 +604,32 @@ export function PortfolioContentEditor({
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-4 py-4">
-          <label className="block text-xs font-semibold uppercase tracking-wide text-parchment-muted">
-            Section
-          </label>
-          <select
-            value={showHeroForm ? "hero" : String(clampedYearIndex)}
-            onChange={(e) => {
-              const v = e.target.value;
-              if (v === "hero") setSection("hero");
-              else {
-                setSection("year");
-                setYearIndex(Number(v));
-              }
-            }}
-            className="mt-1 w-full rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-2 text-sm text-parchment"
-          >
-            <option value="hero">Hero</option>
-            {years.map((y, i) => (
-              <option key={`${i}-${y.year}`} value={i}>
-                {y.year}
-              </option>
-            ))}
-          </select>
+        <div className="flex-1 overflow-y-auto px-4 py-3">
+          {/* Section selector + year actions — compact single row */}
+          <div className="flex items-center gap-2">
+            <select
+              value={showHeroForm ? "hero" : String(clampedYearIndex)}
+              onChange={(e) => {
+                const v = e.target.value;
+                if (v === "hero") setSection("hero");
+                else {
+                  setSection("year");
+                  setYearIndex(Number(v));
+                }
+              }}
+              className="flex-1 rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-1.5 text-sm text-parchment"
+            >
+              <option value="hero">Hero</option>
+              {years.map((y, i) => (
+                <option key={`${i}-${y.year}`} value={i}>
+                  {y.year}
+                </option>
+              ))}
+            </select>
+          </div>
 
           {/* Add school year / Remove school year — same row */}
-          <div className="mt-2">
+          <div className="mt-1.5">
             {!addingYear ? (
               <div className="flex items-center justify-between">
                 <button
@@ -799,62 +801,67 @@ export function PortfolioContentEditor({
                 </div>
               )}
 
-              <label className="mt-4 block text-xs font-semibold uppercase tracking-wide text-parchment-muted">
-                Year tagline
-              </label>
-              <textarea
-                value={block?.tagline ?? ""}
-                onChange={(e) => setTagline(e.target.value)}
-                rows={2}
-                className="mt-1 w-full resize-y rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-2 text-sm text-parchment placeholder:text-parchment-muted/50"
-              />
+              <div className="mt-3 flex items-center gap-2">
+                <label className="w-20 shrink-0 text-xs font-semibold uppercase tracking-wide text-parchment-muted">
+                  Tagline
+                </label>
+                <input
+                  type="text"
+                  value={block?.tagline ?? ""}
+                  onChange={(e) => setTagline(e.target.value)}
+                  placeholder="One-line year summary…"
+                  className="flex-1 rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-1.5 text-sm text-parchment placeholder:text-parchment-muted/40"
+                />
+              </div>
 
-              {/* Event picker header — label + count + add + delete in one row */}
-              <div className="mt-4 flex items-center gap-2">
-                <span className="text-xs font-semibold uppercase tracking-wide text-parchment-muted">
-                  Event
-                </span>
-                {achievements.length > 0 && (
-                  <span className="rounded-full bg-dusk-800 px-1.5 py-0.5 text-[10px] tabular-nums text-parchment-muted/60">
-                    {achievements.length}
+              {/* ── Events section divider ── */}
+              <div className="-mx-4 mt-4 border-t border-dusk-700/70 bg-dusk-900/60 px-4 py-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-semibold uppercase tracking-wide text-parchment-muted/70">
+                    Events
                   </span>
-                )}
-                <div className="ml-auto flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    onClick={addEvent}
-                    className="flex items-center gap-1 rounded-lg border border-umber-500/45 bg-umber-500/15 px-2.5 py-1 text-xs font-medium text-umber-300 transition hover:bg-umber-500/25"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="size-3">
-                      <path d="M8.75 3.75a.75.75 0 0 0-1.5 0v3.5h-3.5a.75.75 0 0 0 0 1.5h3.5v3.5a.75.75 0 0 0 1.5 0v-3.5h3.5a.75.75 0 0 0 0-1.5h-3.5v-3.5Z" />
-                    </svg>
-                    Add
-                  </button>
-                  {selected && (
+                  {achievements.length > 0 && (
+                    <span className="rounded-full bg-dusk-800 px-1.5 py-0.5 text-[10px] tabular-nums text-parchment-muted/50">
+                      {achievements.length}
+                    </span>
+                  )}
+                  <div className="ml-auto flex items-center gap-1.5">
                     <button
                       type="button"
-                      onClick={() => removeEvent(selected.id)}
-                      title="Delete this event"
-                      className="flex items-center gap-1 rounded-lg border border-red-500/25 bg-transparent px-2.5 py-1 text-xs font-medium text-red-400/70 transition hover:border-red-400/50 hover:bg-red-500/8 hover:text-red-400"
+                      onClick={addEvent}
+                      className="flex items-center gap-1 rounded-lg border border-umber-500/45 bg-umber-500/15 px-2.5 py-1 text-xs font-medium text-umber-300 transition hover:bg-umber-500/25"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="size-3">
-                        <path fillRule="evenodd" d="M5 3.25V4H2.75a.75.75 0 0 0 0 1.5h.3l.815 8.15A1.5 1.5 0 0 0 5.357 15h5.285a1.5 1.5 0 0 0 1.493-1.35l.815-8.15h.3a.75.75 0 0 0 0-1.5H11v-.75A2.25 2.25 0 0 0 8.75 1h-1.5A2.25 2.25 0 0 0 5 3.25Zm2.25-.75a.75.75 0 0 0-.75.75V4h3v-.75a.75.75 0 0 0-.75-.75h-1.5ZM6.05 6a.75.75 0 0 1 .787.713l.275 5.5a.75.75 0 0 1-1.498.075l-.275-5.5A.75.75 0 0 1 6.05 6Zm3.9 0a.75.75 0 0 1 .712.787l-.275 5.5a.75.75 0 0 1-1.498-.075l.275-5.5A.75.75 0 0 1 9.95 6Z" clipRule="evenodd" />
+                        <path d="M8.75 3.75a.75.75 0 0 0-1.5 0v3.5h-3.5a.75.75 0 0 0 0 1.5h3.5v3.5a.75.75 0 0 0 1.5 0v-3.5h3.5a.75.75 0 0 0 0-1.5h-3.5v-3.5Z" />
                       </svg>
-                      Delete
+                      Add
                     </button>
-                  )}
+                    {selected && (
+                      <button
+                        type="button"
+                        onClick={() => removeEvent(selected.id)}
+                        title="Delete this event"
+                        className="flex items-center gap-1 rounded-lg border border-red-500/25 bg-transparent px-2.5 py-1 text-xs font-medium text-red-400/70 transition hover:border-red-400/50 hover:bg-red-500/8 hover:text-red-400"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="size-3">
+                          <path fillRule="evenodd" d="M5 3.25V4H2.75a.75.75 0 0 0 0 1.5h.3l.815 8.15A1.5 1.5 0 0 0 5.357 15h5.285a1.5 1.5 0 0 0 1.493-1.35l.815-8.15h.3a.75.75 0 0 0 0-1.5H11v-.75A2.25 2.25 0 0 0 8.75 1h-1.5A2.25 2.25 0 0 0 5 3.25Zm2.25-.75a.75.75 0 0 0-.75.75V4h3v-.75a.75.75 0 0 0-.75-.75h-1.5ZM6.05 6a.75.75 0 0 1 .787.713l.275 5.5a.75.75 0 0 1-1.498.075l-.275-5.5A.75.75 0 0 1 6.05 6Zm3.9 0a.75.75 0 0 1 .712.787l-.275 5.5a.75.75 0 0 1-1.498-.075l.275-5.5A.75.75 0 0 1 9.95 6Z" clipRule="evenodd" />
+                        </svg>
+                        Delete
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
 
               {achievements.length === 0 ? (
-                <p className="mt-2 rounded-lg border border-dashed border-dusk-600 px-3 py-4 text-center text-xs text-parchment-muted/60">
-                  No events yet. Click Add to log your first one.
+                <p className="mt-2 rounded-lg border border-dashed border-dusk-600 px-3 py-3 text-center text-xs text-parchment-muted/60">
+                  No events yet — click Add to log your first one.
                 </p>
               ) : (
                 <select
                   value={selectedId ?? ""}
                   onChange={(e) => setSelectedId(e.target.value || null)}
-                  className="mt-1.5 w-full rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-2 text-sm text-parchment"
+                  className="mt-2 w-full rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-1.5 text-sm text-parchment"
                 >
                   {achievements.map((a) => (
                     <option key={a.id} value={a.id}>
@@ -865,24 +872,25 @@ export function PortfolioContentEditor({
               )}
 
               {selected ? (
-            <div className="mt-4 space-y-3 border-t border-dusk-700/60 pt-4">
+            <div className="mt-3 space-y-2.5 border-t border-dusk-700/60 pt-3">
 
-              {/* AI Link Summarizer */}
-              <div className="rounded-xl border border-umber-500/30 bg-umber-500/8 p-3">
-                <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-umber-300">
-                  Smart import
-                </p>
-                <p className="mb-2 text-[11px] leading-relaxed text-parchment-muted">
-                  Paste a news or results URL — AI fills the title and description.
-                  {plan === "free" && ` ${FREE_AI_LABEL}.`}
-                </p>
+              {/* AI Smart Import */}
+              <div className="rounded-lg border border-umber-500/25 bg-umber-500/8 px-3 py-2">
+                <div className="mb-1.5 flex items-center gap-1.5">
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-umber-300">
+                    Smart import
+                  </span>
+                  {plan === "free" && (
+                    <span className="text-[10px] text-parchment-muted/50">{FREE_AI_LABEL}</span>
+                  )}
+                </div>
                 <div className="flex gap-2">
                   <input
                     type="url"
                     value={linkUrl}
                     onChange={(e) => setLinkUrl(e.target.value)}
-                    placeholder="https://news-article.com/…"
-                    className="min-w-0 flex-1 rounded-lg border border-dusk-600 bg-dusk-850 px-2 py-1.5 text-xs text-parchment placeholder:text-parchment-muted/40"
+                    placeholder="Paste a news / results URL…"
+                    className="min-w-0 flex-1 rounded-md border border-dusk-600 bg-dusk-850 px-2 py-1.5 text-xs text-parchment placeholder:text-parchment-muted/40"
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         e.preventDefault();
@@ -894,7 +902,7 @@ export function PortfolioContentEditor({
                     type="button"
                     onClick={() => void summarizeLink()}
                     disabled={linkLoading || !linkUrl.trim()}
-                    className="shrink-0 rounded-lg border border-umber-500/40 bg-umber-500/20 px-3 py-1.5 text-xs font-medium text-umber-200 disabled:opacity-50"
+                    className="shrink-0 rounded-md border border-umber-500/40 bg-umber-500/20 px-3 py-1.5 text-xs font-medium text-umber-200 disabled:opacity-50"
                   >
                     {linkLoading ? (
                       <DotLottieReact
@@ -907,20 +915,23 @@ export function PortfolioContentEditor({
                   </button>
                 </div>
                 {linkError && (
-                  <p className="mt-1.5 text-[11px] text-red-400">{linkError}</p>
+                  <p className="mt-1 text-[11px] text-red-400">{linkError}</p>
                 )}
               </div>
 
-              <Field label="Heading 1 (title)">
+              {/* 1. Title */}
+              <Field label="Title">
                 <input
                   value={selected.title}
                   onChange={(e) =>
                     patchAchievement(selected.id, { title: e.target.value })
                   }
-                  className="w-full rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-2 text-sm text-parchment"
+                  className="mt-0.5 w-full rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-1.5 text-sm text-parchment"
                 />
               </Field>
-              <Field label="Heading 2">
+
+              {/* 2. Subtitle */}
+              <Field label="Subtitle">
                 <input
                   value={selected.heading2 ?? ""}
                   onChange={(e) =>
@@ -928,10 +939,12 @@ export function PortfolioContentEditor({
                       heading2: e.target.value || undefined,
                     })
                   }
-                  className="w-full rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-2 text-sm text-parchment"
+                  className="mt-0.5 w-full rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-1.5 text-sm text-parchment"
                 />
               </Field>
-              <Field label="Body">
+
+              {/* 3. Description */}
+              <Field label="Description">
                 <textarea
                   value={selected.body ?? selected.description}
                   onChange={(e) =>
@@ -940,11 +953,13 @@ export function PortfolioContentEditor({
                       description: e.target.value,
                     })
                   }
-                  rows={5}
-                  className="w-full resize-y rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-2 text-sm text-parchment"
+                  rows={3}
+                  className="mt-0.5 w-full resize-y rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-1.5 text-sm text-parchment"
                 />
               </Field>
-              <Field label="Categories (comma-separated)">
+
+              {/* 4. Categories */}
+              <Field label="Categories">
                 <input
                   value={(selected.categories ?? []).join(", ")}
                   onChange={(e) => {
@@ -957,36 +972,66 @@ export function PortfolioContentEditor({
                     });
                   }}
                   placeholder="music, stem, competition"
-                  className="w-full rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-2 text-sm text-parchment placeholder:text-parchment-muted/40"
+                  className="mt-0.5 w-full rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-1.5 text-sm text-parchment placeholder:text-parchment-muted/40"
                 />
               </Field>
 
-              <Field label="Images (upload)">
-                <label className="mt-1 block cursor-pointer rounded-lg border border-dashed border-dusk-600 px-3 py-2 text-center text-xs text-parchment-muted hover:border-umber-500/40 hover:text-parchment">
-                  + Add images
+              {/* 5. Images — URL or upload */}
+              <Field label="Images">
+                <input
+                  ref={imageFileInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={onPickImages}
+                />
+                <div className="mt-0.5 flex gap-2">
                   <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    className="hidden"
-                    onChange={onPickImages}
+                    type="url"
+                    value={imageUrlInput}
+                    onChange={(e) => setImageUrlInput(e.target.value)}
+                    placeholder="https://image-url.com/…"
+                    className="min-w-0 flex-1 rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-1.5 text-sm text-parchment placeholder:text-parchment-muted/40"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        const url = imageUrlInput.trim();
+                        if (!url) return;
+                        const existing = selected.images ?? (selected.imageSrc ? [selected.imageSrc] : []);
+                        patchAchievement(selected.id, { images: [...existing, url] });
+                        setImageUrlInput("");
+                      }
+                    }}
                   />
-                </label>
-                <ul className="mt-2 space-y-2">
-                  {(
-                    selected.images ??
-                    (selected.imageSrc ? [selected.imageSrc] : [])
-                  ).map((src, i) => (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const url = imageUrlInput.trim();
+                      if (url) {
+                        const existing = selected.images ?? (selected.imageSrc ? [selected.imageSrc] : []);
+                        patchAchievement(selected.id, { images: [...existing, url] });
+                        setImageUrlInput("");
+                      } else {
+                        imageFileInputRef.current?.click();
+                      }
+                    }}
+                    className="flex shrink-0 items-center gap-1.5 rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-1.5 text-xs font-medium text-parchment-muted transition hover:border-dusk-500 hover:text-parchment"
+                  >
+                    <svg viewBox="0 0 16 16" fill="currentColor" className="size-3.5 shrink-0" aria-hidden>
+                      <path d="M8 1a.75.75 0 0 1 .75.75v5.5h5.5a.75.75 0 0 1 0 1.5h-5.5v5.5a.75.75 0 0 1-1.5 0v-5.5H1.75a.75.75 0 0 1 0-1.5h5.5V1.75A.75.75 0 0 1 8 1Z" />
+                    </svg>
+                    {imageUrlInput.trim() ? "Add" : "Upload"}
+                  </button>
+                </div>
+                <ul className="mt-1.5 space-y-1.5">
+                  {(selected.images ?? (selected.imageSrc ? [selected.imageSrc] : [])).map((src, i) => (
                     <li
                       key={`${selected.id}-ed-${i}`}
                       className="flex items-center gap-2 rounded-lg border border-dusk-700/80 bg-dusk-850/50 p-2"
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={src}
-                        alt=""
-                        className="size-12 shrink-0 rounded object-cover"
-                      />
+                      <img src={src} alt="" className="size-10 shrink-0 rounded object-cover" />
                       <button
                         type="button"
                         onClick={() => removeImageAt(i)}
@@ -999,30 +1044,9 @@ export function PortfolioContentEditor({
                 </ul>
               </Field>
 
-              <Field label="Amount raised (optional, USD)">
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-parchment-muted/60">$</span>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={selected.amountRaised ?? ""}
-                    onChange={(e) =>
-                      patchAchievement(selected.id, {
-                        amountRaised: e.target.value ? parseFloat(e.target.value) : undefined,
-                      })
-                    }
-                    placeholder="0.00"
-                    className="w-full rounded-lg border border-dusk-600 bg-dusk-850 py-2 pl-6 pr-3 text-sm text-parchment placeholder:text-parchment-muted/40"
-                  />
-                </div>
-                <p className="mt-1 text-[11px] text-parchment-muted/50">
-                  For fundraising or donation events. Counts toward your lifetime total on the Badges page.
-                </p>
-              </Field>
-
-              <Field label="Video link (YouTube / Vimeo)">
-                <div className="flex gap-2">
+              {/* 6. Video */}
+              <Field label="Video (YouTube / Vimeo)">
+                <div className="mt-0.5 flex gap-2">
                   <input
                     value={selected.videoUrl ?? ""}
                     onChange={(e) =>
@@ -1031,11 +1055,11 @@ export function PortfolioContentEditor({
                       })
                     }
                     placeholder="https://www.youtube.com/watch?v=…"
-                    className="min-w-0 flex-1 rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-2 text-sm text-parchment placeholder:text-parchment-muted/40"
+                    className="min-w-0 flex-1 rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-1.5 text-sm text-parchment placeholder:text-parchment-muted/40"
                   />
                   <button
                     type="button"
-                    title={plan === "pro" ? "Upload video file (Pro)" : "Upgrade to Pro to upload video files"}
+                    title={plan === "pro" ? "Upload video file" : "Upgrade to Pro to upload video files"}
                     onClick={() => {
                       if (plan !== "pro") {
                         setUpgradeModal({
@@ -1046,10 +1070,9 @@ export function PortfolioContentEditor({
                         });
                         return;
                       }
-                      // Pro: trigger file picker (placeholder — wire to storage upload)
                       window.alert("Video upload coming soon. For now, paste a YouTube or Vimeo link.");
                     }}
-                    className={`flex shrink-0 items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition ${
+                    className={`flex shrink-0 items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition ${
                       plan === "pro"
                         ? "border-dusk-600 bg-dusk-850 text-parchment-muted hover:border-dusk-500 hover:text-parchment"
                         : "border-umber-500/35 bg-umber-500/10 text-umber-300 hover:bg-umber-500/18"
@@ -1068,7 +1091,8 @@ export function PortfolioContentEditor({
                 </div>
               </Field>
 
-              <Field label="Music (Spotify / SoundCloud / Pro upload)">
+              {/* 7. Music */}
+              <Field label="Music (Spotify / SoundCloud)">
                 <input
                   ref={audioFileInputRef}
                   type="file"
@@ -1076,8 +1100,8 @@ export function PortfolioContentEditor({
                   className="hidden"
                   onChange={onPickAudio}
                 />
-                <div className="flex flex-col gap-2">
-                  <div className="flex gap-2">
+                <div className="flex flex-col gap-1.5">
+                  <div className="mt-0.5 flex gap-2">
                     <input
                       value={
                         selected.musicUrl &&
@@ -1089,20 +1113,14 @@ export function PortfolioContentEditor({
                       onChange={(e) => {
                         const v = e.target.value.trim();
                         const prev = selected.musicUrl?.trim();
-                        if (
-                          prev &&
-                          !prev.startsWith("http") &&
-                          !prev.startsWith("data:")
-                        ) {
+                        if (prev && !prev.startsWith("http") && !prev.startsWith("data:")) {
                           const supabase = createBrowserSupabaseClient();
                           if (supabase) void deleteEventImage(supabase, prev);
                         }
-                        patchAchievement(selected.id, {
-                          musicUrl: v || undefined,
-                        });
+                        patchAchievement(selected.id, { musicUrl: v || undefined });
                       }}
-                      placeholder="https://open.spotify.com/track/… or SoundCloud"
-                      className="min-w-0 flex-1 rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-2 text-sm text-parchment placeholder:text-parchment-muted/40"
+                      placeholder="https://open.spotify.com/track/…"
+                      className="min-w-0 flex-1 rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-1.5 text-sm text-parchment placeholder:text-parchment-muted/40"
                     />
                     <button
                       type="button"
@@ -1124,7 +1142,7 @@ export function PortfolioContentEditor({
                         }
                         audioFileInputRef.current?.click();
                       }}
-                      className={`flex shrink-0 items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition disabled:opacity-50 ${
+                      className={`flex shrink-0 items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition disabled:opacity-50 ${
                         canAccess(plan, "eventAudioUpload")
                           ? "border-dusk-600 bg-dusk-850 text-parchment-muted hover:border-dusk-500 hover:text-parchment"
                           : "border-umber-500/35 bg-umber-500/10 text-umber-300 hover:bg-umber-500/18"
@@ -1133,18 +1151,12 @@ export function PortfolioContentEditor({
                       <svg viewBox="0 0 16 16" fill="currentColor" className="size-3.5 shrink-0" aria-hidden>
                         <path d="M8 1a.75.75 0 0 1 .75.75v5.5h5.5a.75.75 0 0 1 0 1.5h-5.5v5.5a.75.75 0 0 1-1.5 0v-5.5H1.75a.75.75 0 0 1 0-1.5h5.5V1.75A.75.75 0 0 1 8 1Z" />
                       </svg>
-                      {audioUploading
-                        ? "…"
-                        : canAccess(plan, "eventAudioUpload")
-                          ? "Upload"
-                          : (
-                              <span className="flex items-center gap-1">
-                                Upload
-                                <span className="rounded-full bg-umber-500/25 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-umber-200">
-                                  Pro
-                                </span>
-                              </span>
-                            )}
+                      {audioUploading ? "…" : canAccess(plan, "eventAudioUpload") ? "Upload" : (
+                        <span className="flex items-center gap-1">
+                          Upload
+                          <span className="rounded-full bg-umber-500/25 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-umber-200">Pro</span>
+                        </span>
+                      )}
                     </button>
                   </div>
                   {selected.musicUrl &&
@@ -1176,42 +1188,37 @@ export function PortfolioContentEditor({
                 </div>
               </Field>
 
-              <div className="space-y-2">
-                <span className="text-xs font-semibold uppercase tracking-wide text-parchment-muted">
+              {/* 8. Links */}
+              <div className="space-y-1.5">
+                <span className="text-[11px] font-semibold uppercase tracking-wide text-parchment-muted/70">
                   Links
                 </span>
                 {(selected.links?.length
                   ? selected.links
                   : [{ label: "", href: "" }]
                 ).map((link, i) => (
-                  <div key={i} className="flex flex-col gap-1 sm:flex-row">
+                  <div key={i} className="flex gap-1.5">
                     <input
                       value={link.label}
                       onChange={(e) => {
-                        const base =
-                          selected.links?.length ?? 0
-                            ? [...selected.links!]
-                            : [{ label: "", href: "" }];
+                        const base = selected.links?.length ? [...selected.links!] : [{ label: "", href: "" }];
                         while (base.length <= i) base.push({ label: "", href: "" });
                         base[i] = { ...base[i], label: e.target.value };
                         patchAchievement(selected.id, { links: base });
                       }}
                       placeholder="Label"
-                      className="flex-1 rounded-lg border border-dusk-600 bg-dusk-850 px-2 py-1.5 text-xs text-parchment"
+                      className="w-24 shrink-0 rounded-lg border border-dusk-600 bg-dusk-850 px-2 py-1.5 text-xs text-parchment"
                     />
                     <input
                       value={link.href}
                       onChange={(e) => {
-                        const base =
-                          selected.links?.length ?? 0
-                            ? [...selected.links!]
-                            : [{ label: "", href: "" }];
+                        const base = selected.links?.length ? [...selected.links!] : [{ label: "", href: "" }];
                         while (base.length <= i) base.push({ label: "", href: "" });
                         base[i] = { ...base[i], href: e.target.value };
                         patchAchievement(selected.id, { links: base });
                       }}
                       placeholder="https://…"
-                      className="min-w-0 flex-[2] rounded-lg border border-dusk-600 bg-dusk-850 px-2 py-1.5 text-xs text-parchment"
+                      className="min-w-0 flex-1 rounded-lg border border-dusk-600 bg-dusk-850 px-2 py-1.5 text-xs text-parchment"
                     />
                   </div>
                 ))}
@@ -1220,9 +1227,7 @@ export function PortfolioContentEditor({
                   onClick={() =>
                     patchAchievement(selected.id, {
                       links: [
-                        ...(selected.links?.length
-                          ? selected.links
-                          : [{ label: "", href: "" }]),
+                        ...(selected.links?.length ? selected.links : [{ label: "", href: "" }]),
                         { label: "", href: "" },
                       ],
                     })
@@ -1232,6 +1237,30 @@ export function PortfolioContentEditor({
                   + Add link row
                 </button>
               </div>
+
+              {/* 9. Donations */}
+              <Field label="Donations (amount raised, USD)">
+                <div className="relative mt-0.5">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-parchment-muted/60">$</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={selected.amountRaised ?? ""}
+                    onChange={(e) =>
+                      patchAchievement(selected.id, {
+                        amountRaised: e.target.value ? parseFloat(e.target.value) : undefined,
+                      })
+                    }
+                    placeholder="0.00"
+                    className="w-full rounded-lg border border-dusk-600 bg-dusk-850 py-1.5 pl-6 pr-3 text-sm text-parchment placeholder:text-parchment-muted/40"
+                  />
+                </div>
+                <p className="mt-0.5 text-[10px] text-parchment-muted/45">
+                  Counts toward your lifetime fundraising total on the Badges page.
+                </p>
+              </Field>
+
             </div>
           ) : null}
             </>
@@ -1322,7 +1351,7 @@ function Field({
 }) {
   return (
     <div>
-      <span className="text-xs font-semibold uppercase tracking-wide text-parchment-muted">
+      <span className="text-[11px] font-semibold uppercase tracking-wide text-parchment-muted/70">
         {label}
       </span>
       {children}
