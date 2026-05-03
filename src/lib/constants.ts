@@ -10,15 +10,26 @@ export const FREE_AI_EXHAUSTED_MESSAGE = `You've used your ${FREE_AI_USES_PER_MO
 
 // ── Subscription prices (USD) ─────────────────────────────────────────────────
 export const PRICES = {
-  pro: {
-    monthly: 2.99,
-    yearly: 23.99,   // ~$2.00/mo, saves 33%
+  // Student (self account) — flat monthly/yearly
+  studentPro: {
+    monthly: 1.99,
+    yearly: 15.99,   // ~$1.33/mo, saves 33%
   },
-  family: {
-    monthly: 6.99,   // up to 4 members, saves ~42% vs 4 individual Pros
-    yearly: 55.99,   // saves 33% vs family monthly
+  // Parent (guardian account) — per child per month
+  parentPro: {
+    perChildMonthly: 1.49,
+    perChildYearly: 11.99,  // ~$1.00/child/mo, saves 33%
   },
 } as const;
+
+// ── Guardian free tier ────────────────────────────────────────────────────────
+/** Number of child profiles a guardian can have on the free plan. */
+export const FREE_CHILD_LIMIT = 2;
+
+// ── Upgrade copy ──────────────────────────────────────────────────────────────
+export const PARENT_UPGRADE_HEADLINE = "Unlock more children + all Pro features";
+export const PARENT_UPGRADE_BODY =
+  `You've reached the free limit of ${FREE_CHILD_LIMIT} child portfolios. Upgrade to Parent Pro for $${PRICES.parentPro.perChildMonthly}/child/mo and get unlimited children with all Pro features for your whole family.`;
 
 // ── Onboarding: who is the portfolio for? (once per account) ─────────────────
 export const ONBOARDING_ACCOUNT_KIND_EYEBROW = "Important — please choose";

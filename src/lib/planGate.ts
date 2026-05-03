@@ -1,4 +1,4 @@
-import { FREE_AI_USES_PER_MONTH } from "@/lib/constants";
+import { FREE_AI_USES_PER_MONTH, FREE_CHILD_LIMIT } from "@/lib/constants";
 import type { Plan } from "@/types/database";
 
 export const PLAN_LIMITS = {
@@ -12,6 +12,7 @@ export const PLAN_LIMITS = {
     analytics: false,
     albumUnlimited: false,
     eventAudioUpload: false,
+    maxChildProfiles: FREE_CHILD_LIMIT,
   },
   pro: {
     eventsPerYear: Infinity,
@@ -23,6 +24,7 @@ export const PLAN_LIMITS = {
     analytics: true,
     albumUnlimited: true,
     eventAudioUpload: true,
+    maxChildProfiles: Infinity,
   },
 } as const;
 
@@ -36,6 +38,6 @@ export function canAccess(plan: Plan, feature: PlanFeature): boolean {
   return false;
 }
 
-export function getLimit(plan: Plan, feature: "eventsPerYear" | "imagesPerEvent" | "aiUsesPerMonth"): number {
+export function getLimit(plan: Plan, feature: "eventsPerYear" | "imagesPerEvent" | "aiUsesPerMonth" | "maxChildProfiles"): number {
   return PLAN_LIMITS[plan][feature] as number;
 }

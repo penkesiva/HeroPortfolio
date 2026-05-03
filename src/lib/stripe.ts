@@ -24,6 +24,7 @@ export const stripe = {
   get subscriptions() { return getStripe().subscriptions; },
 };
 
+/** Student Pro — flat recurring price */
 export function getStripeProPriceId(interval: "month" | "year"): string {
   if (interval === "year") {
     return process.env.STRIPE_PRO_ANNUAL_PRICE_ID ?? "";
@@ -31,9 +32,10 @@ export function getStripeProPriceId(interval: "month" | "year"): string {
   return process.env.STRIPE_PRO_MONTHLY_PRICE_ID ?? "";
 }
 
-export function getStripeFamilyPriceId(interval: "month" | "year"): string {
+/** Parent Pro — per-child recurring price (quantity = number of children at checkout) */
+export function getStripeParentProPriceId(interval: "month" | "year"): string {
   if (interval === "year") {
-    return process.env.STRIPE_FAMILY_ANNUAL_PRICE_ID ?? "";
+    return process.env.STRIPE_PARENT_PRO_ANNUAL_PRICE_ID ?? "";
   }
-  return process.env.STRIPE_FAMILY_MONTHLY_PRICE_ID ?? "";
+  return process.env.STRIPE_PARENT_PRO_MONTHLY_PRICE_ID ?? "";
 }

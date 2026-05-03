@@ -1,33 +1,35 @@
 "use client";
 
-import { FREE_AI_LABEL, PRICES } from "@/lib/constants";
+import { FREE_AI_LABEL, FREE_CHILD_LIMIT, PRICES } from "@/lib/constants";
 
 import { startTransition, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import type { AccountKind } from "@/types/database";
 
-const PRO_MONTHLY = PRICES.pro.monthly;
-const PRO_YEARLY = PRICES.pro.yearly;
-const proYearlyEquivMonthly = (PRO_YEARLY / 12).toFixed(2);
+const STUDENT_MONTHLY = PRICES.studentPro.monthly;
+const STUDENT_YEARLY = PRICES.studentPro.yearly;
+const studentYearlyEquivMonthly = (STUDENT_YEARLY / 12).toFixed(2);
 
-const FAM_MONTHLY = PRICES.family.monthly;
-const FAM_YEARLY = PRICES.family.yearly;
-const famYearlyEquivMonthly = (FAM_YEARLY / 12).toFixed(2);
+const PARENT_PER_CHILD_MONTHLY = PRICES.parentPro.perChildMonthly;
+const PARENT_PER_CHILD_YEARLY = PRICES.parentPro.perChildYearly;
+const parentYearlyEquivMonthly = (PARENT_PER_CHILD_YEARLY / 12).toFixed(2);
 
 type Props = {
   userPlan?: "free" | "pro";
+  accountKind?: AccountKind | null;
   hasStripeCustomer?: boolean;
   isLoggedIn?: boolean;
 };
 
 export function PricingPlansClient({
   userPlan = "free",
+  accountKind = null,
   hasStripeCustomer = false,
   isLoggedIn = false,
 }: Props) {
   const [yearly, setYearly] = useState(false);
-  /** Which Stripe checkout is in flight (Pro vs Family each have their own label). */
-  const [checkoutTier, setCheckoutTier] = useState<null | "pro" | "family">(null);
+  const [checkoutTier, setCheckoutTier] = useState<null | "pro" | "parent_pro">(null);
   const [portalLoading, setPortalLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -37,7 +39,11 @@ export function PricingPlansClient({
 
   const signupForPricingHref = `/signup?next=${encodeURIComponent("/pricing")}`;
 
-  const handleUpgrade = async (tier: "pro" | "family" = "pro") => {
+  // Determine which Pro card to show:
+  // guardian → Parent Pro; self or unknown → Student Pro
+  const isGuardian = accountKind === "guardian";
+
+  const handleUpgrade = async (tier: "pro" | "parent_pro" = "pro") => {
     if (!isLoggedIn) {
       router.push(signupForPricingHref);
       return;
@@ -130,37 +136,58 @@ export function PricingPlansClient({
         <p className="mb-6 text-center text-sm text-red-400">{error}</p>
       )}
 
-      <div className="mx-auto grid max-w-6xl gap-4 lg:grid-cols-3 lg:gap-5">
-        {/* ── Basic ── */}
+      <div className="mx-auto grid max-w-4xl gap-4 lg:grid-cols-2 lg:gap-6">
+        {/* ── Free ── */}
         <article className="flex flex-col rounded-2xl border border-dusk-700/90 bg-dusk-900/40 p-5 shadow-lg sm:p-6">
-          <h2 className="text-base font-semibold text-parchment">Basic</h2>
+          <h2 className="text-base font-semibold text-parchment">Free</h2>
           <p className="mt-0.5 text-sm text-parchment-muted">
-            Everything you need to publish a credible portfolio.
+            {isGuardian
+              ? `Everything you need to get started with up to ${FREE_CHILD_LIMIT} children.`
+              : "Everything you need to publish a credible portfolio."}
           </p>
           <div className="mt-4 flex items-baseline gap-1.5">
             <span className="text-3xl font-semibold tracking-tight text-parchment">$0</span>
             <span className="text-sm text-parchment-muted">/ forever</span>
           </div>
           <ul className="mt-5 flex flex-1 flex-col gap-2 text-sm text-parchment-muted">
-            <Feature>
-              <strong className="font-medium text-parchment/90">1 public portfolio</strong> with a shareable link
-            </Feature>
-            <Feature>
-              <strong className="font-medium text-parchment/90">Year-by-year timeline</strong>, up to 12 events per year
-            </Feature>
-            <Feature>
-              <strong className="font-medium text-parchment/90">3 photos per event</strong> with album view
-            </Feature>
-            <Feature>
-              <strong className="font-medium text-parchment/90">JSON export</strong> for backup
-            </Feature>
-            <Feature>
-              <strong className="font-medium text-parchment/90">AI Smart Import</strong>, {FREE_AI_LABEL}
-            </Feature>
-            <Feature>
-              <strong className="font-medium text-parchment/90">Milestone badges</strong> earned automatically
-            </Feature>
-            <Feature>Light &amp; dark themes, video &amp; music embeds</Feature>
+            {isGuardian ? (
+              <>
+                <Feature>
+                  <strong className="font-medium text-parchment/90">Up to {FREE_CHILD_LIMIT} child portfolios</strong>
+                </Feature>
+                <Feature>
+                  <strong className="font-medium text-parchment/90">Year-by-year timeline</strong>, up to 12 events per year per child
+                </Feature>
+                <Feature>
+                  <strong className="font-medium text-parchment/90">3 photos per event</strong> with album view
+                </Feature>
+                <Feature>
+                  <strong className="font-medium text-parchment/90">AI Smart Import</strong>, {FREE_AI_LABEL}
+                </Feature>
+                <Feature>
+                  <strong className="font-medium text-parchment/90">Milestone badges</strong> earned automatically
+                </Feature>
+              </>
+            ) : (
+              <>
+                <Feature>
+                  <strong className="font-medium text-parchment/90">1 public portfolio</strong> with a shareable link
+                </Feature>
+                <Feature>
+                  <strong className="font-medium text-parchment/90">Year-by-year timeline</strong>, up to 12 events per year
+                </Feature>
+                <Feature>
+                  <strong className="font-medium text-parchment/90">3 photos per event</strong> with album view
+                </Feature>
+                <Feature>
+                  <strong className="font-medium text-parchment/90">AI Smart Import</strong>, {FREE_AI_LABEL}
+                </Feature>
+                <Feature>
+                  <strong className="font-medium text-parchment/90">Milestone badges</strong> earned automatically
+                </Feature>
+                <Feature>JSON export · video &amp; music embeds</Feature>
+              </>
+            )}
           </ul>
           {userPlan === "free" && isLoggedIn ? (
             <p className="mt-6 py-2.5 text-center text-sm font-medium text-parchment-muted">
@@ -175,44 +202,75 @@ export function PricingPlansClient({
             </Link>
           ) : (
             <p className="mt-6 py-2.5 text-center text-sm font-medium text-parchment-muted">
-              Your current plan
+              ✓ Included in your plan
             </p>
           )}
         </article>
 
-        {/* ── Pro ── */}
+        {/* ── Pro card — Student or Parent depending on account_kind ── */}
         <article className="relative flex flex-col rounded-2xl border border-umber-500/45 bg-gradient-to-b from-umber-500/10 to-dusk-900/50 p-5 shadow-[0_24px_64px_rgba(0,0,0,0.35)] ring-1 ring-umber-500/20 sm:p-6">
           <span className="absolute right-4 top-4 rounded-full bg-umber-500/25 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-umber-200">
             Most popular
           </span>
-          <h2 className="text-base font-semibold text-parchment">Pro</h2>
+          <h2 className="text-base font-semibold text-parchment">
+            {isGuardian ? "Parent Pro" : "Student Pro"}
+          </h2>
           <p className="mt-0.5 text-sm text-parchment-muted">
-            For students building a college application portfolio.
+            {isGuardian
+              ? "Unlimited children, all Pro features for your whole family."
+              : "For students building a college application portfolio."}
           </p>
           <div className="mt-4">
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-3xl font-semibold tracking-tight text-parchment">
-                {yearly ? `$${PRO_YEARLY.toFixed(2)}` : `$${PRO_MONTHLY.toFixed(2)}`}
-              </span>
-              <span className="text-sm text-parchment-muted">
-                {yearly ? "/ year" : "/ month"}
-              </span>
-            </div>
-            <p className="mt-1 text-xs text-parchment-muted/80">
-              {yearly
-                ? `~$${proYearlyEquivMonthly}/mo billed annually`
-                : `Or $${PRO_YEARLY}/yr (save 33%)`}
-            </p>
+            {isGuardian ? (
+              <>
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-3xl font-semibold tracking-tight text-parchment">
+                    {yearly ? `$${PARENT_PER_CHILD_YEARLY.toFixed(2)}` : `$${PARENT_PER_CHILD_MONTHLY.toFixed(2)}`}
+                  </span>
+                  <span className="text-sm text-parchment-muted">
+                    / child / {yearly ? "year" : "month"}
+                  </span>
+                </div>
+                <p className="mt-1 text-xs text-parchment-muted/80">
+                  {yearly
+                    ? `~$${parentYearlyEquivMonthly}/child/mo billed annually`
+                    : `Or $${PARENT_PER_CHILD_YEARLY}/child/yr (save 33%)`}
+                </p>
+                <p className="mt-1 text-xs text-parchment-muted/60">
+                  Example: 3 children = ${yearly
+                    ? (PARENT_PER_CHILD_YEARLY * 3).toFixed(2) + "/yr"
+                    : (PARENT_PER_CHILD_MONTHLY * 3).toFixed(2) + "/mo"}
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-3xl font-semibold tracking-tight text-parchment">
+                    {yearly ? `$${STUDENT_YEARLY.toFixed(2)}` : `$${STUDENT_MONTHLY.toFixed(2)}`}
+                  </span>
+                  <span className="text-sm text-parchment-muted">
+                    {yearly ? "/ year" : "/ month"}
+                  </span>
+                </div>
+                <p className="mt-1 text-xs text-parchment-muted/80">
+                  {yearly
+                    ? `~$${studentYearlyEquivMonthly}/mo billed annually`
+                    : `Or $${STUDENT_YEARLY}/yr (save 33%)`}
+                </p>
+              </>
+            )}
           </div>
           <ul className="mt-5 flex flex-1 flex-col gap-2 text-sm text-parchment-muted">
             <Feature>
-              <strong className="font-medium text-parchment/90">Everything in Basic</strong>
+              <strong className="font-medium text-parchment/90">Everything in Free</strong>
             </Feature>
+            {isGuardian && (
+              <Feature>
+                <strong className="font-medium text-parchment/90">Unlimited child portfolios</strong>
+              </Feature>
+            )}
             <Feature>
               <strong className="font-medium text-parchment/90">Unlimited events</strong> + unlimited photos
-            </Feature>
-            <Feature>
-              <strong className="font-medium text-parchment/90">Full album</strong>, masonry gallery across all years
             </Feature>
             <Feature>
               <strong className="font-medium text-parchment/90">PDF Achievement Book</strong> + CSV export
@@ -224,14 +282,17 @@ export function PricingPlansClient({
               <strong className="font-medium text-parchment/90">Profile analytics</strong>
             </Feature>
             <Feature>
-              <strong className="font-medium text-parchment/90">Pro badge</strong> + priority support
+              <strong className="font-medium text-parchment/90">Audio uploads</strong> + full album gallery
+            </Feature>
+            <Feature>
+              <strong className="font-medium text-parchment/90">Priority support</strong>
             </Feature>
           </ul>
 
           {userPlan === "pro" ? (
             <div className="mt-6 space-y-2">
               <p className="py-1.5 text-center text-sm font-medium text-umber-300">
-                ✓ You are on Pro
+                ✓ You are on {isGuardian ? "Parent Pro" : "Student Pro"}
               </p>
               {hasStripeCustomer && (
                 <button
@@ -248,81 +309,26 @@ export function PricingPlansClient({
             <>
               <button
                 type="button"
-                onClick={() => void handleUpgrade("pro")}
+                onClick={() => void handleUpgrade(isGuardian ? "parent_pro" : "pro")}
                 disabled={anyBillingBusy}
                 className="mt-6 w-full rounded-full border border-umber-500/50 bg-umber-500/25 py-2.5 text-sm font-semibold text-umber-100 transition hover:bg-umber-500/35 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {checkoutTier === "pro"
+                {checkoutTier !== null
                   ? "Redirecting…"
-                  : `Upgrade to Pro  ${yearly ? `$${PRO_YEARLY}/yr` : `$${PRO_MONTHLY}/mo`}`}
+                  : isGuardian
+                    ? `Upgrade to Parent Pro · ${yearly ? `$${PARENT_PER_CHILD_YEARLY}/child/yr` : `$${PARENT_PER_CHILD_MONTHLY}/child/mo`}`
+                    : `Upgrade to Student Pro · ${yearly ? `$${STUDENT_YEARLY}/yr` : `$${STUDENT_MONTHLY}/mo`}`}
               </button>
               <p className="mt-2 text-center text-[11px] text-parchment-muted">
-                Stripe checkout · Cancel any time · One scholarship pays for 8+ yrs
+                Stripe checkout · Cancel any time · No hidden fees
               </p>
             </>
           )}
         </article>
-
-        {/* ── Family ── */}
-        <article className="family-card family-card-bg relative flex flex-col rounded-2xl border p-5 shadow-lg sm:p-6">
-          <span className="family-badge absolute right-4 top-4 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest">
-            Family
-          </span>
-          <h2 className="text-base font-semibold text-parchment">Family</h2>
-          <p className="mt-0.5 text-sm text-parchment-muted">
-            Up to 4 members, one simple bill.
-          </p>
-          <div className="mt-4">
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-3xl font-semibold tracking-tight text-parchment">
-                {yearly ? `$${FAM_YEARLY.toFixed(2)}` : `$${FAM_MONTHLY.toFixed(2)}`}
-              </span>
-              <span className="text-sm text-parchment-muted">
-                {yearly ? "/ year" : "/ month"}
-              </span>
-            </div>
-            <p className="family-accent-muted mt-1 text-xs">
-              {yearly
-                ? `~$${famYearlyEquivMonthly}/mo · saves ~42% vs 4 individual Pros`
-                : `Or $${FAM_YEARLY}/yr (save 33%)`}
-            </p>
-          </div>
-          <ul className="mt-5 flex flex-1 flex-col gap-2 text-sm text-parchment-muted">
-            <Feature check="sky">
-              <strong className="font-medium text-parchment/90">Full Pro for every member</strong>, up to 4 accounts
-            </Feature>
-            <Feature check="sky">
-              <strong className="font-medium text-parchment/90">Parent overview dashboard</strong>
-            </Feature>
-            <Feature check="sky">
-              <strong className="font-medium text-parchment/90">Shared family album</strong>
-            </Feature>
-            <Feature check="sky">
-              <strong className="font-medium text-parchment/90">One bill, one login</strong>
-            </Feature>
-            <Feature check="sky">
-              <strong className="font-medium text-parchment/90">Priority family support</strong> + early access
-            </Feature>
-          </ul>
-
-          <button
-            type="button"
-            onClick={() => void handleUpgrade("family")}
-            disabled={anyBillingBusy}
-            className="family-btn mt-6 w-full rounded-full border py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {checkoutTier === "family"
-              ? "Redirecting…"
-              : `Get started with Family  ${yearly ? `$${FAM_YEARLY}/yr` : `$${FAM_MONTHLY}/mo`}`}
-          </button>
-          <p className="mt-2 text-center text-[11px] text-parchment-muted">
-            Stripe checkout · Cancel any time · Dashboard launching Q3 2026
-          </p>
-        </article>
       </div>
 
       <p className="mx-auto mt-10 max-w-2xl text-center text-xs leading-relaxed text-parchment-muted">
-        Prices in USD. Taxes may apply. Cancel Pro or Family any time; Basic stays free forever.
+        Prices in USD. Taxes may apply. Cancel any time; Free plan stays free forever.
       </p>
     </div>
   );

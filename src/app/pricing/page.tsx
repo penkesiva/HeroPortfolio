@@ -9,15 +9,17 @@ import { displayNameFromUser } from "@/lib/auth/displayName";
 import { dbProfileToSiteIntro, getProfile } from "@/lib/db/portfolio";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import type { AccountKind } from "@/types/database";
 
 export const metadata: Metadata = {
   title: "Plans & pricing",
   description:
-    "HeroPortfolio Basic is free forever. Pro adds unlimited events, AI Smart Import, PDF export, and analytics for $4.99/mo or $39.99/yr.",
+    "HeroPortfolio is free to start. Student Pro unlocks unlimited events, AI import, and PDF export for $1.99/mo. Parent Pro adds unlimited child portfolios for $1.49/child/mo.",
 };
 
 export default async function PricingPage() {
   let userPlan: "free" | "pro" = "free";
+  let accountKind: AccountKind | null = null;
   let hasStripeCustomer = false;
   let isLoggedIn = false;
   let userId = "";
@@ -37,6 +39,7 @@ export default async function PricingPage() {
         displayName = displayNameFromUser(user);
         const profile = await getProfile(supabase, user.id);
         userPlan = (profile?.plan as "free" | "pro") ?? "free";
+        accountKind = profile?.account_kind ?? null;
         hasStripeCustomer = Boolean(profile?.stripe_customer_id);
         const siteIntro = await dbProfileToSiteIntro(supabase, profile, displayName);
         headerAvatar = {
@@ -95,12 +98,15 @@ export default async function PricingPage() {
           Plans that match how you achieve
         </h1>
         <p className="mt-4 text-pretty text-base leading-relaxed text-parchment-muted sm:text-[17px]">
-          Start free with a full portfolio. Upgrade to Pro for AI-powered import, unlimited photos, and PDF export. Or go Family for up to 4 members at one simple price.
+          {accountKind === "guardian"
+            ? "Start free with up to 2 child portfolios. Upgrade to Parent Pro for $1.49/child/mo to add unlimited children and unlock all Pro features for your whole family."
+            : "Start free with a full portfolio. Upgrade to Student Pro for AI-powered import, unlimited events, and PDF export — for less than a coffee per month."}
         </p>
 
         <div className="mt-12">
           <PricingPlansClient
             userPlan={userPlan}
+            accountKind={accountKind}
             hasStripeCustomer={hasStripeCustomer}
             isLoggedIn={isLoggedIn}
           />

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getProfile } from "@/lib/db/portfolio";
+import { getChildProfiles, getProfile } from "@/lib/db/portfolio";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { stripe, getStripeProPriceId, getStripeFamilyPriceId } from "@/lib/stripe";
+import { stripe, getStripeProPriceId, getStripeParentProPriceId } from "@/lib/stripe";
 
 export async function POST(req: NextRequest) {
   if (!isSupabaseConfigured()) {
@@ -18,11 +18,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = (await req.json()) as { interval?: "month" | "year"; tier?: "pro" | "family" };
+  const body = (await req.json()) as { interval?: "month" | "year"; tier?: "pro" | "parent_pro" };
   const interval = body.interval === "year" ? "year" : "month";
-  const tier = body.tier === "family" ? "family" : "pro";
-  const priceId = tier === "family"
-    ? getStripeFamilyPriceId(interval)
+  const isParentPro = body.tier === "parent_pro";
+
+  const priceId = isParentPro
+    ? getStripeParentProPriceId(interval)
     : getStripeProPriceId(interval);
 
   if (!priceId) {
@@ -30,6 +31,13 @@ export async function POST(req: NextRequest) {
       { error: "Stripe price IDs not configured." },
       { status: 503 },
     );
+  }
+
+  // For Parent Pro, quantity = current number of children (min 1 so Stripe doesn't reject)
+  let quantity = 1;
+  if (isParentPro) {
+    const children = await getChildProfiles(supabase, user.id);
+    quantity = Math.max(children.length, 1);
   }
 
   const profile = await getProfile(supabase, user.id);
@@ -43,19 +51,20 @@ export async function POST(req: NextRequest) {
       metadata: { supabase_user_id: user.id },
     });
     customerId = customer.id;
-
-    // Store customer ID on profile
     await supabase
       .from("profiles")
       .upsert({ id: user.id, stripe_customer_id: customerId });
   }
 
+  // Guardians land on /children after upgrade; students land on /timeline
+  const successPath = isParentPro ? "/children?upgraded=1" : "/timeline?upgraded=1";
+
   const session = await stripe.checkout.sessions.create({
     customer: customerId,
     payment_method_types: ["card"],
-    line_items: [{ price: priceId, quantity: 1 }],
+    line_items: [{ price: priceId, quantity }],
     mode: "subscription",
-    success_url: `${origin}/timeline?upgraded=1`,
+    success_url: `${origin}${successPath}`,
     cancel_url: `${origin}/pricing?cancelled=1`,
     metadata: { supabase_user_id: user.id },
     subscription_data: {

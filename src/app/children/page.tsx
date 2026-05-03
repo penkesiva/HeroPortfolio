@@ -2,12 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AppHeader } from "@/components/AppHeader";
-import { BackToTimeline } from "@/components/BackToTimeline";
 import { SiteBrandLink } from "@/components/SiteBrandLink";
 import { mustHaveAccountKindOrRedirect } from "@/lib/auth/accountSetup";
 import { displayNameFromUser } from "@/lib/auth/displayName";
 import { getChildProfiles, getProfile, getUserPlan } from "@/lib/db/portfolio";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
+import { FREE_CHILD_LIMIT, PRICES } from "@/lib/constants";
+import { getLimit } from "@/lib/planGate";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
@@ -40,6 +41,9 @@ export default async function ChildrenPage() {
   const displayName = displayNameFromUser(user);
   const avatarSrc = profile?.photo_url ?? null;
 
+  const maxChildren = getLimit(plan, "maxChildProfiles");
+  const atLimit = plan === "free" && children.length >= maxChildren;
+
   return (
     <div className="flex min-h-screen flex-col bg-dusk-950 text-parchment">
       <AppHeader
@@ -59,15 +63,53 @@ export default async function ChildrenPage() {
             <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
               My Children
             </h1>
+            {plan === "free" && (
+              <p className="mt-1 text-xs text-parchment-muted/60">
+                {children.length} / {FREE_CHILD_LIMIT} free portfolios used
+              </p>
+            )}
           </div>
-          <Link
-            href="/children/new"
-            className="flex items-center gap-2 rounded-full border border-umber-500/50 bg-umber-500/15 px-4 py-2 text-sm font-semibold text-umber-200 transition hover:bg-umber-500/25"
-          >
-            <span className="text-base leading-none">+</span>
-            Add child
-          </Link>
+
+          {atLimit ? (
+            <Link
+              href="/pricing?reason=child_limit"
+              className="flex items-center gap-2 rounded-full border border-umber-500/50 bg-umber-500/15 px-4 py-2 text-sm font-semibold text-umber-200 transition hover:bg-umber-500/25"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="size-3.5 shrink-0">
+                <path fillRule="evenodd" d="M8 1a3.5 3.5 0 0 0-3.5 3.5V7A1.5 1.5 0 0 0 3 8.5v5A1.5 1.5 0 0 0 4.5 15h7a1.5 1.5 0 0 0 1.5-1.5v-5A1.5 1.5 0 0 0 11.5 7V4.5A3.5 3.5 0 0 0 8 1Zm2 6V4.5a2 2 0 1 0-4 0V7h4Z" clipRule="evenodd" />
+              </svg>
+              Upgrade to add more
+            </Link>
+          ) : (
+            <Link
+              href="/children/new"
+              className="flex items-center gap-2 rounded-full border border-umber-500/50 bg-umber-500/15 px-4 py-2 text-sm font-semibold text-umber-200 transition hover:bg-umber-500/25"
+            >
+              <span className="text-base leading-none">+</span>
+              Add child
+            </Link>
+          )}
         </div>
+
+        {/* Upgrade banner when at free limit */}
+        {atLimit && (
+          <div className="mb-6 flex flex-col gap-3 rounded-2xl border border-umber-500/30 bg-umber-500/8 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-umber-200">
+                Free limit reached — {FREE_CHILD_LIMIT} child portfolios
+              </p>
+              <p className="mt-0.5 text-xs text-parchment-muted">
+                Upgrade to Parent Pro for ${PRICES.parentPro.perChildMonthly}/child/mo to add unlimited children and unlock all Pro features for your whole family.
+              </p>
+            </div>
+            <Link
+              href="/pricing?reason=child_limit"
+              className="shrink-0 rounded-full border border-umber-500/50 bg-umber-500/20 px-4 py-2 text-sm font-semibold text-umber-200 transition hover:bg-umber-500/30"
+            >
+              See plans
+            </Link>
+          </div>
+        )}
 
         {children.length === 0 ? (
           /* Empty state */
