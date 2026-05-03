@@ -429,9 +429,13 @@ function AchievementCard({
           </p>
         ) : null}
         {prose ? (
-          <p className="text-[15px] leading-relaxed text-parchment-muted">
-            {prose}
-          </p>
+          <div className="space-y-3 text-[15px] leading-relaxed text-parchment-muted">
+            {prose.split(/\n\n+/).map((para, i) => (
+              <p key={i} className="whitespace-pre-wrap">
+                {para}
+              </p>
+            ))}
+          </div>
         ) : null}
         {achievement.musicUrl ? (
           <EventMusicPlayer
@@ -452,33 +456,132 @@ function AchievementCard({
             ))}
           </div>
         ) : null}
-        <div className="flex flex-wrap gap-2 pt-1">
-          {achievement.videoUrl ? (
-            <button
-              type="button"
-              onClick={() =>
-                onPlayVideo(achievement.videoUrl!, achievement.title)
-              }
-              className="inline-flex items-center gap-2 rounded-full border border-umber-500/40 bg-umber-500/10 px-4 py-2 text-sm font-medium text-umber-300 transition hover:border-umber-400/60 hover:bg-umber-500/20"
-            >
-              <PlayIcon className="size-4 shrink-0" />
-              Watch video
-            </button>
-          ) : null}
-          {achievement.links?.map((l, li) => (
-            <Link
-              key={`${li}-${l.href}-${l.label}`}
-              href={l.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center rounded-full border border-dusk-600 bg-dusk-850 px-4 py-2 text-sm font-medium text-parchment-muted transition hover:border-dusk-600 hover:text-parchment"
-            >
-              {l.label}
-            </Link>
-          ))}
-        </div>
+        {/* Preview cards — video + links */}
+        {(achievement.videoUrl || (achievement.links && achievement.links.length > 0)) ? (
+          <div className="grid grid-cols-1 gap-2 pt-1 sm:grid-cols-2">
+            {achievement.videoUrl ? (
+              <VideoPreviewCard
+                videoUrl={achievement.videoUrl}
+                title={achievement.title}
+                onPlay={() => onPlayVideo(achievement.videoUrl!, achievement.title)}
+              />
+            ) : null}
+            {achievement.links?.map((l, li) => (
+              <LinkPreviewCard
+                key={`${li}-${l.href}-${l.label}`}
+                label={l.label}
+                href={l.href}
+              />
+            ))}
+          </div>
+        ) : null}
       </div>
     </motion.article>
+  );
+}
+
+/** Extracts YouTube video ID from common URL formats, or null. */
+function extractYouTubeId(url: string): string | null {
+  try {
+    const u = new URL(url);
+    const host = u.hostname.replace(/^www\./, "");
+    if (host === "youtu.be") return u.pathname.replace(/^\//, "").split("/")[0] ?? null;
+    if (host === "youtube.com" || host === "m.youtube.com") {
+      if (u.pathname.startsWith("/shorts/")) return u.pathname.split("/").filter(Boolean)[1] ?? null;
+      return u.searchParams.get("v");
+    }
+    return null;
+  } catch { return null; }
+}
+
+function VideoPreviewCard({
+  videoUrl,
+  title,
+  onPlay,
+}: {
+  videoUrl: string;
+  title: string;
+  onPlay: () => void;
+}) {
+  const ytId = extractYouTubeId(videoUrl);
+  const thumb = ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : null;
+
+  return (
+    <button
+      type="button"
+      onClick={onPlay}
+      className="group/vcard flex items-center gap-3 overflow-hidden rounded-xl border border-dusk-600 bg-dusk-850/70 p-2.5 text-left transition hover:border-umber-500/50 hover:bg-dusk-850"
+    >
+      {/* Thumbnail */}
+      <div className="relative size-14 shrink-0 overflow-hidden rounded-lg bg-dusk-800">
+        {thumb ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={thumb} alt="" className="h-full w-full object-cover opacity-80 transition group-hover/vcard:opacity-100" />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-dusk-800">
+            <PlayIcon className="size-5 text-parchment-muted" />
+          </div>
+        )}
+        {/* Play overlay */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="flex size-7 items-center justify-center rounded-full bg-dusk-950/70 backdrop-blur-sm">
+            <PlayIcon className="size-3.5 text-umber-300" />
+          </div>
+        </div>
+      </div>
+      {/* Label */}
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-xs font-semibold text-parchment group-hover/vcard:text-umber-200">
+          {title}
+        </p>
+        <p className="mt-0.5 text-[11px] text-parchment-muted/60">
+          {ytId ? "YouTube" : "Watch video"}
+        </p>
+      </div>
+    </button>
+  );
+}
+
+function LinkPreviewCard({ label, href }: { label: string; href: string }) {
+  let domain = href;
+  try {
+    domain = new URL(href).hostname.replace(/^www\./, "");
+  } catch { /* keep raw href */ }
+
+  return (
+    <Link
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="group/lcard flex items-center gap-3 overflow-hidden rounded-xl border border-dusk-600 bg-dusk-850/70 p-2.5 transition hover:border-dusk-500 hover:bg-dusk-850"
+    >
+      {/* Favicon / icon */}
+      <div className="flex size-14 shrink-0 items-center justify-center rounded-lg bg-dusk-800">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={`https://www.google.com/s2/favicons?domain=${domain}&sz=32`}
+          alt=""
+          width={20}
+          height={20}
+          className="size-5 opacity-70 group-hover/lcard:opacity-100"
+          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+        />
+      </div>
+      {/* Label + domain */}
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-xs font-semibold text-parchment group-hover/lcard:text-parchment">
+          {label || domain}
+        </p>
+        <p className="mt-0.5 truncate text-[11px] text-parchment-muted/60">
+          {domain}
+        </p>
+      </div>
+      {/* External link icon */}
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="size-3.5 shrink-0 text-parchment-muted/40 group-hover/lcard:text-parchment-muted" aria-hidden>
+        <path d="M6.22 8.72a.75.75 0 0 0 1.06 1.06l5.22-5.22v1.69a.75.75 0 0 0 1.5 0v-3.5a.75.75 0 0 0-.75-.75h-3.5a.75.75 0 0 0 0 1.5h1.69L6.22 8.72Z" />
+        <path d="M3.5 6.75c0-.69.56-1.25 1.25-1.25H7A.75.75 0 0 0 7 4H4.75A2.75 2.75 0 0 0 2 6.75v4.5A2.75 2.75 0 0 0 4.75 14h4.5A2.75 2.75 0 0 0 12 11.25V9a.75.75 0 0 0-1.5 0v2.25c0 .69-.56 1.25-1.25 1.25h-4.5c-.69 0-1.25-.56-1.25-1.25v-4.5Z" />
+      </svg>
+    </Link>
   );
 }
 
