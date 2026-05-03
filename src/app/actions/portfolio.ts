@@ -6,6 +6,7 @@ import {
   saveUserTimeline,
   syncEventImagesForTimeline,
   upsertProfile,
+  updateChildProfile,
   deleteYearBlock,
   getProfile,
   getUserTimeline,
@@ -28,8 +29,28 @@ export type SaveTimelineResult = {
   celebrationUnlocks?: CelebrationUnlockBadge[];
 };
 
+/**
+ * Verify that `targetUserId` is a child profile owned by `parentUserId`.
+ * Returns the child's id on success, null on failure.
+ */
+async function verifyChildOwnership(
+  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
+  parentUserId: string,
+  targetUserId: string,
+): Promise<boolean> {
+  const { data } = await supabase
+    .from("child_profiles")
+    .select("id")
+    .eq("id", targetUserId)
+    .eq("parent_user_id", parentUserId)
+    .single();
+  return Boolean(data);
+}
+
 export async function saveTimelineAction(
   yearBlocks: YearBlock[],
+  /** For child portfolios: the child's profile id. Server verifies parenthood. */
+  targetUserId?: string,
 ): Promise<SaveTimelineResult> {
   if (!isSupabaseConfigured()) return { error: "Supabase not configured" };
 
@@ -40,12 +61,25 @@ export async function saveTimelineAction(
 
   if (!user) redirect("/login?next=/timeline");
 
-  const timelineBeforeSave = await getUserTimeline(supabase, user.id);
+  // Determine which userId to save under
+  let saveUserId = user.id;
+  const isChildContext = targetUserId && targetUserId !== user.id;
 
-  const saved = await saveUserTimeline(supabase, user.id, yearBlocks);
+  if (isChildContext) {
+    const ok = await verifyChildOwnership(supabase, user.id, targetUserId);
+    if (!ok) return { error: "Access denied." };
+    saveUserId = targetUserId;
+  }
+
+  const timelineBeforeSave = await getUserTimeline(supabase, saveUserId);
+
+  const saved = await saveUserTimeline(supabase, saveUserId, yearBlocks);
   if (saved.error) return saved;
-  const synced = await syncEventImagesForTimeline(supabase, user.id, yearBlocks);
+  const synced = await syncEventImagesForTimeline(supabase, saveUserId, yearBlocks);
   if (synced.error) return synced;
+
+  // Badge celebration only applies to the parent's own account, not children
+  if (isChildContext) return { error: null };
 
   const profile = await getProfile(supabase, user.id);
   if (!profile) return { error: null };
@@ -64,12 +98,8 @@ export async function saveTimelineAction(
   );
   if (freshUnlocks.length === 0) return { error: null };
 
-  const newCategories = [
-    ...new Set(freshUnlocks.map((b) => b.category)),
-  ];
-  const mergedCategories = [
-    ...new Set([...alreadyCelebrated, ...newCategories]),
-  ];
+  const newCategories = [...new Set(freshUnlocks.map((b) => b.category))];
+  const mergedCategories = [...new Set([...alreadyCelebrated, ...newCategories])];
 
   const { error: persistErr } = await supabase
     .from("profiles")
@@ -89,14 +119,12 @@ export async function saveTimelineAction(
     (user.email ? user.email.split("@")[0] : null) ||
     "there";
 
-  const celebrationUnlocks: CelebrationUnlockBadge[] = freshUnlocks.map(
-    (b) => ({
-      id: b.id,
-      name: b.name,
-      icon: b.icon,
-      category: b.category,
-    }),
-  );
+  const celebrationUnlocks: CelebrationUnlockBadge[] = freshUnlocks.map((b) => ({
+    id: b.id,
+    name: b.name,
+    icon: b.icon,
+    category: b.category,
+  }));
 
   return {
     error: null,
@@ -108,6 +136,8 @@ export async function saveTimelineAction(
 
 export async function saveProfileAction(
   intro: Pick<SiteIntro, "heroLead" | "role" | "bio" | "photoSrc" | "name">,
+  /** For child portfolios: the child's profile id. Server verifies parenthood. */
+  targetUserId?: string,
 ): Promise<{ error: string | null }> {
   if (!isSupabaseConfigured()) return { error: "Supabase not configured" };
 
@@ -118,11 +148,21 @@ export async function saveProfileAction(
 
   if (!user) redirect("/login?next=/timeline");
 
-  // Treat the default placeholder as "no photo set" so the DB stays clean
   const photoUrl =
     intro.photoSrc && intro.photoSrc !== "/avatar-placeholder.svg"
       ? intro.photoSrc
       : null;
+
+  // Child profile: save display_name + photo_url to child_profiles
+  if (targetUserId && targetUserId !== user.id) {
+    const ok = await verifyChildOwnership(supabase, user.id, targetUserId);
+    if (!ok) return { error: "Access denied." };
+    await updateChildProfile(supabase, user.id, targetUserId, {
+      display_name: intro.name?.trim() || undefined,
+      photo_url: photoUrl ?? undefined,
+    });
+    return { error: null };
+  }
 
   await upsertProfile(supabase, user.id, {
     display_name: intro.name?.trim() || null,
@@ -137,6 +177,8 @@ export async function saveProfileAction(
 
 export async function deleteYearBlockAction(
   year: number,
+  /** For child portfolios: the child's profile id. Server verifies parenthood. */
+  targetUserId?: string,
 ): Promise<{ error: string | null }> {
   if (!isSupabaseConfigured()) return { error: "Supabase not configured" };
 
@@ -147,5 +189,12 @@ export async function deleteYearBlockAction(
 
   if (!user) redirect("/login?next=/timeline");
 
-  return deleteYearBlock(supabase, user.id, year);
+  let saveUserId = user.id;
+  if (targetUserId && targetUserId !== user.id) {
+    const ok = await verifyChildOwnership(supabase, user.id, targetUserId);
+    if (!ok) return { error: "Access denied." };
+    saveUserId = targetUserId;
+  }
+
+  return deleteYearBlock(supabase, saveUserId, year);
 }

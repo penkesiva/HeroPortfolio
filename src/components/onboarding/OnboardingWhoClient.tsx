@@ -29,9 +29,14 @@ export function OnboardingWhoClient({ nextPath }: { nextPath: string }) {
       setError(res.error);
       return;
     }
-    const safe = sanitizeAuthRedirect(nextPath, "/timeline");
-    const dest = safe.startsWith("/onboarding") ? "/timeline" : safe;
-    router.push(dest);
+    // Guardians go to the children dashboard; self-accounts go to timeline
+    if (kind === "guardian") {
+      router.push("/children");
+    } else {
+      const safe = sanitizeAuthRedirect(nextPath, "/timeline");
+      const dest = safe.startsWith("/onboarding") ? "/timeline" : safe;
+      router.push(dest);
+    }
     router.refresh();
   }
 

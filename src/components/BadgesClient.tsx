@@ -118,13 +118,13 @@ function BadgeCard({ badge }: { badge: Badge }) {
   // Dome gradient for front face — radial highlight top-left → dark edge
   const frontGradient = badge.earned
     ? `radial-gradient(circle at 35% 28%, rgba(255,255,255,0.32) 0%, ${catMeta.ring}55 30%, #12100e 65%, rgba(0,0,0,0.55) 100%)`
-    : `radial-gradient(circle at 35% 28%, rgba(255,255,255,0.06) 0%, #1a1613 60%, rgba(0,0,0,0.6) 100%)`;
+    : `radial-gradient(circle at 35% 28%, rgba(255,255,255,0.18) 0%, #3a3530 55%, #2a2420 100%)`;
 
   const backGradient = badge.earned
     ? `radial-gradient(circle at 65% 72%, rgba(255,255,255,0.18) 0%, ${catMeta.ring}30 35%, #0c0a08 70%, rgba(0,0,0,0.5) 100%)`
-    : `radial-gradient(circle at 65% 72%, rgba(255,255,255,0.04) 0%, #0c0a08 70%)`;
+    : `radial-gradient(circle at 65% 72%, rgba(255,255,255,0.12) 0%, #3a3530 65%, #2a2420 100%)`;
 
-  const rimColor = badge.earned ? catMeta.ring : "#2a2520";
+  const rimColor = badge.earned ? catMeta.ring : "#4a4540";
 
   return (
     <div
@@ -241,16 +241,6 @@ function BadgeCard({ badge }: { badge: Badge }) {
                 justifyContent: "center",
               }}
             >
-              {/* Top arc highlight — dome curvature */}
-              <div style={{
-                position: "absolute",
-                top: 7, left: "18%", right: "18%",
-                height: 16,
-                borderRadius: "50%",
-                background: "rgba(255,255,255,0.22)",
-                filter: "blur(5px)",
-                pointerEvents: "none",
-              }} />
               {badge.icon.startsWith("/") ? (
                 <img
                   src={badge.icon}
@@ -259,13 +249,13 @@ function BadgeCard({ badge }: { badge: Badge }) {
                   height={68}
                   style={{
                     position: "relative",
-                    zIndex: 1,
+                    zIndex: 2,
                     width: 68,
                     height: 68,
                     objectFit: "cover",
                     borderRadius: "50%",
                     clipPath: "circle(50%)",
-                    filter: badge.earned ? "none" : "grayscale(1) opacity(0.4)",
+                    filter: badge.earned ? "none" : "grayscale(1) opacity(0.85)",
                   }}
                 />
               ) : (
@@ -308,7 +298,7 @@ function BadgeCard({ badge }: { badge: Badge }) {
                 </div>
               ) : (
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
-                  <span style={{ fontSize: 16, lineHeight: 1, opacity: 0.4 }}>🔒</span>
+                  <span style={{ fontSize: 16, lineHeight: 1, opacity: 0.85 }}>🔒</span>
                   <span style={{
                     fontSize: 7,
                     fontWeight: 700,

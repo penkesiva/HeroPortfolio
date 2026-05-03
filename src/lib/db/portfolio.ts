@@ -6,6 +6,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Achievement, SiteIntro, YearBlock } from "@/data/timeline";
 import type {
   AnalyticsSummary,
+  DbChildProfile,
   DbEvent,
   DbEventImage,
   DbProfile,
@@ -462,6 +463,28 @@ export async function dbProfileToSiteIntro(
   };
 }
 
+/**
+ * Build a SiteIntro from a child profile (no auth user involved).
+ */
+export async function childProfileToSiteIntro(
+  supabase: SupabaseClient,
+  child: DbChildProfile,
+): Promise<SiteIntro> {
+  const rawPhotoUrl = child.photo_url ?? "/avatar-placeholder.svg";
+  const signClient = getClientForStorageSigning(supabase);
+  const photoSrc = await signStoragePath(signClient, BUCKET_PROFILE_PHOTOS, rawPhotoUrl);
+  const gradeLabel = child.grade != null ? (child.grade === 0 ? "Kindergarten" : `Grade ${child.grade}`) : null;
+
+  return {
+    name: child.display_name,
+    heroLead: "I'm",
+    role: gradeLabel ? `${gradeLabel} · Portfolio` : "Student · Portfolio",
+    bio: "Add milestones, media, and links. This timeline tracks achievements year by year.",
+    photoSrc,
+    photoAlt: child.display_name,
+  };
+}
+
 // ─── analytics ───────────────────────────────────────────────────────────────
 
 export async function recordProfileView(
@@ -560,4 +583,78 @@ export async function checkAndIncrementAiUsage(
     .eq("id", userId);
 
   return { allowed: true, remaining: limit - currentUses - 1 };
+}
+
+// ─── child profiles ───────────────────────────────────────────────────────────
+
+export async function getChildProfiles(
+  supabase: SupabaseClient,
+  parentUserId: string,
+): Promise<DbChildProfile[]> {
+  const { data } = await supabase
+    .from("child_profiles")
+    .select("*")
+    .eq("parent_user_id", parentUserId)
+    .order("created_at", { ascending: true });
+  return (data as DbChildProfile[] | null) ?? [];
+}
+
+export async function getChildProfile(
+  supabase: SupabaseClient,
+  parentUserId: string,
+  childId: string,
+): Promise<DbChildProfile | null> {
+  const { data } = await supabase
+    .from("child_profiles")
+    .select("*")
+    .eq("id", childId)
+    .eq("parent_user_id", parentUserId)
+    .single();
+  return (data as DbChildProfile | null) ?? null;
+}
+
+export async function createChildProfile(
+  supabase: SupabaseClient,
+  parentUserId: string,
+  fields: { display_name: string; grade?: number | null; birth_year?: number | null },
+): Promise<{ data: DbChildProfile | null; error: string | null }> {
+  const { data, error } = await supabase
+    .from("child_profiles")
+    .insert({
+      parent_user_id: parentUserId,
+      display_name: fields.display_name.trim(),
+      grade: fields.grade ?? null,
+      birth_year: fields.birth_year ?? null,
+    })
+    .select()
+    .single();
+  if (error) return { data: null, error: error.message };
+  return { data: data as DbChildProfile, error: null };
+}
+
+export async function updateChildProfile(
+  supabase: SupabaseClient,
+  parentUserId: string,
+  childId: string,
+  patch: Partial<Pick<DbChildProfile, "display_name" | "grade" | "birth_year" | "photo_url">>,
+): Promise<{ error: string | null }> {
+  const { error } = await supabase
+    .from("child_profiles")
+    .update({ ...patch, updated_at: new Date().toISOString() })
+    .eq("id", childId)
+    .eq("parent_user_id", parentUserId);
+  return { error: error?.message ?? null };
+}
+
+export async function deleteChildProfile(
+  supabase: SupabaseClient,
+  parentUserId: string,
+  childId: string,
+): Promise<{ error: string | null }> {
+  const { error } = await supabase
+    .from("child_profiles")
+    .delete()
+    .eq("id", childId)
+    .eq("parent_user_id", parentUserId);
+  return { error: error?.message ?? null };
 }

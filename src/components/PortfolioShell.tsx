@@ -601,6 +601,10 @@ type PortfolioShellProps = {
   plan?: "free" | "pro";
   /** After Stripe success redirect: show a short success banner under the app header. */
   showUpgradedBanner?: boolean;
+  /** For child profiles: pre-fill the empty-state grade picker */
+  initialGrade?: number | null;
+  /** For child profiles: pre-fill the empty-state oldest-year picker (birth_year → approx start) */
+  initialOldestYear?: number | null;
 };
 
 export function PortfolioShell({
@@ -610,6 +614,8 @@ export function PortfolioShell({
   userId,
   plan = "free",
   showUpgradedBanner = false,
+  initialGrade,
+  initialOldestYear,
 }: PortfolioShellProps) {
   const [timeline, setTimeline] = useState(serverTimeline);
   const [draftHydrated, setDraftHydrated] = useState(false);
@@ -629,7 +635,7 @@ export function PortfolioShell({
 
   useEffect(() => {
     if (publicView) return;
-    const d = loadDraftTimeline();
+    const d = loadDraftTimeline(userId);
     startTransition(() => {
       if (d?.length && serverTimeline.length > 0) {
         const serverCount = countAchievementsInTimeline(serverTimeline);
@@ -638,13 +644,13 @@ export function PortfolioShell({
         // If server has more saved events than the local draft, prefer server.
         // This avoids stale local drafts hiding newly saved timeline data.
         if (serverCount > draftCount) {
-          clearDraftTimeline();
+          clearDraftTimeline(userId);
           setTimeline(serverTimeline);
         } else {
           setTimeline(d);
         }
       } else if (d?.length && serverTimeline.length === 0) {
-        clearDraftTimeline();
+        clearDraftTimeline(userId);
       }
       setDraftHydrated(true);
     });
@@ -653,7 +659,7 @@ export function PortfolioShell({
 
   useEffect(() => {
     if (publicView) return;
-    const d = loadDraftProfileIntro();
+    const d = loadDraftProfileIntro(userId);
     startTransition(() => {
       if (d) setIntro(introFromDraftFields(serverIntro, d));
       setIntroDraftHydrated(true);
@@ -673,12 +679,12 @@ export function PortfolioShell({
   useEffect(() => {
     if (publicView) return;
     if (!draftHydrated) return;
-    const d = loadDraftTimeline();
+    const d = loadDraftTimeline(userId);
     if (d) {
       const serverCount = countAchievementsInTimeline(serverTimeline);
       const draftCount = countAchievementsInTimeline(d);
       if (draftCount >= serverCount) return;
-      clearDraftTimeline();
+      clearDraftTimeline(userId);
     }
     startTransition(() => setTimeline(serverTimeline));
   }, [publicView, serverTimeline, draftHydrated]);
@@ -686,7 +692,7 @@ export function PortfolioShell({
   useEffect(() => {
     if (publicView) return;
     if (!introDraftHydrated) return;
-    if (loadDraftProfileIntro()) return;
+    if (loadDraftProfileIntro(userId)) return;
     startTransition(() => setIntro(serverIntro));
   }, [publicView, serverIntro, introDraftHydrated]);
 
@@ -694,9 +700,9 @@ export function PortfolioShell({
     (next: YearBlock[]) => {
       if (publicView) return;
       setTimeline(next);
-      saveDraftTimeline(next);
+      saveDraftTimeline(next, userId);
     },
-    [publicView],
+    [publicView, userId],
   );
 
   const applyIntro = useCallback(
@@ -705,11 +711,11 @@ export function PortfolioShell({
       setIntro((prev) => {
         const fields = serverIntroToDraftFields(prev);
         const next = { ...fields, ...patch };
-        saveDraftProfileIntro(next);
+        saveDraftProfileIntro(next, userId);
         return introFromDraftFields(serverIntro, next);
       });
     },
-    [publicView, serverIntro],
+    [publicView, serverIntro, userId],
   );
 
   const handleAddYear = useCallback(
@@ -733,7 +739,7 @@ export function PortfolioShell({
       //  2. Discard reverts to this scaffolded state, not to an empty timeline.
       if (userId) {
         lastSavedTimeline.current = next;
-        void saveTimelineAction(next).catch(() => {});
+        void saveTimelineAction(next, userId).catch(() => {});
       }
       // Snapshot the scaffolded state as the panel-open baseline so Discard
       // after onboarding reverts to the scaffolded years, not an empty timeline.
@@ -757,7 +763,7 @@ export function PortfolioShell({
       if (userId) {
         lastSavedTimeline.current = next;
         panelOpenTimeline.current = next;
-        void saveTimelineAction(next).catch(() => {});
+        void saveTimelineAction(next, userId).catch(() => {});
       }
     },
     [publicView, timeline, applyTimeline, userId],
@@ -772,7 +778,7 @@ export function PortfolioShell({
       lastSavedTimeline.current = next;
       panelOpenTimeline.current = next;
       if (userId) {
-        await deleteYearBlockAction(year).catch(() => {});
+        await deleteYearBlockAction(year, userId).catch(() => {});
       }
     },
     [publicView, timeline, applyTimeline, userId],
@@ -794,8 +800,8 @@ export function PortfolioShell({
     celebrationUnlocks?: CelebrationUnlockLite[];
   }> => {
     if (publicView) return { error: null };
-    saveDraftTimeline(timeline);
-    saveDraftProfileIntro(serverIntroToDraftFields(intro));
+    saveDraftTimeline(timeline, userId);
+    saveDraftProfileIntro(serverIntroToDraftFields(intro), userId);
     lastSavedTimeline.current = timeline;
     lastSavedIntro.current = intro;
     // Advance the panel-open snapshot so Discard after Save only undoes
@@ -804,14 +810,14 @@ export function PortfolioShell({
     panelOpenIntro.current = intro;
     if (userId) {
       const [timelineResult] = await Promise.all([
-        saveTimelineAction(timeline),
+        saveTimelineAction(timeline, userId),
         saveProfileAction({
           name: intro.name,
           heroLead: intro.heroLead,
           role: intro.role,
           bio: intro.bio,
           photoSrc: intro.photoSrc,
-        }),
+        }, userId),
       ]);
       if (timelineResult.error) return { error: timelineResult.error };
       if (timelineResult.celebrateFirstContribution) {
@@ -836,8 +842,8 @@ export function PortfolioShell({
 
   const discardDrafts = useCallback(() => {
     if (publicView) return;
-    clearDraftTimeline();
-    clearDraftProfileIntro();
+    clearDraftTimeline(userId);
+    clearDraftProfileIntro(userId);
     // Revert to the snapshot taken when this panel session opened (or the last
     // Save within this session). This undoes only unsaved in-panel edits.
     setTimeline(panelOpenTimeline.current);
@@ -1435,6 +1441,8 @@ export function PortfolioShell({
               <TimelineEmptyState
                 onAddYear={handleAddYear}
                 onOpenEditor={() => openEditor()}
+                initialGrade={initialGrade}
+                initialOldestYear={initialOldestYear}
               />
             ) : null}
             {(categoryFilter || mediaFilter) &&

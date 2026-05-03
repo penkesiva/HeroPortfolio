@@ -79,6 +79,17 @@ export type DbYearBlockWithEvents = DbYearBlock & {
   events: DbEventWithImages[];
 };
 
+export type DbChildProfile = {
+  id: string;
+  parent_user_id: string;
+  display_name: string;
+  grade: number | null;
+  birth_year: number | null;
+  photo_url: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type AnalyticsSummary = {
   totalViews: number;
   viewsThisMonth: number;

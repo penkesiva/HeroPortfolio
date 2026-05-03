@@ -7,6 +7,9 @@ import type { DotLottie } from "@lottiefiles/dotlottie-react";
 interface TimelineEmptyStateProps {
   onAddYear: (year: number) => void;
   onOpenEditor: () => void;
+  /** Pre-populate from child profile data so the parent doesn't re-enter it. */
+  initialGrade?: number | null;
+  initialOldestYear?: number | null;
 }
 
 const CURRENT_YEAR = new Date().getFullYear();
@@ -42,20 +45,26 @@ function gradeLabel(year: number, currentGrade: number): string {
 export function TimelineEmptyState({
   onAddYear,
   onOpenEditor,
+  initialGrade,
+  initialOldestYear,
 }: TimelineEmptyStateProps) {
-  const [currentGrade, setCurrentGrade] = useState(9);
-  const [selectedYear, setSelectedYear] = useState(CURRENT_YEAR);
+  const [currentGrade, setCurrentGrade] = useState(initialGrade ?? 9);
+  const [selectedYear, setSelectedYear] = useState(initialOldestYear ?? CURRENT_YEAR);
   const [launched, setLaunched] = useState(false);
   /** Single-flight guard: animation complete + scheduled fallback share this. */
   const launchDoneRef = useRef(false);
   /** Latest proceed fn (set on each "Let's go" click) for the rocket complete event. */
   const proceedRef = useRef<(() => void) | null>(null);
 
-  // Show enough years to reach back to ~grade 5 (elementary), capped at 12 years
+  // Show enough years to reach back to ~grade 5 (elementary), capped at 16 years.
+  // Always extend far enough to include initialOldestYear if it's further back.
   const yearOptions = useMemo(() => {
-    const count = Math.min(Math.max(currentGrade - 4, 4), 12);
-    return Array.from({ length: count + 1 }, (_, i) => CURRENT_YEAR - i);
-  }, [currentGrade]);
+    const gradeCount = Math.min(Math.max(currentGrade - 4, 4), 16);
+    const neededCount = initialOldestYear
+      ? Math.max(gradeCount, CURRENT_YEAR - initialOldestYear)
+      : gradeCount;
+    return Array.from({ length: neededCount + 1 }, (_, i) => CURRENT_YEAR - i);
+  }, [currentGrade, initialOldestYear]);
 
   const handleGradeChange = (grade: number) => {
     setCurrentGrade(grade);

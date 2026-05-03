@@ -1,6 +1,10 @@
 import type { SiteIntro } from "@/data/timeline";
 
-export const DRAFT_PROFILE_STORAGE_KEY = "samportfolio-profile-draft-v1";
+const DRAFT_PROFILE_STORAGE_KEY_BASE = "samportfolio-profile-draft-v1";
+
+function profileDraftKey(userId?: string) {
+  return userId ? `${DRAFT_PROFILE_STORAGE_KEY_BASE}-${userId}` : DRAFT_PROFILE_STORAGE_KEY_BASE;
+}
 
 /** Stored hero fields; empty `heroLead` means hide the lead line. */
 export type DraftProfileFields = {
@@ -25,10 +29,10 @@ function isFullDraft(x: unknown): x is DraftProfileFields {
   );
 }
 
-export function loadDraftProfileIntro(): DraftProfileFields | null {
+export function loadDraftProfileIntro(userId?: string): DraftProfileFields | null {
   if (typeof window === "undefined") return null;
   try {
-    const raw = window.localStorage.getItem(DRAFT_PROFILE_STORAGE_KEY);
+    const raw = window.localStorage.getItem(profileDraftKey(userId));
     if (!raw) return null;
     const parsed = JSON.parse(raw) as unknown;
     return isFullDraft(parsed) ? parsed : null;
@@ -37,21 +41,18 @@ export function loadDraftProfileIntro(): DraftProfileFields | null {
   }
 }
 
-export function saveDraftProfileIntro(fields: DraftProfileFields): void {
+export function saveDraftProfileIntro(fields: DraftProfileFields, userId?: string): void {
   if (typeof window === "undefined") return;
   try {
-    window.localStorage.setItem(
-      DRAFT_PROFILE_STORAGE_KEY,
-      JSON.stringify(fields),
-    );
+    window.localStorage.setItem(profileDraftKey(userId), JSON.stringify(fields));
   } catch {
     // QuotaExceededError
   }
 }
 
-export function clearDraftProfileIntro(): void {
+export function clearDraftProfileIntro(userId?: string): void {
   if (typeof window === "undefined") return;
-  window.localStorage.removeItem(DRAFT_PROFILE_STORAGE_KEY);
+  window.localStorage.removeItem(profileDraftKey(userId));
 }
 
 export function introFromDraftFields(

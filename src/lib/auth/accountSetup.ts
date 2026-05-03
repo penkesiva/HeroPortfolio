@@ -4,6 +4,9 @@ import { getProfile } from "@/lib/db/portfolio";
 
 /**
  * If the user has not chosen self vs guardian yet, send them to onboarding.
+ * If they have chosen, enforce they are on the right route type:
+ *   - guardian → /children (not /timeline)
+ *   - self     → /timeline (not /children)
  * Call after confirming `user` is non-null.
  */
 export async function mustHaveAccountKindOrRedirect(
@@ -17,5 +20,13 @@ export async function mustHaveAccountKindOrRedirect(
   }
   if (profile.account_kind == null) {
     redirect(`/onboarding/who?next=${encodeURIComponent(nextPath)}`);
+  }
+  // Redirect guardians away from self-only routes
+  if (profile.account_kind === "guardian" && nextPath.startsWith("/timeline")) {
+    redirect("/children");
+  }
+  // Redirect self-accounts away from guardian-only routes
+  if (profile.account_kind === "self" && nextPath.startsWith("/children")) {
+    redirect("/timeline");
   }
 }
