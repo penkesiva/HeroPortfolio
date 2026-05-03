@@ -334,7 +334,7 @@ export function computeBadges(timeline: YearBlock[]): Badge[] {
     },
     {
       id: "community_silver",
-      icon: "💛",
+      icon: "/badges/badge26.webp",
       name: "Servant Leader",
       description: "Logged 3 community service achievements.",
       category: "community",
@@ -343,7 +343,7 @@ export function computeBadges(timeline: YearBlock[]): Badge[] {
     },
     {
       id: "community_gold",
-      icon: "🌍",
+      icon: "/badges/badge27.webp",
       name: "Change Maker",
       description: "Logged 5 or more community service achievements.",
       category: "community",
@@ -354,7 +354,7 @@ export function computeBadges(timeline: YearBlock[]): Badge[] {
     // ── Debate ───────────────────────────────────────────────────────────────
     {
       id: "debate_bronze",
-      icon: "🎤",
+      icon: "/badges/badge28.webp",
       name: "Speaker",
       description: "Logged your first debate or public speaking achievement.",
       category: "debate",
@@ -363,7 +363,7 @@ export function computeBadges(timeline: YearBlock[]): Badge[] {
     },
     {
       id: "debate_silver",
-      icon: "📢",
+      icon: "/badges/badge29.webp",
       name: "Orator",
       description: "Logged 3 debate or public speaking achievements.",
       category: "debate",
@@ -372,7 +372,7 @@ export function computeBadges(timeline: YearBlock[]): Badge[] {
     },
     {
       id: "debate_gold",
-      icon: "🏛️",
+      icon: "/badges/badge30.webp",
       name: "Champion Debater",
       description: "Logged 5 or more debate or public speaking achievements.",
       category: "debate",
@@ -383,7 +383,7 @@ export function computeBadges(timeline: YearBlock[]): Badge[] {
     // ── Media ────────────────────────────────────────────────────────────────
     {
       id: "video_star",
-      icon: "🎥",
+      icon: "/badges/badge31.webp",
       name: "Video Star",
       description: "Added a video to an achievement.",
       category: "media",
@@ -392,7 +392,7 @@ export function computeBadges(timeline: YearBlock[]): Badge[] {
     },
     {
       id: "well_connected",
-      icon: "🔗",
+      icon: "/badges/badge32.webp",
       name: "Well Connected",
       description: "Added external links to your achievements.",
       category: "media",
@@ -401,7 +401,7 @@ export function computeBadges(timeline: YearBlock[]): Badge[] {
     },
     {
       id: "storyteller",
-      icon: "📖",
+      icon: "/badges/badge33.webp",
       name: "Storyteller",
       description: "Added both videos and links to your achievements.",
       category: "media",
@@ -412,7 +412,7 @@ export function computeBadges(timeline: YearBlock[]): Badge[] {
     // ── Cross-category ───────────────────────────────────────────────────────
     {
       id: "multi_talent",
-      icon: "🌈",
+      icon: "/badges/badge34.webp",
       name: "Multi-Talent",
       description: "Achievements across 5 or more different categories.",
       category: "milestone",
@@ -421,7 +421,7 @@ export function computeBadges(timeline: YearBlock[]): Badge[] {
     },
     {
       id: "renaissance",
-      icon: "✨",
+      icon: "/badges/badge35.webp",
       name: "Renaissance Student",
       description: "Achievements across 7 or more different categories.",
       category: "milestone",
@@ -432,7 +432,7 @@ export function computeBadges(timeline: YearBlock[]): Badge[] {
     // ── Fundraising ──────────────────────────────────────────────────────────
     {
       id: "fundraiser_first",
-      icon: "💝",
+      icon: "/badges/badge36.webp",
       name: "First Fundraiser",
       description: "Logged your first fundraising or donation event.",
       category: "community",
@@ -441,7 +441,7 @@ export function computeBadges(timeline: YearBlock[]): Badge[] {
     },
     {
       id: "fundraiser_100",
-      icon: "💛",
+      icon: "/badges/badge37.webp",
       name: "Community Fund",
       description: "Raised $100 or more for causes across your timeline.",
       category: "community",
@@ -450,7 +450,7 @@ export function computeBadges(timeline: YearBlock[]): Badge[] {
     },
     {
       id: "fundraiser_500",
-      icon: "🤍",
+      icon: "/badges/badge38.webp",
       name: "Big Heart",
       description: "Raised $500 or more for causes across your timeline.",
       category: "community",
@@ -459,7 +459,7 @@ export function computeBadges(timeline: YearBlock[]): Badge[] {
     },
     {
       id: "fundraiser_1000",
-      icon: "🌟",
+      icon: "/badges/badge39.webp",
       name: "Philanthropist",
       description: "Raised $1,000 or more for causes across your timeline.",
       category: "community",
