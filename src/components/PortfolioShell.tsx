@@ -314,11 +314,13 @@ function AchievementCard({
   year,
   delay = 0,
   onPlayVideo,
+  onEdit,
 }: {
   achievement: YearBlock["achievements"][number];
   year: number;
   delay?: number;
   onPlayVideo: (watchUrl: string, title: string) => void;
+  onEdit?: () => void;
 }) {
   const gallery =
     achievement.images && achievement.images.length > 0
@@ -339,8 +341,22 @@ function AchievementCard({
         delay,
         ease: easeOutExpo,
       }}
-      className="relative overflow-hidden rounded-2xl border border-dusk-700/90 bg-dusk-900/60 shadow-[0_20px_50px_rgba(0,0,0,0.35)] backdrop-blur-sm"
+      className="group/card relative overflow-hidden rounded-2xl border border-dusk-700/90 bg-dusk-900/60 shadow-[0_20px_50px_rgba(0,0,0,0.35)] backdrop-blur-sm"
     >
+      {onEdit && (
+        <button
+          type="button"
+          onClick={onEdit}
+          aria-label={`Edit "${achievement.title}"`}
+          title="Edit this event"
+          className="absolute right-3 top-3 z-20 flex items-center gap-1.5 rounded-full border border-dusk-600 bg-dusk-850/90 px-2.5 py-1 text-xs font-medium text-parchment-muted opacity-0 transition hover:border-umber-400/60 hover:bg-umber-500/15 hover:text-umber-300 group-hover/card:opacity-100"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="size-3 shrink-0">
+            <path d="M13.488 2.513a1.75 1.75 0 0 0-2.475 0L2.317 11.21a1.75 1.75 0 0 0-.455.88l-.578 2.89a.75.75 0 0 0 .736.886.75.75 0 0 0 .145-.014l2.89-.578a1.75 1.75 0 0 0 .88-.455l8.697-8.696a1.75 1.75 0 0 0 0-2.475l-.144-.135ZM12.03 3.573a.25.25 0 0 1 .354 0l.043.044a.25.25 0 0 1 0 .354L11.5 4.9l-.397-.397 1.43-1.43H12.03ZM10.043 5.457l.397.397-6.743 6.744a.25.25 0 0 1-.126.065l-1.73.346.346-1.73a.25.25 0 0 1 .065-.126l6.744-6.743-.953.047Z" />
+          </svg>
+          Edit
+        </button>
+      )}
       {hasImages ? (
         <div className="relative z-0 border-b border-dusk-700/80 bg-dusk-800">
           <div
@@ -830,6 +846,7 @@ export function PortfolioShell({
 
   const [editorOpen, setEditorOpen] = useState(false);
   const [editorOpenOnYear, setEditorOpenOnYear] = useState<number | null>(null);
+  const [editorOpenOnAchievementId, setEditorOpenOnAchievementId] = useState<string | null>(null);
 
   // Always snapshot current state before opening the panel so Discard can
   // revert to exactly what the user saw when they clicked "Edit content".
@@ -841,6 +858,15 @@ export function PortfolioShell({
 
   const openEditorForYear = useCallback((year: number) => {
     setEditorOpenOnYear(year);
+    setEditorOpenOnAchievementId(null);
+    panelOpenTimeline.current = timeline;
+    panelOpenIntro.current = intro;
+    setEditorOpen(true);
+  }, [timeline, intro]);
+
+  const openEditorForAchievement = useCallback((year: number, achievementId: string) => {
+    setEditorOpenOnYear(year);
+    setEditorOpenOnAchievementId(achievementId);
     panelOpenTimeline.current = timeline;
     panelOpenIntro.current = intro;
     setEditorOpen(true);
@@ -899,6 +925,8 @@ export function PortfolioShell({
   }, [sorted, categoryFilter, mediaFilter, publicView]);
 
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [inYearSection, setInYearSection] = useState(false);
+  const intersectingYears = useRef(new Set<string>());
 
   useEffect(() => {
     startTransition(() => {
@@ -991,6 +1019,15 @@ export function PortfolioShell({
 
     const observer = new IntersectionObserver(
       (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            intersectingYears.current.add(e.target.id);
+          } else {
+            intersectingYears.current.delete(e.target.id);
+          }
+        });
+        setInYearSection(intersectingYears.current.size > 0);
+
         const visible = entries
           .filter((e) => e.isIntersecting)
           .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
@@ -1009,7 +1046,10 @@ export function PortfolioShell({
     );
 
     elements.forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      intersectingYears.current.clear();
+    };
   }, [visibleBlocks]);
 
   const photoAlt = intro.photoAlt ?? intro.name;
@@ -1428,20 +1468,36 @@ export function PortfolioShell({
                 className="scroll-mt-28"
               >
                 <div className="mb-6 border-b border-dusk-700/50 pb-5">
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-umber-400">
-                    Year
-                  </p>
-                  <h2
-                    id={`year-heading-${block.year}`}
-                    className="mt-1 text-2xl font-semibold tabular-nums tracking-tight lg:text-3xl"
-                  >
-                    {block.year}
-                  </h2>
-                  {block.tagline ? (
-                    <p className="mt-2 max-w-2xl text-sm text-parchment-muted lg:text-[15px]">
-                      {block.tagline}
-                    </p>
-                  ) : null}
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-umber-400">
+                        Year
+                      </p>
+                      <h2
+                        id={`year-heading-${block.year}`}
+                        className="mt-1 text-2xl font-semibold tabular-nums tracking-tight lg:text-3xl"
+                      >
+                        {block.year}
+                      </h2>
+                      {block.tagline ? (
+                        <p className="mt-2 max-w-2xl text-sm text-parchment-muted lg:text-[15px]">
+                          {block.tagline}
+                        </p>
+                      ) : null}
+                    </div>
+                    {!publicView && (
+                      <button
+                        type="button"
+                        onClick={() => openEditorForYear(block.year)}
+                        aria-label={`Add event to ${block.year}`}
+                        title={`Add event to ${block.year}`}
+                        className="mt-1 flex shrink-0 items-center gap-1.5 rounded-full border border-dusk-600 bg-dusk-850 px-3 py-1.5 text-xs font-semibold text-parchment-muted transition hover:border-umber-400/60 hover:bg-umber-500/10 hover:text-umber-300"
+                      >
+                        <span className="text-base leading-none">+</span>
+                        <span>Add event</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {isEmptyYear && !publicView && !yearHasAnyEvents ? (
@@ -1482,6 +1538,7 @@ export function PortfolioShell({
                         year={block.year}
                         delay={0.04 + i * 0.06}
                         onPlayVideo={openVideo}
+                        onEdit={!publicView ? () => openEditorForAchievement(block.year, a.id) : undefined}
                       />
                     ))}
                   </div>
@@ -1507,18 +1564,33 @@ export function PortfolioShell({
 
       {showContentEditor ? (
         <>
-          <button
-            type="button"
-            onClick={() => openEditor()}
-            className="fixed bottom-5 right-4 z-[80] rounded-full border border-umber-500/50 bg-umber-500/20 px-4 py-2.5 text-sm font-medium text-umber-200 shadow-lg backdrop-blur transition hover:bg-umber-500/30 sm:bottom-5 sm:right-5"
-          >
-            Edit content
-          </button>
+          {(() => {
+            const fabYear = inYearSection ? selectedYear : null;
+            return (
+              <button
+                type="button"
+                onClick={() => fabYear ? openEditorForYear(fabYear) : openEditor()}
+                className="fixed bottom-5 right-4 z-[80] flex items-center gap-2 rounded-full border border-umber-500/50 bg-umber-500/20 px-4 py-2.5 text-sm font-medium text-umber-200 shadow-lg backdrop-blur transition hover:bg-umber-500/30 sm:bottom-5 sm:right-5"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="size-3.5 shrink-0 opacity-70">
+                  <path d="M13.488 2.513a1.75 1.75 0 0 0-2.475 0L2.317 11.21a1.75 1.75 0 0 0-.455.88l-.578 2.89a.75.75 0 0 0 .736.886.75.75 0 0 0 .145-.014l2.89-.578a1.75 1.75 0 0 0 .88-.455l8.697-8.696a1.75 1.75 0 0 0 0-2.475l-.144-.135ZM12.03 3.573a.25.25 0 0 1 .354 0l.043.044a.25.25 0 0 1 0 .354L11.5 4.9l-.397-.397 1.43-1.43H12.03ZM10.043 5.457l.397.397-6.743 6.744a.25.25 0 0 1-.126.065l-1.73.346.346-1.73a.25.25 0 0 1 .065-.126l6.744-6.743-.953.047Z" />
+                </svg>
+                <span>
+                  {fabYear ? (
+                    <>Edit <span className="tabular-nums">{fabYear}</span></>
+                  ) : (
+                    "Edit Hero"
+                  )}
+                </span>
+              </button>
+            );
+          })()}
           <PortfolioContentEditor
             open={editorOpen}
             onClose={() => {
               setEditorOpen(false);
               setEditorOpenOnYear(null);
+              setEditorOpenOnAchievementId(null);
             }}
             timeline={timeline}
             serverTimeline={serverTimeline}
@@ -1532,6 +1604,7 @@ export function PortfolioShell({
             onDeleteYear={handleDeleteYear}
             plan={plan}
             openOnYear={editorOpenOnYear}
+            openOnAchievementId={editorOpenOnAchievementId}
           />
         </>
       ) : null}

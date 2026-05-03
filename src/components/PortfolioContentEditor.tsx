@@ -51,6 +51,8 @@ type PortfolioContentEditorProps = {
   plan?: Plan;
   /** When set, the editor jumps to this year's section on open. */
   openOnYear?: number | null;
+  /** When set, the editor selects this achievement (by id) on open. */
+  openOnAchievementId?: string | null;
 };
 
 function sortYearsDesc(t: YearBlock[]): YearBlock[] {
@@ -155,6 +157,7 @@ export function PortfolioContentEditor({
   onDeleteYear,
   plan = "free",
   openOnYear = null,
+  openOnAchievementId = null,
 }: PortfolioContentEditorProps) {
   const [saveAck, setSaveAck] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -241,6 +244,12 @@ export function PortfolioContentEditor({
       });
     }
   }, [open, openOnYear, years]);
+
+  // When openOnAchievementId is specified, select that achievement in the editor
+  useEffect(() => {
+    if (!open || openOnAchievementId == null) return;
+    startTransition(() => setSelectedId(openOnAchievementId));
+  }, [open, openOnAchievementId]);
 
   const block = years.length > 0 ? years[clampedYearIndex] : undefined;
   const heroFields: DraftProfileFields = {
