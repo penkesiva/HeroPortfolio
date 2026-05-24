@@ -9,12 +9,16 @@ import { displayNameFromUser } from "@/lib/auth/displayName";
 import { dbProfileToSiteIntro, getProfile } from "@/lib/db/portfolio";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import {
+  PRICING_PAGE_GUARDIAN_SUBHEAD,
+  PRICING_PAGE_META_DESCRIPTION,
+  PRICING_PAGE_STUDENT_SUBHEAD,
+} from "@/lib/constants";
 import type { AccountKind } from "@/types/database";
 
 export const metadata: Metadata = {
   title: "Plans & pricing",
-  description:
-    "HeroPortfolio is free to start. Student Pro unlocks unlimited events, AI import, and PDF export for $1.99/mo. Parent Pro adds unlimited child portfolios for $1.49/child/mo.",
+  description: PRICING_PAGE_META_DESCRIPTION,
 };
 
 export default async function PricingPage() {
@@ -99,8 +103,8 @@ export default async function PricingPage() {
         </h1>
         <p className="mt-4 text-pretty text-base leading-relaxed text-parchment-muted sm:text-[17px]">
           {accountKind === "guardian"
-            ? "Start free with up to 2 child portfolios. Upgrade to Parent Pro for $1.49/child/mo to add unlimited children and unlock all Pro features for your whole family."
-            : "Start free with a full portfolio. Upgrade to Student Pro for AI-powered import, unlimited events, and PDF export — for less than a coffee per month."}
+            ? PRICING_PAGE_GUARDIAN_SUBHEAD
+            : PRICING_PAGE_STUDENT_SUBHEAD}
         </p>
 
         <div className="mt-12">

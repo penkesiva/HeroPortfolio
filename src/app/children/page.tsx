@@ -7,7 +7,7 @@ import { mustHaveAccountKindOrRedirect } from "@/lib/auth/accountSetup";
 import { displayNameFromUser } from "@/lib/auth/displayName";
 import { getChildProfiles, getProfile, getUserPlan } from "@/lib/db/portfolio";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
-import { FREE_CHILD_LIMIT, PRICES } from "@/lib/constants";
+import { CHILD_LIMIT_UPGRADE_BODY, FREE_CHILD_LIMIT } from "@/lib/constants";
 import { getLimit } from "@/lib/planGate";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -99,7 +99,7 @@ export default async function ChildrenPage() {
                 Free limit reached — {FREE_CHILD_LIMIT} child portfolios
               </p>
               <p className="mt-0.5 text-xs text-parchment-muted">
-                Upgrade to Parent Pro for ${PRICES.parentPro.perChildMonthly}/child/mo to add unlimited children and unlock all Pro features for your whole family.
+                {CHILD_LIMIT_UPGRADE_BODY}
               </p>
             </div>
             <Link

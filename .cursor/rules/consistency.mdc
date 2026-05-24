@@ -8,7 +8,9 @@ alwaysApply: true
 
 ## Constants — never hardcode inline
 
-All limits, prices, and user-facing copy strings live in **`src/lib/constants.ts`**.
+**Tunable limits and prices** live in **`config/app.config.json`** (project root). Edit that file — not source code.
+
+**Derived copy and labels** are built in **`src/lib/constants.ts`**. App code imports from constants; never hardcode prices inline.
 
 When editing any of these files, import from constants instead of using literal values:
 
@@ -16,8 +18,10 @@ When editing any of these files, import from constants instead of using literal 
 - `src/app/api/summarize-link/route.ts` — uses `FREE_AI_EXHAUSTED_MESSAGE`
 - `src/components/PortfolioContentEditor.tsx` — uses `FREE_AI_LABEL`
 - `src/components/PricingPlansClient.tsx` — uses `PRICES`, `FREE_AI_LABEL`, `FAMILY_PLAN_MAILTO`
+- `src/app/pricing/page.tsx` — uses `PRICING_PAGE_*` copy from constants
+- `src/app/children/page.tsx` — uses `CHILD_LIMIT_UPGRADE_BODY`, `FREE_CHILD_LIMIT`
 
-**If you change a limit or price, update `src/lib/constants.ts` first, then verify no raw values remain.**
+**If you change a limit or price, update `config/app.config.json` first, then verify no raw values remain in `src/`.**
 
 ## Back navigation button
 

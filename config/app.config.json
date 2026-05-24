@@ -1,0 +1,19 @@
+{
+  "pricing": {
+    "studentPro": {
+      "monthly": 1.99,
+      "yearly": 15.99
+    },
+    "parentPro": {
+      "perChildMonthly": 1.49,
+      "perChildYearly": 11.99
+    }
+  },
+  "limits": {
+    "freeAiUsesPerMonth": 2,
+    "freeChildProfiles": 2
+  },
+  "contact": {
+    "supportEmail": "hello@heroportfolio.com"
+  }
+}

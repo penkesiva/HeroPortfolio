@@ -7,18 +7,20 @@ This version has breaking changes — APIs, conventions, and file structure may 
 <!-- BEGIN:consistency-rules -->
 ## Single Source of Truth
 
-**All limits, prices, and repeated copy live in `src/lib/constants.ts`. Never hardcode them inline.**
+**Tunable limits and prices live in `config/app.config.json` (project root). Never hardcode them in source.**
 
-- `FREE_AI_USES_PER_MONTH` — AI Smart Import free tier limit
-- `FREE_AI_LABEL` — user-facing label ("2 uses/month free")
-- `FREE_AI_EXHAUSTED_MESSAGE` — error message shown when limit is reached
-- `PRICES` — all plan prices (Pro monthly/yearly, Family monthly/yearly)
-- `FAMILY_PLAN_MAILTO` — family plan contact link
-- `SUPPORT_EMAIL` — contact email address
+App code reads values via `src/lib/constants.ts` (derived labels and copy). Import from constants in components — not from the JSON directly.
 
-**Before changing any limit, price, or copy string:**
-1. Update `src/lib/constants.ts` first.
+- `config/app.config.json` → `pricing`, `limits`, `contact`
+- `FREE_AI_USES_PER_MONTH` — from `limits.freeAiUsesPerMonth`
+- `FREE_CHILD_LIMIT` — from `limits.freeChildProfiles`
+- `PRICES` — from `pricing`
+- `SUPPORT_EMAIL` — from `contact.supportEmail`
+
+**Before changing any limit, price, or contact email:**
+1. Update `config/app.config.json` first.
 2. Run `rg "old value" src/` to find any remaining inline occurrences and fix them.
+3. Update Stripe env vars separately if billing amount changed.
 
 ## Shared UI Components
 
