@@ -1,0 +1,88 @@
+{
+  "version": 1,
+  "portfolioUserId": "23f4e3ec-d1eb-4484-9e1b-dc04374bca41",
+  "name": "Maya Chen",
+  "profile": {
+    "name": "Maya Chen",
+    "heroLead": "I'm",
+    "role": "11th grade · STEM & Debate",
+    "bio": "Building a portfolio of research, competition, and leadership — aiming for engineering and public policy in college."
+  },
+  "years": [
+    {
+      "year": 2026,
+      "tagline": "Junior year — research, debate, and college prep in motion.",
+      "events": [
+        {
+          "id": "f26a1001-0001-4001-8001-000000000001",
+          "heading1": "AP Research — urban heat island study",
+          "heading2": "Independent project · mentor: Dr. Patel",
+          "categories": ["stem", "academic"],
+          "body": "Designed a semester-long study comparing surface temperatures across three neighborhoods using open satellite data and local sensor readings. Presented preliminary findings to our science department and submitted the abstract to a regional high school research symposium.",
+          "links": [
+            { "label": "Research symposium", "href": "https://www.societyforscience.org/regeneron-sts/" }
+          ]
+        },
+        {
+          "id": "f26a1001-0002-4001-8001-000000000002",
+          "heading1": "Varsity debate — state qualifier",
+          "heading2": "Public Forum · team captain",
+          "categories": ["debate", "leadership"],
+          "body": "Led weekly case drills for eight teammates, researched climate policy briefs, and earned a bid to the state tournament after placing 2nd at the Metro Invitational.",
+          "videoUrl": "https://www.youtube.com/watch?v=J7zPuTiR7Tg"
+        }
+      ]
+    },
+    {
+      "year": 2025,
+      "tagline": "Sophomore year — first state-level recognition.",
+      "events": [
+        {
+          "id": "f25a1001-0001-4001-8001-000000000001",
+          "heading1": "Science Olympiad — two gold medals",
+          "heading2": "Anatomy & Forensics",
+          "categories": ["stem"],
+          "body": "Partnered on Anatomy & Physiology and Forensics events. Gold in both at regionals; placed 4th in Forensics at state after rebuilding our evidence binder twice in the final week.",
+          "links": [
+            { "label": "Science Olympiad", "href": "https://www.soinc.org/" }
+          ]
+        },
+        {
+          "id": "f25a1001-0002-4001-8001-000000000002",
+          "heading1": "Regional piano honor ensemble",
+          "heading2": "Selected performer",
+          "categories": ["arts", "music"],
+          "body": "Auditioned with a Chopin prelude and was selected for the county honor ensemble. Performed at the spring concert and logged 120+ practice hours across the season.",
+          "musicUrl": "https://open.spotify.com/track/4TrsU77z0Uq4B7yF3dG7d2"
+        },
+        {
+          "id": "f25a1001-0003-4001-8001-000000000003",
+          "heading1": "NHS chapter vice president",
+          "heading2": "Service & tutoring lead",
+          "categories": ["leadership", "community", "academic"],
+          "body": "Organized peer tutoring blocks for underclassmen in algebra and chemistry. Co-led a campus supply drive that collected 400+ items for a local shelter."
+        }
+      ]
+    },
+    {
+      "year": 2024,
+      "tagline": "Freshman year — finding my lanes.",
+      "events": [
+        {
+          "id": "f24a1001-0001-4001-8001-000000000001",
+          "heading1": "First STEM fair — environmental sensors",
+          "heading2": "Honorable mention",
+          "categories": ["stem"],
+          "body": "Built a low-cost air quality monitor with Arduino and placed honorable mention at the district fair. This project sparked my interest in urban environmental data."
+        },
+        {
+          "id": "f24a1001-0002-4001-8001-000000000002",
+          "heading1": "Joined varsity debate",
+          "heading2": "Novice season",
+          "categories": ["debate"],
+          "body": "Learned cross-examination structure and competed in five novice tournaments. Finished the season with a winning record and a nomination for most improved."
+        }
+      ]
+    }
+  ]
+}

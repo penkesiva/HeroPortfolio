@@ -1,0 +1,69 @@
+{
+  "version": 1,
+  "name": "Sofia Reyes",
+  "profile": {
+    "name": "Sofia Reyes"
+  },
+  "years": [
+    {
+      "year": 2026,
+      "tagline": "7th grade — art, soccer, and science curiosity.",
+      "events": [
+        {
+          "id": "sofia-26-1",
+          "heading1": "All-district art show — watercolor series",
+          "heading2": "“Neighborhood windows”",
+          "categories": ["arts"],
+          "body": "Created a five-piece watercolor series of front porches on our block. One piece was selected for the district spring show and displayed in the county library for six weeks.",
+          "links": [
+            { "label": "District fine arts", "href": "https://www.naea.org/" }
+          ]
+        },
+        {
+          "id": "sofia-26-2",
+          "heading1": "Travel soccer — league champions",
+          "heading2": "Midfielder · U13 squad",
+          "categories": ["sports"],
+          "body": "Started every league match as a central midfielder. Helped the team go undefeated in league play and assisted the game-winning goal in the championship."
+        }
+      ]
+    },
+    {
+      "year": 2025,
+      "tagline": "6th grade — science fair and choir.",
+      "events": [
+        {
+          "id": "sofia-25-1",
+          "heading1": "Science fair — pollinators in our yard",
+          "heading2": "1st place · life sciences",
+          "categories": ["stem", "academic"],
+          "body": "Counted bee visits on three native plants over four weeks and built a simple chart of peak activity times. Won first place in life sciences at the school fair.",
+          "links": [
+            { "label": "Science Buddies", "href": "https://www.sciencebuddies.org/science-fair-projects" }
+          ]
+        },
+        {
+          "id": "sofia-25-2",
+          "heading1": "Junior choir solo",
+          "heading2": "Winter concert",
+          "categories": ["arts", "music"],
+          "body": "Auditioned for a short solo in the winter concert and performed in front of 300 families. Practiced breath control and diction with my choir director for six weeks.",
+          "musicUrl": "https://www.youtube.com/watch?v=3JZ_D3Axwkk"
+        }
+      ]
+    },
+    {
+      "year": 2024,
+      "tagline": "5th grade — first team sports.",
+      "events": [
+        {
+          "id": "sofia-24-1",
+          "heading1": "Recreational soccer — most improved",
+          "heading2": "First season",
+          "categories": ["sports"],
+          "body": "Learned positioning and passing in my first organized season. Coaches voted me most improved after I moved from defense to midfield mid-season."
+        }
+      ]
+    }
+  ]
+}

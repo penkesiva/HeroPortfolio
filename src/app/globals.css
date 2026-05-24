@@ -241,3 +241,12 @@ html[data-theme="light"] {
   0%   { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
   100% { transform: translate(var(--tx), var(--ty)) rotate(var(--rot)) scale(0.2); opacity: 0; }
 }
+
+@keyframes portfolio-transfer-indeterminate {
+  0%   { transform: translateX(-120%); }
+  100% { transform: translateX(420%); }
+}
+
+.portfolio-transfer-bar {
+  animation: portfolio-transfer-indeterminate 1.15s ease-in-out infinite;
+}

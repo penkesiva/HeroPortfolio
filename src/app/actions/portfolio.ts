@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { SiteIntro, YearBlock } from "@/data/timeline";
 import {
@@ -10,8 +11,13 @@ import {
   deleteYearBlock,
   getProfile,
   getUserTimeline,
+  getUserPlan,
 } from "@/lib/db/portfolio";
 import { newlyUnlockedCategoryBadges } from "@/lib/badges";
+import {
+  clampTimelineToPlan,
+  parsePortfolioImportJson,
+} from "@/lib/portfolioImport";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -197,4 +203,104 @@ export async function deleteYearBlockAction(
   }
 
   return deleteYearBlock(supabase, saveUserId, year);
+}
+
+export type ImportPortfolioResult = {
+  error: string | null;
+  timeline?: YearBlock[];
+  profile?: Partial<Pick<SiteIntro, "name" | "heroLead" | "role" | "bio" | "photoSrc">>;
+  warnings?: string[];
+  stats?: { years: number; events: number };
+};
+
+export async function importPortfolioJsonAction(
+  rawJson: string,
+  /** Portfolio owner: auth user id (student) or child profile id. */
+  targetUserId?: string,
+): Promise<ImportPortfolioResult> {
+  if (!isSupabaseConfigured()) return { error: "Supabase not configured" };
+
+  const supabase = await createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) redirect("/login?next=/timeline");
+
+  let saveUserId = user.id;
+  const isChildContext = targetUserId && targetUserId !== user.id;
+
+  if (isChildContext) {
+    const ok = await verifyChildOwnership(supabase, user.id, targetUserId);
+    if (!ok) return { error: "Access denied." };
+    saveUserId = targetUserId;
+  }
+
+  let parsed;
+  try {
+    parsed = parsePortfolioImportJson(rawJson);
+  } catch (err) {
+    return {
+      error: err instanceof Error ? err.message : "Could not read import file.",
+    };
+  }
+
+  const plan = await getUserPlan(supabase, user.id);
+  const { timeline: clamped, warnings: limitWarnings } = clampTimelineToPlan(
+    parsed.timeline,
+    plan,
+  );
+  const warnings = [...parsed.warnings, ...limitWarnings];
+
+  const existing = await getUserTimeline(supabase, saveUserId);
+  const importYears = new Set(clamped.map((b) => b.year));
+  for (const block of existing) {
+    if (!importYears.has(block.year)) {
+      const deleted = await deleteYearBlock(supabase, saveUserId, block.year);
+      if (deleted.error) return { error: deleted.error };
+    }
+  }
+
+  const saved = await saveUserTimeline(supabase, saveUserId, clamped);
+  if (saved.error) return { error: saved.error };
+
+  const synced = await syncEventImagesForTimeline(supabase, saveUserId, clamped);
+  if (synced.error) return { error: synced.error };
+
+  if (parsed.profile) {
+    const p = parsed.profile;
+    const photoUrl =
+      p.photoSrc && p.photoSrc !== "/avatar-placeholder.svg" ? p.photoSrc : null;
+
+    if (isChildContext) {
+      await updateChildProfile(supabase, user.id, saveUserId, {
+        display_name: p.name?.trim() || undefined,
+        photo_url: photoUrl ?? undefined,
+      });
+    } else {
+      await upsertProfile(supabase, user.id, {
+        display_name: p.name?.trim() || null,
+        hero_lead: p.heroLead ?? null,
+        role: p.role ?? null,
+        bio: p.bio ?? null,
+        photo_url: photoUrl,
+      });
+    }
+  }
+
+  revalidatePath("/timeline");
+  revalidatePath("/children");
+  if (isChildContext) {
+    revalidatePath(`/children/${saveUserId}`);
+  }
+
+  const eventCount = clamped.reduce((n, b) => n + b.achievements.length, 0);
+
+  return {
+    error: null,
+    timeline: clamped,
+    profile: parsed.profile ?? undefined,
+    warnings,
+    stats: { years: clamped.length, events: eventCount },
+  };
 }

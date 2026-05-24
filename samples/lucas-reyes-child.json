@@ -1,0 +1,67 @@
+{
+  "version": 1,
+  "name": "Lucas Reyes",
+  "profile": {
+    "name": "Lucas Reyes"
+  },
+  "years": [
+    {
+      "year": 2026,
+      "tagline": "5th grade — robotics, basketball, and giving back.",
+      "events": [
+        {
+          "id": "lucas-26-1",
+          "heading1": "FIRST LEGO League — design award",
+          "heading2": "Team “Gear Guardians”",
+          "categories": ["stem"],
+          "body": "Helped design a robot attachment that sorted cargo blocks by color. Our team won the design award at the regional qualifier and presented our engineering notebook to judges.",
+          "links": [
+            { "label": "FIRST LEGO League", "href": "https://www.firstinspires.org/robotics/fll" }
+          ],
+          "videoUrl": "https://www.youtube.com/watch?v=8_tAwL6A4Z4"
+        },
+        {
+          "id": "lucas-26-2",
+          "heading1": "Rec basketball — season MVP",
+          "heading2": "Point guard",
+          "categories": ["sports"],
+          "body": "Averaged the most assists on the team and kept a notebook of plays we ran in practice. Coaches named me MVP for leadership and hustle."
+        }
+      ]
+    },
+    {
+      "year": 2025,
+      "tagline": "4th grade — reading challenge and scouts.",
+      "events": [
+        {
+          "id": "lucas-25-1",
+          "heading1": "Read-a-thon fundraiser",
+          "heading2": "$500 raised for library",
+          "categories": ["community", "academic"],
+          "body": "Read 25 books in three weeks and collected pledges from family and neighbors. Donated $500 to our school library for graphic novels and STEM kits.",
+          "amountRaised": 500
+        },
+        {
+          "id": "lucas-25-2",
+          "heading1": "Cub Scout pinewood derby",
+          "heading2": "2nd place · Pack 142",
+          "categories": ["community"],
+          "body": "Built a car with my dad, sanded the axles, and learned to measure weight distribution. Finished 2nd in my den and helped younger scouts tune their cars."
+        }
+      ]
+    },
+    {
+      "year": 2024,
+      "tagline": "3rd grade — early maker projects.",
+      "events": [
+        {
+          "id": "lucas-24-1",
+          "heading1": "School maker fair — cardboard arcade",
+          "heading2": "Class showcase",
+          "categories": ["stem", "arts"],
+          "body": "Built a mini skee-ball game from cardboard boxes and rubber bands. Demonstrated it at the school maker fair and explained the lever we used for the launcher."
+        }
+      ]
+    }
+  ]
+}

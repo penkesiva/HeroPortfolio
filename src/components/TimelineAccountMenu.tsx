@@ -18,6 +18,9 @@ import {
   type ThemeChoice,
   type ThemeSetting,
 } from "@/lib/themePreference";
+import { PortfolioJsonImport } from "@/components/PortfolioJsonImport";
+import { PortfolioTransferProgress } from "@/components/PortfolioTransferProgress";
+import { AppNoticeDialog } from "@/components/AppNoticeDialog";
 
 function UserAvatarIcon({ className }: { className?: string }) {
   return (
@@ -123,6 +126,8 @@ type Props = {
   userId: string;
   displayName: string;
   plan?: "free" | "pro";
+  /** Defaults to userId — set to a child profile id when importing a child's portfolio. */
+  portfolioUserId?: string;
   /** Hero / profile photo — shown as a small center-crop circle, same source as the hero image. */
   avatarSrc?: string | null;
   avatarAlt?: string;
@@ -137,9 +142,11 @@ export function TimelineAccountMenu({
   userId,
   displayName,
   plan = "free",
+  portfolioUserId,
   avatarSrc = null,
   avatarAlt,
 }: Props) {
+  const portfolioId = portfolioUserId ?? userId;
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [copyError, setCopyError] = useState(false);
@@ -148,6 +155,9 @@ export function TimelineAccountMenu({
   const [themeSetting, setThemeSetting] = useState<ThemeSetting>("auto");
   const [themeMounted, setThemeMounted] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
+  const [exportProgressTitle, setExportProgressTitle] = useState("Exporting portfolio");
+  const [exportProgressDetail, setExportProgressDetail] = useState<string | undefined>();
+  const [exportError, setExportError] = useState<string | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const menuId = useId();
   const router = useRouter();
@@ -229,7 +239,14 @@ export function TimelineAccountMenu({
       return;
     }
     close();
+
+    const formatLabel =
+      format === "pdf" ? "PDF Achievement Book" : format.toUpperCase();
+
     setExportLoading(true);
+    setExportProgressTitle(`Exporting ${formatLabel}`);
+    setExportProgressDetail("Building your file…");
+
     try {
       const res = await fetch(`/api/export?format=${format}`);
       if (!res.ok) {
@@ -246,9 +263,10 @@ export function TimelineAccountMenu({
         } catch {
           /* keep default */
         }
-        window.alert(message);
+        setExportError(message);
         return;
       }
+      setExportProgressDetail("Starting download…");
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -257,9 +275,10 @@ export function TimelineAccountMenu({
       a.click();
       URL.revokeObjectURL(url);
     } catch {
-      window.alert("Export failed. Check your connection.");
+      setExportError("Export failed. Check your connection.");
     } finally {
       setExportLoading(false);
+      setExportProgressDetail(undefined);
     }
   }
 
@@ -269,6 +288,19 @@ export function TimelineAccountMenu({
 
   return (
     <>
+      <PortfolioTransferProgress
+        open={exportLoading}
+        title={exportProgressTitle}
+        detail={exportProgressDetail}
+      />
+      <AppNoticeDialog
+        open={Boolean(exportError)}
+        onClose={() => setExportError(null)}
+        variant="error"
+        title="Export didn't finish"
+        message={exportError ?? "Something went wrong while building your file."}
+        primaryLabel="Close"
+      />
       <div className="relative" ref={wrapRef}>
         <button
           type="button"
@@ -324,8 +356,14 @@ export function TimelineAccountMenu({
               </div>
             </div>
 
-            {/* Export section */}
+            {/* Export / import */}
             <div className="border-b border-dusk-700/60 px-3 py-2.5">
+              <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-parchment-muted/60">
+                Backup &amp; import
+              </p>
+              <div className="mb-2">
+                <PortfolioJsonImport portfolioUserId={portfolioId} compact />
+              </div>
               <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-parchment-muted/60">
                 Export portfolio
               </p>
@@ -376,9 +414,6 @@ export function TimelineAccountMenu({
                   )}
                 </button>
               </div>
-              {exportLoading && (
-                <p className="mt-1.5 text-[11px] text-parchment-muted/60">Preparing export…</p>
-              )}
             </div>
 
             {/* Actions */}

@@ -1718,6 +1718,19 @@ export function PortfolioShell({
             onAddSingleYear={handleAddSingleYear}
             onDeleteYear={handleDeleteYear}
             plan={plan}
+            portfolioUserId={userId}
+            onImportApplied={({ timeline: imported, profile: profilePatch }) => {
+              lastSavedTimeline.current = imported;
+              panelOpenTimeline.current = imported;
+              if (profilePatch) {
+                const merged = { ...intro, ...profilePatch };
+                setIntro(merged);
+                lastSavedIntro.current = merged;
+                panelOpenIntro.current = merged;
+              }
+              clearDraftTimeline(userId);
+              clearDraftProfileIntro(userId);
+            }}
             openOnYear={editorOpenOnYear}
             openOnAchievementId={editorOpenOnAchievementId}
           />

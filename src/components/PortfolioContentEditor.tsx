@@ -16,6 +16,7 @@ import type { Achievement, SiteIntro, YearBlock } from "@/data/timeline";
 import type { DraftProfileFields } from "@/lib/draftProfileIntro";
 import { FREE_AI_EXHAUSTED_MESSAGE, FREE_AI_LABEL } from "@/lib/constants";
 import { UpgradeModal } from "@/components/UpgradeModal";
+import { PortfolioJsonImport } from "@/components/PortfolioJsonImport";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import {
   BUCKET_EVENT_IMAGES,
@@ -49,6 +50,12 @@ type PortfolioContentEditorProps = {
   /** Delete an empty year block from state and DB. */
   onDeleteYear?: (year: number) => Promise<void>;
   plan?: Plan;
+  /** Portfolio owner id — required for JSON import (student or child profile id). */
+  portfolioUserId?: string;
+  onImportApplied?: (payload: {
+    timeline: YearBlock[];
+    profile: Partial<DraftProfileFields> | null;
+  }) => void;
   /** When set, the editor jumps to this year's section on open. */
   openOnYear?: number | null;
   /** When set, the editor selects this achievement (by id) on open. */
@@ -156,6 +163,8 @@ export function PortfolioContentEditor({
   onAddSingleYear,
   onDeleteYear,
   plan = "free",
+  portfolioUserId,
+  onImportApplied,
   openOnYear = null,
   openOnAchievementId = null,
 }: PortfolioContentEditorProps) {
@@ -605,6 +614,22 @@ export function PortfolioContentEditor({
         </div>
 
         <div className="flex-1 overflow-y-auto px-4 py-3">
+          {portfolioUserId ? (
+            <div className="mb-4">
+              <PortfolioJsonImport
+                portfolioUserId={portfolioUserId}
+                onImported={({ timeline: imported, profile, warnings }) => {
+                  onApplyTimeline(imported);
+                  if (profile) onApplyIntro(profile);
+                  onImportApplied?.({ timeline: imported, profile });
+                  if (warnings.length > 0) {
+                    console.info("Import warnings:", warnings);
+                  }
+                }}
+              />
+            </div>
+          ) : null}
+
           {/* Section selector + year actions — compact single row */}
           <div className="flex items-center gap-2">
             <select
