@@ -36,11 +36,13 @@ import {
   type CelebrationUnlockLite,
 } from "@/components/FirstContributionParty";
 import { AppHeader } from "@/components/AppHeader";
+import { DefaultAvatarImage } from "@/components/DefaultAvatarImage";
 import { UpgradedBanner } from "@/components/UpgradedBanner";
 import { AchievementBadges } from "@/components/AchievementBadges";
 import { EventMusicPlayer } from "@/components/EventMusicPlayer";
 import { TimelineEmptyState } from "@/components/TimelineEmptyState";
 import { videoUrlToEmbedSrc, withVideoAutoplay } from "@/lib/embedUrls";
+import { isDefaultAvatar } from "@/lib/defaultAvatar";
 import type { Achievement, SiteIntro, YearBlock } from "@/data/timeline";
 import type { DraftProfileFields } from "@/lib/draftProfileIntro";
 
@@ -1170,6 +1172,7 @@ export function PortfolioShell({
 
   const photoAlt = intro.photoAlt ?? intro.name;
   const photoIsDataUrl = intro.photoSrc.startsWith("data:");
+  const usesDefaultAvatar = isDefaultAvatar(intro.photoSrc);
 
   const headerDisplayName = intro.name?.trim() || "Portfolio";
 
@@ -1258,18 +1261,26 @@ export function PortfolioShell({
             className="order-2 flex items-center justify-center lg:order-2 lg:justify-end"
           >
             <div className="relative aspect-[3/4] w-full max-w-[220px] overflow-hidden rounded-3xl border border-dusk-700/90 bg-dusk-900/50 shadow-[0_28px_80px_rgba(0,0,0,0.45)] sm:max-w-[300px] lg:max-w-[340px]">
-              <Image
-                src={intro.photoSrc}
-                alt={photoAlt}
-                fill
-                className="object-cover"
-                sizes="(max-width: 1024px) 72vw, 380px"
-                priority
-                unoptimized={photoIsDataUrl || intro.photoSrc.endsWith(".svg")}
-              />
+              {usesDefaultAvatar ? (
+                <DefaultAvatarImage
+                  alt={photoAlt}
+                  sizes="(max-width: 1024px) 72vw, 380px"
+                  priority
+                />
+              ) : (
+                <Image
+                  src={intro.photoSrc}
+                  alt={photoAlt}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 1024px) 72vw, 380px"
+                  priority
+                  unoptimized={photoIsDataUrl || intro.photoSrc.endsWith(".svg")}
+                />
+              )}
               <span className="pointer-events-none absolute inset-0 bg-gradient-to-t from-dusk-950/50 via-transparent to-transparent" />
               {/* Upload nudge for owner when no real photo is set */}
-              {!publicView && intro.photoSrc === "/avatar-placeholder.svg" && (
+              {!publicView && usesDefaultAvatar && (
                 <button
                   type="button"
                   onClick={() => openEditor()}

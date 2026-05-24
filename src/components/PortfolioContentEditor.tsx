@@ -14,6 +14,11 @@ import { AnimatePresence, motion } from "framer-motion";
 import { DotLottieReact } from "@lottiefiles/dotlottie-react";
 import type { Achievement, SiteIntro, YearBlock } from "@/data/timeline";
 import type { DraftProfileFields } from "@/lib/draftProfileIntro";
+import { DefaultAvatarThumb } from "@/components/DefaultAvatarImage";
+import {
+  DEFAULT_AVATAR_STORED,
+  isDefaultAvatar,
+} from "@/lib/defaultAvatar";
 import { FREE_AI_EXHAUSTED_MESSAGE, FREE_AI_LABEL } from "@/lib/constants";
 import { UpgradeModal } from "@/components/UpgradeModal";
 import { PortfolioJsonImport } from "@/components/PortfolioJsonImport";
@@ -765,13 +770,21 @@ export function PortfolioContentEditor({
               </Field>
               <Field label="Profile photo">
                 <div className="mt-1 flex items-center gap-3">
-                  {/* Preview */}
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={heroFields.photoSrc || "/avatar-placeholder.svg"}
-                    alt="Profile preview"
-                    className="h-14 w-14 shrink-0 rounded-xl object-cover border border-dusk-600"
-                  />
+                  <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-dusk-600">
+                    {isDefaultAvatar(heroFields.photoSrc) ? (
+                      <DefaultAvatarThumb
+                        alt="Profile preview"
+                        className="size-full object-cover"
+                      />
+                    ) : (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img
+                        src={heroFields.photoSrc}
+                        alt="Profile preview"
+                        className="size-full object-cover"
+                      />
+                    )}
+                  </div>
                   <div className="flex flex-col gap-1.5">
                     <label className="cursor-pointer rounded-lg border border-dusk-600 bg-dusk-850 px-3 py-1.5 text-center text-xs text-parchment-muted hover:border-umber-500/40 hover:text-parchment">
                       Upload new photo
@@ -783,11 +796,11 @@ export function PortfolioContentEditor({
                       />
                     </label>
                     {heroFields.photoSrc &&
-                      heroFields.photoSrc !== "/avatar-placeholder.svg" ? (
+                      !isDefaultAvatar(heroFields.photoSrc) ? (
                       <button
                         type="button"
                         onClick={() =>
-                          onApplyIntro({ photoSrc: "/avatar-placeholder.svg" })
+                          onApplyIntro({ photoSrc: DEFAULT_AVATAR_STORED })
                         }
                         className="rounded-lg border border-red-500/30 px-3 py-1.5 text-xs text-red-400/80 transition hover:border-red-400/50 hover:text-red-400"
                       >

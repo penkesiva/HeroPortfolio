@@ -28,6 +28,8 @@ import {
   PORTFOLIO_COPY_SHARE_LINK_LABEL,
   PORTFOLIO_PRIVATE_SHARE_HINT,
 } from "@/lib/constants";
+import { DefaultAvatarThumb } from "@/components/DefaultAvatarImage";
+import { isDefaultAvatar } from "@/lib/defaultAvatar";
 
 function UserAvatarIcon({ className }: { className?: string }) {
   return (
@@ -127,8 +129,6 @@ function DownloadIcon({ className }: { className?: string }) {
   );
 }
 
-const DEFAULT_AVATAR = "/avatar-placeholder.svg";
-
 type Props = {
   userId: string;
   displayName: string;
@@ -143,7 +143,7 @@ type Props = {
 
 function shouldShowProfileAvatar(avatarSrc: string | null | undefined): boolean {
   if (!avatarSrc || !String(avatarSrc).trim()) return false;
-  return String(avatarSrc).trim() !== DEFAULT_AVATAR;
+  return !isDefaultAvatar(avatarSrc);
 }
 
 export function TimelineAccountMenu({
@@ -308,7 +308,9 @@ export function TimelineAccountMenu({
 
   void theme; // used indirectly via themeSetting
 
-  const usePhotoAvatar = shouldShowProfileAvatar(avatarSrc);
+  const useCustomAvatar = shouldShowProfileAvatar(avatarSrc);
+  const useDefaultAvatar = Boolean(avatarSrc?.trim()) && isDefaultAvatar(avatarSrc);
+  const useAvatarImage = useCustomAvatar || useDefaultAvatar;
 
   return (
     <>
@@ -334,17 +336,19 @@ export function TimelineAccountMenu({
           aria-label="Account menu"
           onClick={() => setOpen((o) => !o)}
           className={`flex size-10 shrink-0 items-center justify-center rounded-full border border-dusk-600 bg-dusk-850/90 text-parchment-muted shadow-sm transition hover:border-umber-400/55 hover:bg-dusk-800 hover:text-umber-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-umber-400/70 ${
-            usePhotoAvatar ? "overflow-hidden p-0" : ""
+            useAvatarImage ? "overflow-hidden p-0" : ""
           }`}
           title="Account menu"
         >
-          {usePhotoAvatar && avatarSrc ? (
+          {useCustomAvatar && avatarSrc ? (
             // eslint-disable-next-line @next/next/no-img-element -- data URLs and signed URLs; matches hero
             <img
               src={avatarSrc}
               alt={avatarAlt || displayName}
               className="size-full min-h-0 min-w-0 object-cover object-center"
             />
+          ) : useDefaultAvatar ? (
+            <DefaultAvatarThumb alt={avatarAlt || displayName} />
           ) : (
             <UserAvatarIcon className="size-[22px] text-umber-300/95" />
           )}

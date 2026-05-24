@@ -328,7 +328,7 @@ export function PricingPlansClient({
                     : `Upgrade to Student Pro · ${yearly ? `$${STUDENT_YEARLY}/yr` : `$${STUDENT_MONTHLY}/mo`}`}
               </button>
               <p className="mt-2 text-center text-[11px] text-parchment-muted">
-                Stripe checkout · Cancel any time · No hidden fees
+                Cancel any time · No hidden fees
               </p>
             </>
           )}

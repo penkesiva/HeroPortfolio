@@ -59,6 +59,11 @@ body {
 .family-btn           { border-color: rgba(56,189,248,0.40); background: rgba(56,189,248,0.15); color: #bae6fd; } /* sky-200 */
 .family-btn:hover     { background: rgba(56,189,248,0.25); }
 
+/* Default hero/profile placeholder — swaps with data-theme before paint */
+.default-avatar-img-light { display: none; }
+html[data-theme="light"] .default-avatar-img-dark { display: none; }
+html[data-theme="light"] .default-avatar-img-light { display: block; }
+
 html[data-theme="light"] .family-card          { border-color: rgba(2,132,199,0.40); }
 html[data-theme="light"] .family-card-bg       { background: linear-gradient(to bottom, rgba(186,230,253,0.35), rgba(241,245,249,0.6)); }
 html[data-theme="light"] .family-badge         { background: rgba(2,132,199,0.12); color: #0369a1; } /* sky-700 */

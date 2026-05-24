@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { SiteIntro, YearBlock } from "@/data/timeline";
+import { isDefaultAvatar } from "@/lib/defaultAvatar";
 import {
   saveUserTimeline,
   syncEventImagesForTimeline,
@@ -157,9 +158,7 @@ export async function saveProfileAction(
   if (!user) redirect("/login?next=/timeline");
 
   const photoUrl =
-    intro.photoSrc && intro.photoSrc !== "/avatar-placeholder.svg"
-      ? intro.photoSrc
-      : null;
+    intro.photoSrc && !isDefaultAvatar(intro.photoSrc) ? intro.photoSrc : null;
 
   // Owned portfolio profile (child or personal)
   if (targetUserId && targetUserId !== user.id) {
@@ -283,7 +282,7 @@ export async function importPortfolioJsonAction(
   if (parsed.profile) {
     const p = parsed.profile;
     const photoUrl =
-      p.photoSrc && p.photoSrc !== "/avatar-placeholder.svg" ? p.photoSrc : null;
+      p.photoSrc && !isDefaultAvatar(p.photoSrc) ? p.photoSrc : null;
 
     if (isChildContext) {
       await updateChildProfile(supabase, user.id, saveUserId, {

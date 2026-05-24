@@ -7,6 +7,7 @@ import { PrivatePortfolioPage } from "@/components/PrivatePortfolioPage";
 import { PublicPortfolioClient } from "@/components/PublicPortfolioClient";
 import { SiteBrandLink } from "@/components/SiteBrandLink";
 import { isPublicProfileUserId } from "@/lib/auth/profileId";
+import { DEFAULT_AVATAR_STORED } from "@/lib/defaultAvatar";
 import {
   childProfileToSiteIntro,
   dbProfileToSiteIntro,
@@ -109,7 +110,7 @@ export default async function PublicProfilePage({ params }: Props) {
           heroLead: "I'm",
           role: "Student · Portfolio",
           bio: "Achievement timeline on HeroPortfolio.",
-          photoSrc: "/avatar-placeholder.svg",
+          photoSrc: DEFAULT_AVATAR_STORED,
           photoAlt: "Student",
         };
 

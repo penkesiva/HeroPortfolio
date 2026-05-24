@@ -21,6 +21,7 @@ import {
   BUCKET_EVENT_IMAGES,
   BUCKET_PROFILE_PHOTOS,
 } from "@/lib/storage";
+import { DEFAULT_AVATAR_STORED, isDefaultAvatar } from "@/lib/defaultAvatar";
 import { createServiceSupabaseClient } from "@/lib/supabase/service";
 
 /**
@@ -476,7 +477,7 @@ export async function dbProfileToSiteIntro(
   profile: DbProfile | null,
   fallbackName: string,
 ): Promise<SiteIntro> {
-  const rawPhotoUrl = profile?.photo_url ?? "/avatar-placeholder.svg";
+  const rawPhotoUrl = profile?.photo_url ?? DEFAULT_AVATAR_STORED;
   const signClient = getClientForStorageSigning(supabase);
   const photoSrc = await signStoragePath(signClient, BUCKET_PROFILE_PHOTOS, rawPhotoUrl);
 
@@ -499,7 +500,7 @@ export async function childProfileToSiteIntro(
   supabase: SupabaseClient,
   child: DbPortfolioProfile,
 ): Promise<SiteIntro> {
-  const rawPhotoUrl = child.photo_url ?? "/avatar-placeholder.svg";
+  const rawPhotoUrl = child.photo_url ?? DEFAULT_AVATAR_STORED;
   const signClient = getClientForStorageSigning(supabase);
   const photoSrc = await signStoragePath(signClient, BUCKET_PROFILE_PHOTOS, rawPhotoUrl);
   const gradeLabel =
@@ -662,8 +663,8 @@ export async function getPortfolioHubEntries(
           ? ownerProfile?.photo_url
           : null);
 
-      if (!rawPhoto || rawPhoto === "/avatar-placeholder.svg") {
-        return { portfolio, photoSrc: null };
+      if (!rawPhoto || isDefaultAvatar(rawPhoto)) {
+        return { portfolio, photoSrc: DEFAULT_AVATAR_STORED };
       }
 
       const photoSrc = await signStoragePath(

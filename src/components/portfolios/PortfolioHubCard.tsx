@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { DefaultAvatarThumb } from "@/components/DefaultAvatarImage";
 import { PortfolioVisibilityToggle, PortfolioVisibilityBadge } from "@/components/PortfolioVisibilityToggle";
+import { isDefaultAvatar } from "@/lib/defaultAvatar";
 import type { DbPortfolioProfile } from "@/types/database";
 
 type Props = {
@@ -26,12 +28,16 @@ export function PortfolioHubCard({ portfolio, photoSrc = null }: Props) {
     <div className="group flex flex-col rounded-2xl border border-dusk-700/90 bg-dusk-900/60 p-6 shadow transition hover:border-umber-500/40 hover:bg-dusk-900/80">
       <Link href={`/portfolios/${portfolio.id}`} className="flex flex-col gap-3">
         <div className="flex items-center gap-3">
-          {photoSrc ? (
+          {photoSrc && !isDefaultAvatar(photoSrc) ? (
             <img
               src={photoSrc}
               alt={portfolio.display_name}
               className="size-12 shrink-0 rounded-full object-cover ring-2 ring-dusk-600"
             />
+          ) : photoSrc && isDefaultAvatar(photoSrc) ? (
+            <div className="size-12 shrink-0 overflow-hidden rounded-full ring-2 ring-dusk-600">
+              <DefaultAvatarThumb alt={portfolio.display_name} />
+            </div>
           ) : (
             <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-dusk-800 text-xl ring-2 ring-dusk-600">
               {portfolio.portfolio_kind === "child" ? "🧒" : "📁"}
