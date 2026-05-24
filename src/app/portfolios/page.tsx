@@ -95,22 +95,13 @@ export default async function PortfoliosPage() {
             )}
           </div>
 
-          {atLimit ? (
-            <Link
-              href="/pricing?reason=portfolio_limit"
-              className="flex items-center gap-2 rounded-full border border-umber-500/50 bg-umber-500/15 px-4 py-2 text-sm font-semibold text-umber-200 transition hover:bg-umber-500/25"
-            >
-              Upgrade to add more
-            </Link>
-          ) : (
-            <Link
-              href="/portfolios/new"
-              className="flex items-center gap-2 rounded-full border border-umber-500/50 bg-umber-500/15 px-4 py-2 text-sm font-semibold text-umber-200 transition hover:bg-umber-500/25"
-            >
-              <span className="text-base leading-none">+</span>
-              {isGuardian ? PORTFOLIOS_ADD_LABEL_GUARDIAN : PORTFOLIOS_ADD_LABEL_SELF}
-            </Link>
-          )}
+          <Link
+            href="/portfolios/new"
+            className="flex items-center gap-2 rounded-full border border-umber-500/50 bg-umber-500/15 px-4 py-2 text-sm font-semibold text-umber-200 transition hover:bg-umber-500/25"
+          >
+            <span className="text-base leading-none">+</span>
+            {isGuardian ? PORTFOLIOS_ADD_LABEL_GUARDIAN : PORTFOLIOS_ADD_LABEL_SELF}
+          </Link>
         </div>
 
         {atLimit && (

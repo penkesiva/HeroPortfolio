@@ -1,6 +1,13 @@
 "use client";
 
-import { FREE_AI_LABEL, FREE_CHILD_LIMIT, PRICES } from "@/lib/constants";
+import {
+  FREE_AI_LABEL,
+  FREE_PORTFOLIO_LIMIT,
+  PRICES,
+  PRICING_FREE_PLAN_TAGLINE_GUARDIAN,
+  PRICING_FREE_PLAN_TAGLINE_SELF,
+  PRICING_STUDENT_PRO_TAGLINE,
+} from "@/lib/constants";
 
 import { startTransition, useState } from "react";
 import Link from "next/link";
@@ -141,9 +148,7 @@ export function PricingPlansClient({
         <article className="flex flex-col rounded-2xl border border-dusk-700/90 bg-dusk-900/40 p-5 shadow-lg sm:p-6">
           <h2 className="text-base font-semibold text-parchment">Free</h2>
           <p className="mt-0.5 text-sm text-parchment-muted">
-            {isGuardian
-              ? `Everything you need to get started with up to ${FREE_CHILD_LIMIT} children.`
-              : "Everything you need to publish a credible portfolio."}
+            {isGuardian ? PRICING_FREE_PLAN_TAGLINE_GUARDIAN : PRICING_FREE_PLAN_TAGLINE_SELF}
           </p>
           <div className="mt-4 flex items-baseline gap-1.5">
             <span className="text-3xl font-semibold tracking-tight text-parchment">$0</span>
@@ -153,13 +158,13 @@ export function PricingPlansClient({
             {isGuardian ? (
               <>
                 <Feature>
-                  <strong className="font-medium text-parchment/90">Up to {FREE_CHILD_LIMIT} child portfolios</strong>
+                  <strong className="font-medium text-parchment/90">Up to {FREE_PORTFOLIO_LIMIT} child portfolios</strong>
                 </Feature>
                 <Feature>
                   <strong className="font-medium text-parchment/90">Year-by-year timeline</strong>, up to 12 events per year per child
                 </Feature>
                 <Feature>
-                  <strong className="font-medium text-parchment/90">3 photos per event</strong> with album view
+                  <strong className="font-medium text-parchment/90">1 photo per event</strong>
                 </Feature>
                 <Feature>
                   <strong className="font-medium text-parchment/90">AI Smart Import</strong>, {FREE_AI_LABEL}
@@ -171,13 +176,16 @@ export function PricingPlansClient({
             ) : (
               <>
                 <Feature>
-                  <strong className="font-medium text-parchment/90">1 public portfolio</strong> with a shareable link
+                  <strong className="font-medium text-parchment/90">Up to {FREE_PORTFOLIO_LIMIT} portfolios</strong>
+                </Feature>
+                <Feature>
+                  <strong className="font-medium text-parchment/90">Public or private sharing</strong> per portfolio
                 </Feature>
                 <Feature>
                   <strong className="font-medium text-parchment/90">Year-by-year timeline</strong>, up to 12 events per year
                 </Feature>
                 <Feature>
-                  <strong className="font-medium text-parchment/90">3 photos per event</strong> with album view
+                  <strong className="font-medium text-parchment/90">1 photo per event</strong>
                 </Feature>
                 <Feature>
                   <strong className="font-medium text-parchment/90">AI Smart Import</strong>, {FREE_AI_LABEL}
@@ -218,7 +226,7 @@ export function PricingPlansClient({
           <p className="mt-0.5 text-sm text-parchment-muted">
             {isGuardian
               ? "Unlimited children, all Pro features for your whole family."
-              : "For students building a college application portfolio."}
+              : PRICING_STUDENT_PRO_TAGLINE}
           </p>
           <div className="mt-4">
             {isGuardian ? (
@@ -264,11 +272,11 @@ export function PricingPlansClient({
             <Feature>
               <strong className="font-medium text-parchment/90">Everything in Free</strong>
             </Feature>
-            {isGuardian && (
-              <Feature>
-                <strong className="font-medium text-parchment/90">Unlimited child portfolios</strong>
-              </Feature>
-            )}
+            <Feature>
+              <strong className="font-medium text-parchment/90">
+                {isGuardian ? "Unlimited child portfolios" : "Unlimited portfolios"}
+              </strong>
+            </Feature>
             <Feature>
               <strong className="font-medium text-parchment/90">Unlimited events</strong> + unlimited photos
             </Feature>

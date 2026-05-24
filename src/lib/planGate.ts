@@ -4,7 +4,7 @@ import type { Plan } from "@/types/database";
 export const PLAN_LIMITS = {
   free: {
     eventsPerYear: 12,
-    imagesPerEvent: 3,
+    imagesPerEvent: 1,
     totalStorageMb: 500,
     aiUsesPerMonth: FREE_AI_USES_PER_MONTH,
     pdfExport: false,

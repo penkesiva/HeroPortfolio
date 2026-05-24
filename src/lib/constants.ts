@@ -46,11 +46,17 @@ export const PORTFOLIOS_FREE_USAGE_LABEL = (used: number, limit: number) =>
 
 // ── Pricing page copy ─────────────────────────────────────────────────────────
 export const PRICING_PAGE_META_DESCRIPTION =
-  `HeroPortfolio is free to start. Student Pro unlocks unlimited events, AI import, and PDF export for ${STUDENT_PRO_MONTHLY_PRICE_LABEL}. Parent Pro adds unlimited child portfolios for ${PARENT_PRO_PER_CHILD_MONTHLY_PRICE_LABEL}.`;
+  `HeroPortfolio is free to start with up to ${FREE_PORTFOLIO_LIMIT} portfolios. Student Pro unlocks unlimited portfolios, events, AI import, and PDF export for ${STUDENT_PRO_MONTHLY_PRICE_LABEL}. Parent Pro adds unlimited child portfolios for ${PARENT_PRO_PER_CHILD_MONTHLY_PRICE_LABEL}.`;
 export const PRICING_PAGE_GUARDIAN_SUBHEAD =
   `Start free with up to ${FREE_PORTFOLIO_LIMIT} portfolios per account. Upgrade to Parent Pro for ${PARENT_PRO_PER_CHILD_MONTHLY_PRICE_LABEL} to add unlimited children and unlock all Pro features for your whole family.`;
 export const PRICING_PAGE_STUDENT_SUBHEAD =
-  "Start free with a full portfolio. Upgrade to Student Pro for AI-powered import, unlimited events, and PDF export — for less than a coffee per month.";
+  `Start free with up to ${FREE_PORTFOLIO_LIMIT} portfolios — music, sports, achievements, and more. Upgrade to Student Pro for unlimited portfolios, AI-powered import, unlimited events, and PDF export — for less than a coffee per month.`;
+export const PRICING_FREE_PLAN_TAGLINE_GUARDIAN =
+  `Everything you need to get started with up to ${FREE_PORTFOLIO_LIMIT} child portfolios.`;
+export const PRICING_FREE_PLAN_TAGLINE_SELF =
+  `Up to ${FREE_PORTFOLIO_LIMIT} portfolios — music, sports, achievements, and more.`;
+export const PRICING_STUDENT_PRO_TAGLINE =
+  "Unlimited portfolios for music, sports, achievements, and college apps.";
 
 // ── Upgrade copy ──────────────────────────────────────────────────────────────
 export const PARENT_UPGRADE_HEADLINE = "Unlock more children + all Pro features";
