@@ -19,6 +19,7 @@ export function PortfolioTransferProgress({ open, title, detail }: Props) {
       role="status"
       aria-live="polite"
       aria-busy="true"
+      onMouseDown={(e) => e.stopPropagation()}
     >
       <div className="w-full max-w-sm rounded-2xl border border-dusk-600/90 bg-dusk-900/95 px-5 py-5 shadow-[0_24px_64px_rgba(0,0,0,0.45)]">
         <div className="flex items-center gap-3">

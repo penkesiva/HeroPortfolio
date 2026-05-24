@@ -17,8 +17,8 @@ type Props = { searchParams: Promise<{ next?: string }> };
 
 export default async function OnboardingWhoPage({ searchParams }: Props) {
   const q = await searchParams;
-  const rawNext = sanitizeAuthRedirect(q.next, "/timeline");
-  const nextPath = rawNext.startsWith("/onboarding") ? "/timeline" : rawNext;
+  const rawNext = sanitizeAuthRedirect(q.next, "/portfolios");
+  const nextPath = rawNext.startsWith("/onboarding") ? "/portfolios" : rawNext;
 
   if (!isSupabaseConfigured()) redirect("/");
 

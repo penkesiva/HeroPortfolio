@@ -29,12 +29,12 @@ export function OnboardingWhoClient({ nextPath }: { nextPath: string }) {
       setError(res.error);
       return;
     }
-    // Guardians go to the children dashboard; self-accounts go to timeline
+    // Guardians and students land on the unified portfolios hub
     if (kind === "guardian") {
-      router.push("/children");
+      router.push("/portfolios");
     } else {
-      const safe = sanitizeAuthRedirect(nextPath, "/timeline");
-      const dest = safe.startsWith("/onboarding") ? "/timeline" : safe;
+      const safe = sanitizeAuthRedirect(nextPath, "/portfolios");
+      const dest = safe.startsWith("/onboarding") ? "/portfolios" : safe;
       router.push(dest);
     }
     router.refresh();

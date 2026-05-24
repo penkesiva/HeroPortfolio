@@ -5,7 +5,7 @@ import { BackToTimeline } from "@/components/BackToTimeline";
 import { BadgesClient } from "@/components/BadgesClient";
 import { mustHaveAccountKindOrRedirect } from "@/lib/auth/accountSetup";
 import { displayNameFromUser } from "@/lib/auth/displayName";
-import { dbProfileToSiteIntro, getProfile, getUserPlan, getUserTimeline } from "@/lib/db/portfolio";
+import { dbProfileToSiteIntro, getProfile, getUserPlan, getUserTimeline, resolveDefaultPortfolioId } from "@/lib/db/portfolio";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { computeBadges, computeLifetimeRaised } from "@/lib/badges";
@@ -28,9 +28,16 @@ export default async function BadgesPage() {
   await mustHaveAccountKindOrRedirect(supabase, user.id, "/timeline/badges");
 
   const name = displayNameFromUser(user);
-  const [profile, timeline, plan] = await Promise.all([
-    getProfile(supabase, user.id),
-    getUserTimeline(supabase, user.id),
+  const profile = await getProfile(supabase, user.id);
+  const portfolioUserId = await resolveDefaultPortfolioId(
+    supabase,
+    user.id,
+    profile?.account_kind ?? null,
+  );
+  if (!portfolioUserId) redirect("/portfolios");
+
+  const [timeline, plan] = await Promise.all([
+    getUserTimeline(supabase, portfolioUserId),
     getUserPlan(supabase, user.id),
   ]);
   const siteIntro = await dbProfileToSiteIntro(supabase, profile, name);

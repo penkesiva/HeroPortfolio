@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import type { AccountKind } from "@/types/database";
+import { ensurePrimaryPortfolioProfile } from "@/lib/db/portfolio";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -35,6 +36,18 @@ export async function setAccountKindAction(
     return { error: "This choice was already saved. Refresh the page." };
   }
 
+  if (kind === "self") {
+    try {
+      await ensurePrimaryPortfolioProfile(supabase, user.id);
+    } catch (err) {
+      return {
+        error:
+          err instanceof Error ? err.message : "Could not create primary portfolio.",
+      };
+    }
+  }
+
+  revalidatePath("/portfolios");
   revalidatePath("/timeline");
   revalidatePath("/onboarding/who");
   return { error: null };

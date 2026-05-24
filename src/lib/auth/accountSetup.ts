@@ -2,12 +2,13 @@ import { redirect } from "next/navigation";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getProfile } from "@/lib/db/portfolio";
 
+const LEGACY_CHILD_PREFIX = "/children";
+const LEGACY_TIMELINE_PREFIX = "/timeline";
+const PORTFOLIOS_PREFIX = "/portfolios";
+
 /**
  * If the user has not chosen self vs guardian yet, send them to onboarding.
- * If they have chosen, enforce they are on the right route type:
- *   - guardian → /children (not /timeline)
- *   - self     → /timeline (not /children)
- * Call after confirming `user` is non-null.
+ * Both account kinds use the unified /portfolios hub.
  */
 export async function mustHaveAccountKindOrRedirect(
   supabase: SupabaseClient,
@@ -21,12 +22,15 @@ export async function mustHaveAccountKindOrRedirect(
   if (profile.account_kind == null) {
     redirect(`/onboarding/who?next=${encodeURIComponent(nextPath)}`);
   }
-  // Redirect guardians away from self-only routes
-  if (profile.account_kind === "guardian" && nextPath.startsWith("/timeline")) {
-    redirect("/children");
+
+  if (nextPath.startsWith(LEGACY_CHILD_PREFIX)) {
+    redirect(nextPath.replace(LEGACY_CHILD_PREFIX, PORTFOLIOS_PREFIX));
   }
-  // Redirect self-accounts away from guardian-only routes
-  if (profile.account_kind === "self" && nextPath.startsWith("/children")) {
-    redirect("/timeline");
+
+  if (
+    nextPath === LEGACY_TIMELINE_PREFIX ||
+    nextPath.startsWith(`${LEGACY_TIMELINE_PREFIX}/`)
+  ) {
+    return;
   }
 }

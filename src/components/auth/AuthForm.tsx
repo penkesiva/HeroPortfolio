@@ -244,12 +244,12 @@ export function AuthForm({ mode, redirectAfterAuth }: { mode: Mode; redirectAfte
 
       {pwMessage ? (
         <p
-          className={`mt-4 rounded-lg border px-3 py-2 text-center text-xs ${
+          className={`mt-4 rounded-lg border px-3 py-2 text-center text-xs font-medium ${
             pwStatus === "error"
-              ? "border-red-500/35 bg-red-950/25 text-red-200/90"
+              ? "auth-alert-error"
               : pwStatus === "success"
-                ? "border-green-500/35 bg-green-950/25 text-green-200/90"
-                : "border-dusk-600 bg-dusk-900/60 text-parchment-muted"
+                ? "auth-alert-success"
+                : "auth-alert-neutral"
           }`}
           role={pwStatus === "error" ? "alert" : "status"}
         >

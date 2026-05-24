@@ -8,8 +8,10 @@ import { displayNameFromUser } from "@/lib/auth/displayName";
 import {
   dbProfileToSiteIntro,
   getAnalyticsSummary,
+  getPortfolioProfile,
   getProfile,
   getUserPlan,
+  resolveDefaultPortfolioId,
 } from "@/lib/db/portfolio";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -36,6 +38,16 @@ export default async function AnalyticsPage() {
     getProfile(supabase, user.id),
   ]);
   const name = displayNameFromUser(user);
+  const portfolioUserId = await resolveDefaultPortfolioId(
+    supabase,
+    user.id,
+    profile?.account_kind ?? null,
+  );
+  if (!portfolioUserId) redirect("/portfolios");
+
+  const portfolioMeta = await getPortfolioProfile(supabase, user.id, portfolioUserId);
+  const portfolioIsPublic = portfolioMeta?.is_public ?? profile?.is_public ?? false;
+
   const siteIntro = await dbProfileToSiteIntro(supabase, profile, name);
   const headerAvatar = {
     avatarSrc: siteIntro.photoSrc,
@@ -52,6 +64,7 @@ export default async function AnalyticsPage() {
           plan={plan}
           avatarSrc={headerAvatar.avatarSrc}
           avatarAlt={headerAvatar.avatarAlt}
+          portfolioIsPublic={portfolioIsPublic}
         />
         <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-10 text-center sm:px-6">
           <div className="mb-6 text-left">
@@ -68,9 +81,9 @@ export default async function AnalyticsPage() {
     );
   }
 
-  const analytics = await getAnalyticsSummary(supabase, user.id);
+  const analytics = await getAnalyticsSummary(supabase, portfolioUserId);
 
-  const publicUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/p/${user.id}`;
+  const publicUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/p/${portfolioUserId}`;
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -80,6 +93,7 @@ export default async function AnalyticsPage() {
         plan={plan}
         avatarSrc={headerAvatar.avatarSrc}
         avatarAlt={headerAvatar.avatarAlt}
+        portfolioIsPublic={portfolioIsPublic}
       />
 
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-10 sm:px-6">

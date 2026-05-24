@@ -1,5 +1,6 @@
 {
   "version": 1,
+  "portfolioUserId": "8eaab131-165f-4659-8fa2-006caa461214",
   "name": "Sofia Reyes",
   "profile": {
     "name": "Sofia Reyes"
@@ -10,7 +11,7 @@
       "tagline": "7th grade — art, soccer, and science curiosity.",
       "events": [
         {
-          "id": "sofia-26-1",
+          "id": "f26b2001-0001-4001-8001-000000000001",
           "heading1": "All-district art show — watercolor series",
           "heading2": "“Neighborhood windows”",
           "categories": ["arts"],
@@ -20,7 +21,7 @@
           ]
         },
         {
-          "id": "sofia-26-2",
+          "id": "f26b2001-0002-4001-8001-000000000002",
           "heading1": "Travel soccer — league champions",
           "heading2": "Midfielder · U13 squad",
           "categories": ["sports"],
@@ -33,7 +34,7 @@
       "tagline": "6th grade — science fair and choir.",
       "events": [
         {
-          "id": "sofia-25-1",
+          "id": "f25b2001-0001-4001-8001-000000000001",
           "heading1": "Science fair — pollinators in our yard",
           "heading2": "1st place · life sciences",
           "categories": ["stem", "academic"],
@@ -43,7 +44,7 @@
           ]
         },
         {
-          "id": "sofia-25-2",
+          "id": "f25b2001-0002-4001-8001-000000000002",
           "heading1": "Junior choir solo",
           "heading2": "Winter concert",
           "categories": ["arts", "music"],
@@ -57,7 +58,7 @@
       "tagline": "5th grade — first team sports.",
       "events": [
         {
-          "id": "sofia-24-1",
+          "id": "f24b2001-0001-4001-8001-000000000001",
           "heading1": "Recreational soccer — most improved",
           "heading2": "First season",
           "categories": ["sports"],

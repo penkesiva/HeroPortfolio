@@ -56,8 +56,7 @@ export async function POST(req: NextRequest) {
       .upsert({ id: user.id, stripe_customer_id: customerId });
   }
 
-  // Guardians land on /children after upgrade; students land on /timeline
-  const successPath = isParentPro ? "/children?upgraded=1" : "/timeline?upgraded=1";
+  const successPath = isParentPro ? "/portfolios?upgraded=1" : "/timeline?upgraded=1";
 
   const session = await stripe.checkout.sessions.create({
     customer: customerId,

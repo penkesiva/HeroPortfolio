@@ -6,12 +6,14 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Achievement, SiteIntro, YearBlock } from "@/data/timeline";
 import type {
   AnalyticsSummary,
-  DbChildProfile,
   DbEvent,
   DbEventImage,
+  DbPortfolioProfile,
   DbProfile,
   DbYearBlock,
   Plan,
+  PortfolioKind,
+  PortfolioVisibility,
 } from "@/types/database";
 import {
   signEventImagePaths,
@@ -77,6 +79,33 @@ export async function getUserPlan(
     .eq("id", userId)
     .single();
   return ((data as { plan?: string } | null)?.plan as Plan) ?? "free";
+}
+
+export async function getPortfolioVisibility(
+  supabase: SupabaseClient,
+  portfolioUserId: string,
+): Promise<PortfolioVisibility> {
+  const { data, error } = await supabase.rpc("get_portfolio_visibility", {
+    p_portfolio_id: portfolioUserId,
+  });
+  if (error || !data) return "not_found";
+  if (data === "public" || data === "private" || data === "not_found") {
+    return data;
+  }
+  return "not_found";
+}
+
+export async function getPublicChildProfile(
+  supabase: SupabaseClient,
+  childId: string,
+): Promise<DbPortfolioProfile | null> {
+  const { data } = await supabase
+    .from("child_profiles")
+    .select("*")
+    .eq("id", childId)
+    .eq("is_public", true)
+    .maybeSingle();
+  return (data as DbPortfolioProfile | null) ?? null;
 }
 
 // ─── year_blocks + events ─────────────────────────────────────────────────────
@@ -468,17 +497,26 @@ export async function dbProfileToSiteIntro(
  */
 export async function childProfileToSiteIntro(
   supabase: SupabaseClient,
-  child: DbChildProfile,
+  child: DbPortfolioProfile,
 ): Promise<SiteIntro> {
   const rawPhotoUrl = child.photo_url ?? "/avatar-placeholder.svg";
   const signClient = getClientForStorageSigning(supabase);
   const photoSrc = await signStoragePath(signClient, BUCKET_PROFILE_PHOTOS, rawPhotoUrl);
-  const gradeLabel = child.grade != null ? (child.grade === 0 ? "Kindergarten" : `Grade ${child.grade}`) : null;
+  const gradeLabel =
+    child.portfolio_kind === "child" && child.grade != null
+      ? child.grade === 0
+        ? "Kindergarten"
+        : `Grade ${child.grade}`
+      : null;
 
   return {
     name: child.display_name,
     heroLead: "I'm",
-    role: gradeLabel ? `${gradeLabel} · Portfolio` : "Student · Portfolio",
+    role: gradeLabel
+      ? `${gradeLabel} · Portfolio`
+      : child.is_primary
+        ? "Student · Portfolio"
+        : `${child.display_name} · Portfolio`,
     bio: "Add milestones, media, and links. This timeline tracks achievements year by year.",
     photoSrc,
     photoAlt: child.display_name,
@@ -585,76 +623,269 @@ export async function checkAndIncrementAiUsage(
   return { allowed: true, remaining: limit - currentUses - 1 };
 }
 
-// ─── child profiles ───────────────────────────────────────────────────────────
+// ─── portfolio profiles (children + personal) ────────────────────────────────
 
-export async function getChildProfiles(
+export async function getPortfolioProfiles(
   supabase: SupabaseClient,
-  parentUserId: string,
-): Promise<DbChildProfile[]> {
+  ownerUserId: string,
+): Promise<DbPortfolioProfile[]> {
   const { data } = await supabase
     .from("child_profiles")
     .select("*")
-    .eq("parent_user_id", parentUserId)
+    .eq("parent_user_id", ownerUserId)
+    .order("is_primary", { ascending: false })
     .order("created_at", { ascending: true });
-  return (data as DbChildProfile[] | null) ?? [];
+  return (data as DbPortfolioProfile[] | null) ?? [];
 }
 
+export type PortfolioHubEntry = {
+  portfolio: DbPortfolioProfile;
+  photoSrc: string | null;
+};
+
+/** Hub cards: resolve + sign photos, with account photo fallback for primary portfolio. */
+export async function getPortfolioHubEntries(
+  supabase: SupabaseClient,
+  ownerUserId: string,
+): Promise<PortfolioHubEntry[]> {
+  const [portfolios, ownerProfile] = await Promise.all([
+    getPortfolioProfiles(supabase, ownerUserId),
+    getProfile(supabase, ownerUserId),
+  ]);
+  const signClient = getClientForStorageSigning(supabase);
+
+  return Promise.all(
+    portfolios.map(async (portfolio) => {
+      const rawPhoto =
+        portfolio.photo_url ??
+        (portfolio.is_primary && portfolio.portfolio_kind === "personal"
+          ? ownerProfile?.photo_url
+          : null);
+
+      if (!rawPhoto || rawPhoto === "/avatar-placeholder.svg") {
+        return { portfolio, photoSrc: null };
+      }
+
+      const photoSrc = await signStoragePath(
+        signClient,
+        BUCKET_PROFILE_PHOTOS,
+        rawPhoto,
+      );
+      return { portfolio, photoSrc };
+    }),
+  );
+}
+
+/** @deprecated Use getPortfolioProfiles */
+export async function getChildProfiles(
+  supabase: SupabaseClient,
+  parentUserId: string,
+): Promise<DbPortfolioProfile[]> {
+  return getPortfolioProfiles(supabase, parentUserId);
+}
+
+export async function getPortfolioProfile(
+  supabase: SupabaseClient,
+  ownerUserId: string,
+  portfolioId: string,
+): Promise<DbPortfolioProfile | null> {
+  const { data } = await supabase
+    .from("child_profiles")
+    .select("*")
+    .eq("id", portfolioId)
+    .eq("parent_user_id", ownerUserId)
+    .single();
+  return (data as DbPortfolioProfile | null) ?? null;
+}
+
+/** @deprecated Use getPortfolioProfile */
 export async function getChildProfile(
   supabase: SupabaseClient,
   parentUserId: string,
   childId: string,
-): Promise<DbChildProfile | null> {
+): Promise<DbPortfolioProfile | null> {
+  return getPortfolioProfile(supabase, parentUserId, childId);
+}
+
+export async function getPrimaryPortfolioProfile(
+  supabase: SupabaseClient,
+  ownerUserId: string,
+): Promise<DbPortfolioProfile | null> {
   const { data } = await supabase
     .from("child_profiles")
     .select("*")
-    .eq("id", childId)
-    .eq("parent_user_id", parentUserId)
-    .single();
-  return (data as DbChildProfile | null) ?? null;
+    .eq("parent_user_id", ownerUserId)
+    .eq("portfolio_kind", "personal")
+    .eq("is_primary", true)
+    .maybeSingle();
+  return (data as DbPortfolioProfile | null) ?? null;
 }
 
-export async function createChildProfile(
+export async function ensurePrimaryPortfolioProfile(
   supabase: SupabaseClient,
-  parentUserId: string,
-  fields: { display_name: string; grade?: number | null; birth_year?: number | null },
-): Promise<{ data: DbChildProfile | null; error: string | null }> {
+  ownerUserId: string,
+  displayName = "My Portfolio",
+): Promise<DbPortfolioProfile> {
+  const existing = await getPrimaryPortfolioProfile(supabase, ownerUserId);
+  if (existing) return existing;
+
+  const ownerProfile = await getProfile(supabase, ownerUserId);
+
   const { data, error } = await supabase
     .from("child_profiles")
     .insert({
-      parent_user_id: parentUserId,
+      parent_user_id: ownerUserId,
+      display_name: displayName.trim() || "My Portfolio",
+      portfolio_kind: "personal",
+      is_primary: true,
+      photo_url: ownerProfile?.photo_url ?? null,
+    })
+    .select()
+    .single();
+
+  if (error || !data) {
+    throw new Error(error?.message ?? "Could not create primary portfolio.");
+  }
+
+  return data as DbPortfolioProfile;
+}
+
+export async function resolveDefaultPortfolioId(
+  supabase: SupabaseClient,
+  ownerUserId: string,
+  accountKind: "self" | "guardian" | null,
+): Promise<string | null> {
+  if (accountKind === "self") {
+    const primary = await ensurePrimaryPortfolioProfile(supabase, ownerUserId);
+    return primary.id;
+  }
+  const profiles = await getPortfolioProfiles(supabase, ownerUserId);
+  return profiles[0]?.id ?? null;
+}
+
+export async function createPortfolioProfile(
+  supabase: SupabaseClient,
+  ownerUserId: string,
+  fields: {
+    display_name: string;
+    portfolio_kind: PortfolioKind;
+    grade?: number | null;
+    birth_year?: number | null;
+    is_primary?: boolean;
+  },
+): Promise<{ data: DbPortfolioProfile | null; error: string | null }> {
+  const { data, error } = await supabase
+    .from("child_profiles")
+    .insert({
+      parent_user_id: ownerUserId,
       display_name: fields.display_name.trim(),
-      grade: fields.grade ?? null,
-      birth_year: fields.birth_year ?? null,
+      portfolio_kind: fields.portfolio_kind,
+      is_primary: fields.is_primary ?? false,
+      grade: fields.portfolio_kind === "child" ? (fields.grade ?? null) : null,
+      birth_year:
+        fields.portfolio_kind === "child" ? (fields.birth_year ?? null) : null,
     })
     .select()
     .single();
   if (error) return { data: null, error: error.message };
-  return { data: data as DbChildProfile, error: null };
+  return { data: data as DbPortfolioProfile, error: null };
 }
 
-export async function updateChildProfile(
+/** @deprecated Use createPortfolioProfile */
+export async function createChildProfile(
   supabase: SupabaseClient,
   parentUserId: string,
-  childId: string,
-  patch: Partial<Pick<DbChildProfile, "display_name" | "grade" | "birth_year" | "photo_url">>,
+  fields: { display_name: string; grade?: number | null; birth_year?: number | null },
+): Promise<{ data: DbPortfolioProfile | null; error: string | null }> {
+  return createPortfolioProfile(supabase, parentUserId, {
+    ...fields,
+    portfolio_kind: "child",
+  });
+}
+
+export async function updatePortfolioProfile(
+  supabase: SupabaseClient,
+  ownerUserId: string,
+  portfolioId: string,
+  patch: Partial<
+    Pick<
+      DbPortfolioProfile,
+      "display_name" | "grade" | "birth_year" | "photo_url" | "is_public"
+    >
+  >,
 ): Promise<{ error: string | null }> {
   const { error } = await supabase
     .from("child_profiles")
     .update({ ...patch, updated_at: new Date().toISOString() })
-    .eq("id", childId)
-    .eq("parent_user_id", parentUserId);
+    .eq("id", portfolioId)
+    .eq("parent_user_id", ownerUserId);
   return { error: error?.message ?? null };
 }
 
+/** @deprecated Use updatePortfolioProfile */
+export async function updateChildProfile(
+  supabase: SupabaseClient,
+  parentUserId: string,
+  childId: string,
+  patch: Partial<
+    Pick<DbPortfolioProfile, "display_name" | "grade" | "birth_year" | "photo_url" | "is_public">
+  >,
+): Promise<{ error: string | null }> {
+  return updatePortfolioProfile(supabase, parentUserId, childId, patch);
+}
+
+export async function deletePortfolioProfile(
+  supabase: SupabaseClient,
+  ownerUserId: string,
+  portfolioId: string,
+): Promise<{ error: string | null }> {
+  const profile = await getPortfolioProfile(supabase, ownerUserId, portfolioId);
+  if (!profile) return { error: "Portfolio not found." };
+  if (profile.is_primary) {
+    return { error: "Your main portfolio can't be deleted." };
+  }
+
+  const { error } = await supabase
+    .from("child_profiles")
+    .delete()
+    .eq("id", portfolioId)
+    .eq("parent_user_id", ownerUserId);
+  return { error: error?.message ?? null };
+}
+
+/** @deprecated Use deletePortfolioProfile */
 export async function deleteChildProfile(
   supabase: SupabaseClient,
   parentUserId: string,
   childId: string,
 ): Promise<{ error: string | null }> {
+  return deletePortfolioProfile(supabase, parentUserId, childId);
+}
+
+export async function setPortfolioVisibility(
+  supabase: SupabaseClient,
+  authUserId: string,
+  portfolioUserId: string,
+  isPublic: boolean,
+): Promise<{ error: string | null }> {
+  let targetId = portfolioUserId;
+  if (portfolioUserId === authUserId) {
+    const primary = await getPrimaryPortfolioProfile(supabase, authUserId);
+    if (primary) {
+      targetId = primary.id;
+    } else {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ is_public: isPublic, updated_at: new Date().toISOString() })
+        .eq("id", authUserId);
+      return { error: error?.message ?? null };
+    }
+  }
+
   const { error } = await supabase
     .from("child_profiles")
-    .delete()
-    .eq("id", childId)
-    .eq("parent_user_id", parentUserId);
+    .update({ is_public: isPublic, updated_at: new Date().toISOString() })
+    .eq("id", targetId)
+    .eq("parent_user_id", authUserId);
   return { error: error?.message ?? null };
 }

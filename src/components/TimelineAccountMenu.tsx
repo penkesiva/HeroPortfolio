@@ -20,7 +20,14 @@ import {
 } from "@/lib/themePreference";
 import { PortfolioJsonImport } from "@/components/PortfolioJsonImport";
 import { PortfolioTransferProgress } from "@/components/PortfolioTransferProgress";
+import { PortfolioVisibilityToggle } from "@/components/PortfolioVisibilityToggle";
 import { AppNoticeDialog } from "@/components/AppNoticeDialog";
+import {
+  PORTFOLIO_COPIED_SHARE_LINK_LABEL,
+  PORTFOLIO_COPY_SHARE_LINK_FAILED_LABEL,
+  PORTFOLIO_COPY_SHARE_LINK_LABEL,
+  PORTFOLIO_PRIVATE_SHARE_HINT,
+} from "@/lib/constants";
 
 function UserAvatarIcon({ className }: { className?: string }) {
   return (
@@ -128,6 +135,7 @@ type Props = {
   plan?: "free" | "pro";
   /** Defaults to userId — set to a child profile id when importing a child's portfolio. */
   portfolioUserId?: string;
+  portfolioIsPublic?: boolean;
   /** Hero / profile photo — shown as a small center-crop circle, same source as the hero image. */
   avatarSrc?: string | null;
   avatarAlt?: string;
@@ -143,11 +151,13 @@ export function TimelineAccountMenu({
   displayName,
   plan = "free",
   portfolioUserId,
+  portfolioIsPublic = false,
   avatarSrc = null,
   avatarAlt,
 }: Props) {
   const portfolioId = portfolioUserId ?? userId;
   const [open, setOpen] = useState(false);
+  const [isPublic, setIsPublic] = useState(portfolioIsPublic);
   const [copied, setCopied] = useState(false);
   const [copyError, setCopyError] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
@@ -166,6 +176,12 @@ export function TimelineAccountMenu({
 
   useEffect(() => {
     startTransition(() => {
+      setIsPublic(portfolioIsPublic);
+    });
+  }, [portfolioIsPublic]);
+
+  useEffect(() => {
+    startTransition(() => {
       setTheme(getDocumentTheme());
       setThemeSetting(readStoredThemeSetting());
       setThemeMounted(true);
@@ -181,7 +197,14 @@ export function TimelineAccountMenu({
   useEffect(() => {
     if (!open) return;
     function onDoc(e: MouseEvent) {
-      if (!wrapRef.current?.contains(e.target as Node)) close();
+      const target = e.target;
+      if (!(target instanceof Node)) return;
+      if (wrapRef.current?.contains(target)) return;
+      if (target instanceof Element) {
+        if (target.closest('[role="dialog"]')) return;
+        if (target.closest('[role="status"][aria-busy="true"]')) return;
+      }
+      close();
     }
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") close();
@@ -207,8 +230,9 @@ export function TimelineAccountMenu({
   }
 
   async function copyProfileUrl() {
+    if (!isPublic) return;
     setCopyError(false);
-    const url = `${window.location.origin}/p/${userId}`;
+    const url = `${window.location.origin}/p/${portfolioId}`;
     try {
       await navigator.clipboard.writeText(url);
       setCopied(true);
@@ -248,7 +272,7 @@ export function TimelineAccountMenu({
     setExportProgressDetail("Building your file…");
 
     try {
-      const res = await fetch(`/api/export?format=${format}`);
+      const res = await fetch(`/api/export?format=${format}&portfolioId=${encodeURIComponent(portfolioId)}`);
       if (!res.ok) {
         let message = "Export failed.";
         const ct = res.headers.get("content-type") ?? "";
@@ -460,27 +484,51 @@ export function TimelineAccountMenu({
                 <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-parchment-muted/60">
                   Share
                 </p>
+                <PortfolioVisibilityToggle
+                  portfolioUserId={portfolioId}
+                  isPublic={isPublic}
+                  onIsPublicChange={setIsPublic}
+                />
                 <button
                   type="button"
                   role="menuitem"
+                  disabled={!isPublic}
                   onClick={() => void copyProfileUrl()}
-                  className={`flex w-full items-center justify-center gap-2 rounded-full border px-2.5 py-2 text-xs font-medium transition ${
+                  title={!isPublic ? PORTFOLIO_PRIVATE_SHARE_HINT : undefined}
+                  className={`mt-2.5 flex w-full items-center justify-center gap-2 rounded-full border px-2.5 py-2 text-xs font-medium transition disabled:cursor-not-allowed disabled:opacity-45 ${
                     copied
                       ? "border-umber-500/40 bg-umber-500/15 text-umber-200 shadow-sm ring-1 ring-umber-500/20"
                       : copyError
                         ? "border-red-500/35 bg-red-500/10 text-red-300/95 hover:border-red-500/45"
-                        : "border-dusk-600 bg-dusk-850 text-parchment-muted shadow-sm hover:border-umber-500/35 hover:bg-dusk-800 hover:text-parchment"
+                        : isPublic
+                          ? "border-dusk-600 bg-dusk-850 text-parchment-muted shadow-sm hover:border-umber-500/35 hover:bg-dusk-800 hover:text-parchment"
+                          : "border-dusk-700/80 bg-dusk-900/50 text-parchment-muted/50"
                   }`}
                 >
                   <LinkShareIcon
                     className={`size-3.5 shrink-0 ${
-                      copied ? "text-umber-200" : copyError ? "text-red-300/90" : "text-umber-300"
+                      copied
+                        ? "text-umber-200"
+                        : copyError
+                          ? "text-red-300/90"
+                          : isPublic
+                            ? "text-umber-300"
+                            : "text-parchment-muted/40"
                     }`}
                   />
                   <span>
-                    {copied ? "Copied!" : copyError ? "Copy failed" : "Copy share link"}
+                    {copied
+                      ? PORTFOLIO_COPIED_SHARE_LINK_LABEL
+                      : copyError
+                        ? PORTFOLIO_COPY_SHARE_LINK_FAILED_LABEL
+                        : PORTFOLIO_COPY_SHARE_LINK_LABEL}
                   </span>
                 </button>
+                {!isPublic ? (
+                  <p className="mt-1.5 text-[10px] leading-relaxed text-parchment-muted/50">
+                    {PORTFOLIO_PRIVATE_SHARE_HINT}
+                  </p>
+                ) : null}
               </div>
               <div className="border-t border-dusk-700/60 mt-1 pt-1">
                 <button

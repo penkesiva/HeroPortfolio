@@ -1,5 +1,6 @@
 {
   "version": 1,
+  "portfolioUserId": "d85a6529-451e-46bf-a8bb-a5dad721628c",
   "name": "Lucas Reyes",
   "profile": {
     "name": "Lucas Reyes"
@@ -10,7 +11,7 @@
       "tagline": "5th grade — robotics, basketball, and giving back.",
       "events": [
         {
-          "id": "lucas-26-1",
+          "id": "f26c3001-0001-4001-8001-000000000001",
           "heading1": "FIRST LEGO League — design award",
           "heading2": "Team “Gear Guardians”",
           "categories": ["stem"],
@@ -21,7 +22,7 @@
           "videoUrl": "https://www.youtube.com/watch?v=8_tAwL6A4Z4"
         },
         {
-          "id": "lucas-26-2",
+          "id": "f26c3001-0002-4001-8001-000000000002",
           "heading1": "Rec basketball — season MVP",
           "heading2": "Point guard",
           "categories": ["sports"],
@@ -34,7 +35,7 @@
       "tagline": "4th grade — reading challenge and scouts.",
       "events": [
         {
-          "id": "lucas-25-1",
+          "id": "f25c3001-0001-4001-8001-000000000001",
           "heading1": "Read-a-thon fundraiser",
           "heading2": "$500 raised for library",
           "categories": ["community", "academic"],
@@ -42,7 +43,7 @@
           "amountRaised": 500
         },
         {
-          "id": "lucas-25-2",
+          "id": "f25c3001-0002-4001-8001-000000000002",
           "heading1": "Cub Scout pinewood derby",
           "heading2": "2nd place · Pack 142",
           "categories": ["community"],
@@ -55,7 +56,7 @@
       "tagline": "3rd grade — early maker projects.",
       "events": [
         {
-          "id": "lucas-24-1",
+          "id": "f24c3001-0001-4001-8001-000000000001",
           "heading1": "School maker fair — cardboard arcade",
           "heading2": "Class showcase",
           "categories": ["stem", "arts"],

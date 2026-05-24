@@ -15,6 +15,8 @@ export type DbProfile = {
   /** BadgeCategory keys that have already triggered the unlock celebration. */
   celebrated_badge_categories?: string[];
   plan: Plan;
+  /** When true, /p/[id] is viewable by anyone with the link. Default false. */
+  is_public: boolean;
   account_kind: AccountKind | null;
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
@@ -79,16 +81,29 @@ export type DbYearBlockWithEvents = DbYearBlock & {
   events: DbEventWithImages[];
 };
 
-export type DbChildProfile = {
+export type PortfolioKind = "child" | "personal";
+
+export type DbPortfolioProfile = {
   id: string;
+  /** Auth user who owns / manages this portfolio. */
   parent_user_id: string;
   display_name: string;
   grade: number | null;
   birth_year: number | null;
   photo_url: string | null;
+  /** When true, /p/[id] is viewable by anyone with the link. Default false. */
+  is_public: boolean;
+  portfolio_kind: PortfolioKind;
+  /** Default personal portfolio for self accounts (at most one per owner). */
+  is_primary: boolean;
   created_at: string;
   updated_at: string;
 };
+
+/** @deprecated Use DbPortfolioProfile */
+export type DbChildProfile = DbPortfolioProfile;
+
+export type PortfolioVisibility = "public" | "private" | "not_found";
 
 export type AnalyticsSummary = {
   totalViews: number;

@@ -14,7 +14,7 @@ type Props = { searchParams: Promise<{ next?: string }> };
 
 export default async function SignupPage({ searchParams }: Props) {
   const q = await searchParams;
-  const next = sanitizeAuthRedirect(q.next, "/timeline");
+  const next = sanitizeAuthRedirect(q.next, "/portfolios");
 
   return (
     <div className="flex min-h-screen flex-col bg-dusk-950 lg:flex-row">

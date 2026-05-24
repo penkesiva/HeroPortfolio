@@ -4,10 +4,10 @@ import Link from "next/link";
  * Consistent back-navigation button used on all sub-pages (Album, Badges,
  * Analytics, Pricing). Update the styling here to change it everywhere.
  */
-export function BackToTimeline({ label = "Timeline" }: { label?: string }) {
+export function BackToTimeline({ label = "My Portfolios" }: { label?: string }) {
   return (
     <Link
-      href="/timeline"
+      href="/portfolios"
       className="inline-flex items-center gap-2 rounded-lg border border-dusk-700/60 bg-dusk-900/50 px-3.5 py-2 text-sm font-medium text-parchment-muted transition hover:border-dusk-600 hover:bg-dusk-800/60 hover:text-parchment"
     >
       <svg

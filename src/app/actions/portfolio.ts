@@ -12,6 +12,8 @@ import {
   getProfile,
   getUserTimeline,
   getUserPlan,
+  setPortfolioVisibility,
+  getPortfolioProfile,
 } from "@/lib/db/portfolio";
 import { newlyUnlockedCategoryBadges } from "@/lib/badges";
 import {
@@ -159,7 +161,7 @@ export async function saveProfileAction(
       ? intro.photoSrc
       : null;
 
-  // Child profile: save display_name + photo_url to child_profiles
+  // Owned portfolio profile (child or personal)
   if (targetUserId && targetUserId !== user.id) {
     const ok = await verifyChildOwnership(supabase, user.id, targetUserId);
     if (!ok) return { error: "Access denied." };
@@ -167,6 +169,17 @@ export async function saveProfileAction(
       display_name: intro.name?.trim() || undefined,
       photo_url: photoUrl ?? undefined,
     });
+
+    const portfolio = await getPortfolioProfile(supabase, user.id, targetUserId);
+    if (portfolio?.is_primary && portfolio.portfolio_kind === "personal") {
+      await upsertProfile(supabase, user.id, {
+        display_name: intro.name?.trim() || null,
+        photo_url: photoUrl,
+      });
+    }
+
+    revalidatePath("/portfolios");
+    revalidatePath(`/portfolios/${targetUserId}`);
     return { error: null };
   }
 
@@ -288,10 +301,10 @@ export async function importPortfolioJsonAction(
     }
   }
 
+  revalidatePath("/portfolios");
   revalidatePath("/timeline");
-  revalidatePath("/children");
   if (isChildContext) {
-    revalidatePath(`/children/${saveUserId}`);
+    revalidatePath(`/portfolios/${saveUserId}`);
   }
 
   const eventCount = clamped.reduce((n, b) => n + b.achievements.length, 0);
@@ -303,4 +316,41 @@ export async function importPortfolioJsonAction(
     warnings,
     stats: { years: clamped.length, events: eventCount },
   };
+}
+
+export async function setPortfolioVisibilityAction(
+  isPublic: boolean,
+  /** Portfolio owner: auth user id (student) or child profile id. */
+  targetUserId?: string,
+): Promise<{ error: string | null }> {
+  if (!isSupabaseConfigured()) return { error: "Supabase not configured" };
+
+  const supabase = await createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) redirect("/login?next=/timeline");
+
+  const portfolioUserId = targetUserId ?? user.id;
+
+  if (portfolioUserId !== user.id) {
+    const ok = await verifyChildOwnership(supabase, user.id, portfolioUserId);
+    if (!ok) return { error: "Access denied." };
+  }
+
+  const result = await setPortfolioVisibility(
+    supabase,
+    user.id,
+    portfolioUserId,
+    isPublic,
+  );
+  if (result.error) return result;
+
+  revalidatePath("/portfolios");
+  revalidatePath("/timeline");
+  revalidatePath(`/portfolios/${portfolioUserId}`);
+  revalidatePath(`/p/${portfolioUserId}`);
+
+  return { error: null };
 }

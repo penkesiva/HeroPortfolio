@@ -1,60 +1,38 @@
-import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { PortfolioShell } from "@/components/PortfolioShell";
 import { mustHaveAccountKindOrRedirect } from "@/lib/auth/accountSetup";
-import { displayNameFromUser } from "@/lib/auth/displayName";
-import { getUserTimeline, getProfile, dbProfileToSiteIntro } from "@/lib/db/portfolio";
-import { getUserPlan } from "@/lib/db/portfolio";
+import { resolveDefaultPortfolioId, getProfile } from "@/lib/db/portfolio";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
-export const metadata: Metadata = {
-  title: "Your timeline",
-  description:
-    "Build your HeroPortfolio timeline: achievements and milestones year by year.",
-};
-
-export default async function TimelinePage({
+export default async function LegacyTimelineRedirect({
   searchParams,
 }: {
   searchParams: Promise<{ upgraded?: string }>;
 }) {
   const { upgraded } = await searchParams;
-  if (!isSupabaseConfigured()) {
-    redirect("/");
-  }
+  if (!isSupabaseConfigured()) redirect("/");
 
   const supabase = await createServerSupabaseClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) {
-    redirect("/login?next=/timeline");
-  }
+  if (!user) redirect("/login?next=/timeline");
 
   await mustHaveAccountKindOrRedirect(supabase, user.id, "/timeline");
 
-  const name = displayNameFromUser(user);
-
-  // Load profile and timeline from DB
-  const [profile, dbTimeline, plan] = await Promise.all([
-    getProfile(supabase, user.id),
-    getUserTimeline(supabase, user.id),
-    getUserPlan(supabase, user.id),
-  ]);
-
-  const siteIntro = await dbProfileToSiteIntro(supabase, profile, name);
-
-  return (
-    <div className="flex min-h-screen flex-col">
-      <PortfolioShell
-        timeline={dbTimeline}
-        siteIntro={siteIntro}
-        userId={user.id}
-        plan={plan}
-        showUpgradedBanner={upgraded === "1"}
-      />
-    </div>
+  const profile = await getProfile(supabase, user.id);
+  const portfolioId = await resolveDefaultPortfolioId(
+    supabase,
+    user.id,
+    profile?.account_kind ?? null,
   );
+
+  const suffix = upgraded === "1" ? "?upgraded=1" : "";
+
+  if (portfolioId) {
+    redirect(`/portfolios/${portfolioId}${suffix}`);
+  }
+
+  redirect("/portfolios");
 }

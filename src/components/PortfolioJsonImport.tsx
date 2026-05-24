@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { importPortfolioJsonAction } from "@/app/actions/portfolio";
+import { AppConfirmDialog } from "@/components/AppConfirmDialog";
 import { AppNoticeDialog } from "@/components/AppNoticeDialog";
 import { PortfolioTransferProgress } from "@/components/PortfolioTransferProgress";
 import type { SiteIntro, YearBlock } from "@/data/timeline";
@@ -29,29 +30,17 @@ export function PortfolioJsonImport({
   compact = false,
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const pendingFileRef = useRef<File | null>(null);
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const [progressTitle, setProgressTitle] = useState("Importing portfolio");
   const [progressDetail, setProgressDetail] = useState<string | undefined>();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<SuccessState | null>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
 
-  async function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file) return;
-
-    if (!file.name.endsWith(".json") && file.type !== "application/json") {
-      setError("Choose a .json file.");
-      return;
-    }
-
-    const ok = window.confirm(
-      "Import replaces the entire timeline for this portfolio. Export a backup first if you need one. Continue?",
-    );
-    if (!ok) return;
-
-    setLoading(true);
+  async function runImport(file: File) {
     setError(null);
     setSuccess(null);
     setProgressTitle("Importing portfolio");
@@ -83,12 +72,60 @@ export function PortfolioJsonImport({
       setError("Import failed. Try again.");
     } finally {
       setLoading(false);
+      setConfirming(false);
       setProgressDetail(undefined);
     }
   }
 
+  function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+
+    if (!file.name.endsWith(".json") && file.type !== "application/json") {
+      setError("Choose a .json file.");
+      return;
+    }
+
+    pendingFileRef.current = file;
+    setPendingFile(file);
+  }
+
+  function clearPendingFile() {
+    pendingFileRef.current = null;
+    setPendingFile(null);
+  }
+
+  function handleConfirmImport() {
+    const file = pendingFileRef.current ?? pendingFile;
+    if (!file) return;
+    setConfirming(true);
+    setLoading(true);
+    clearPendingFile();
+    void runImport(file);
+  }
+
   return (
     <>
+      <AppConfirmDialog
+        open={pendingFile !== null}
+        onClose={() => {
+          if (confirming || loading) return;
+          clearPendingFile();
+        }}
+        onConfirm={handleConfirmImport}
+        variant="warning"
+        title="Replace this portfolio?"
+        message={
+          pendingFile
+            ? `Importing "${pendingFile.name}" will replace the entire timeline for this portfolio.`
+            : undefined
+        }
+        note="Export a JSON backup first if you want to keep what's here."
+        confirmLabel="Replace & import"
+        cancelLabel="Keep current timeline"
+        loading={confirming || loading}
+      />
       <PortfolioTransferProgress
         open={loading}
         title={progressTitle}
@@ -130,7 +167,7 @@ export function PortfolioJsonImport({
           type="file"
           accept="application/json,.json"
           className="hidden"
-          onChange={(e) => void onFileChange(e)}
+          onChange={onFileChange}
         />
         <button
           type="button"

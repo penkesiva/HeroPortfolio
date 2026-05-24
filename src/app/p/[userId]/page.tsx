@@ -3,13 +3,17 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { PrivatePortfolioPage } from "@/components/PrivatePortfolioPage";
 import { PublicPortfolioClient } from "@/components/PublicPortfolioClient";
 import { SiteBrandLink } from "@/components/SiteBrandLink";
 import { isPublicProfileUserId } from "@/lib/auth/profileId";
 import {
-  getProfile,
-  getUserTimeline,
+  childProfileToSiteIntro,
   dbProfileToSiteIntro,
+  getPortfolioVisibility,
+  getProfile,
+  getPublicChildProfile,
+  getUserTimeline,
   recordProfileView,
 } from "@/lib/db/portfolio";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
@@ -25,12 +29,29 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   try {
     const supabase = await createServerSupabaseClient();
+    const visibility = await getPortfolioVisibility(supabase, userId);
+    if (visibility !== "public") {
+      return { title: "Private portfolio" };
+    }
+
     const profile = await getProfile(supabase, userId);
-    const name = profile?.display_name ?? "Student";
-    return {
-      title: `${name}'s portfolio`,
-      description: `${name}'s achievement timeline on HeroPortfolio.com`,
-    };
+    if (profile) {
+      const name = profile.display_name ?? "Student";
+      return {
+        title: `${name}'s portfolio`,
+        description: `${name}'s achievement timeline on HeroPortfolio.com`,
+      };
+    }
+
+    const child = await getPublicChildProfile(supabase, userId);
+    if (child) {
+      return {
+        title: `${child.display_name}'s portfolio`,
+        description: `${child.display_name}'s achievement timeline on HeroPortfolio.com`,
+      };
+    }
+
+    return { title: "Student portfolio" };
   } catch {
     return { title: "Student portfolio" };
   }
@@ -47,11 +68,23 @@ export default async function PublicProfilePage({ params }: Props) {
   }
 
   const supabase = await createServerSupabaseClient();
+  const visibility = await getPortfolioVisibility(supabase, userId);
 
-  const [profile, dbTimeline] = await Promise.all([
+  if (visibility === "not_found") {
+    notFound();
+  }
+
+  if (visibility === "private") {
+    return <PrivatePortfolioPage />;
+  }
+
+  const [profile, child, dbTimeline] = await Promise.all([
     getProfile(supabase, userId),
+    getPublicChildProfile(supabase, userId),
     getUserTimeline(supabase, userId),
   ]);
+
+  const isPro = profile?.plan === "pro";
 
   // Record anonymized view in background (best-effort)
   try {
@@ -67,7 +100,18 @@ export default async function PublicProfilePage({ params }: Props) {
     // Non-fatal
   }
 
-  const genericIntro = await dbProfileToSiteIntro(supabase, profile, "Student portfolio");
+  const genericIntro = profile
+    ? await dbProfileToSiteIntro(supabase, profile, "Student portfolio")
+    : child
+      ? await childProfileToSiteIntro(supabase, child)
+      : {
+          name: "Student",
+          heroLead: "I'm",
+          role: "Student · Portfolio",
+          bio: "Achievement timeline on HeroPortfolio.",
+          photoSrc: "/avatar-placeholder.svg",
+          photoAlt: "Student",
+        };
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -100,7 +144,7 @@ export default async function PublicProfilePage({ params }: Props) {
         profileUserId={userId}
         serverTimeline={dbTimeline}
         genericIntro={genericIntro}
-        isPro={profile?.plan === "pro"}
+        isPro={isPro}
       />
     </div>
   );

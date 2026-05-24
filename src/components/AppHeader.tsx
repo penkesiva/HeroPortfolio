@@ -13,6 +13,7 @@ interface AppHeaderProps {
   /** Hero profile photo; center-cropped in the account icon when set. */
   avatarSrc?: string | null;
   avatarAlt?: string;
+  portfolioIsPublic?: boolean;
 }
 
 /**
@@ -25,6 +26,7 @@ export function AppHeader({
   plan,
   avatarSrc = null,
   avatarAlt = "",
+  portfolioIsPublic = false,
 }: AppHeaderProps) {
   const pathname = usePathname();
   return (
@@ -32,10 +34,10 @@ export function AppHeader({
       {/* Main row */}
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
         <SiteBrandLink
-          href="/timeline"
-          ariaLabel="HeroPortfolio.com: your timeline"
+          href="/portfolios"
+          ariaLabel="HeroPortfolio.com: my portfolios"
           onClick={() => {
-            if (pathname === "/timeline") {
+            if (pathname === "/portfolios" || pathname.startsWith("/portfolios/")) {
               window.scrollTo({ top: 0, behavior: "smooth" });
             }
           }}
@@ -76,6 +78,7 @@ export function AppHeader({
             plan={plan}
             avatarSrc={avatarSrc}
             avatarAlt={avatarAlt}
+            portfolioIsPublic={portfolioIsPublic}
           />
         </div>
       </div>

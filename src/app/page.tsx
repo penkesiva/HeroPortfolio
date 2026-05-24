@@ -72,7 +72,7 @@ export default async function HomePage() {
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (user) redirect("/timeline");
+    if (user) redirect("/portfolios");
   }
 
   return (

@@ -708,6 +708,8 @@ type PortfolioShellProps = {
   initialGrade?: number | null;
   /** For child profiles: pre-fill the empty-state oldest-year picker (birth_year → approx start) */
   initialOldestYear?: number | null;
+  /** When false, /p/[userId] shows a private notice and share link is disabled. */
+  portfolioIsPublic?: boolean;
 };
 
 export function PortfolioShell({
@@ -719,6 +721,7 @@ export function PortfolioShell({
   showUpgradedBanner = false,
   initialGrade,
   initialOldestYear,
+  portfolioIsPublic = false,
 }: PortfolioShellProps) {
   const [timeline, setTimeline] = useState(serverTimeline);
   const [draftHydrated, setDraftHydrated] = useState(false);
@@ -1179,6 +1182,7 @@ export function PortfolioShell({
           plan={plan}
           avatarSrc={intro.photoSrc}
           avatarAlt={intro.photoAlt ?? intro.name}
+          portfolioIsPublic={portfolioIsPublic}
         />
       ) : null}
       {showUpgradedBanner && !publicView && <UpgradedBanner />}

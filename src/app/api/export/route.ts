@@ -39,12 +39,37 @@ export async function GET(req: NextRequest) {
     );
   }
 
+  const portfolioIdParam = req.nextUrl.searchParams.get("portfolioId");
+
   const [timeline, profile] = await Promise.all([
-    getUserTimeline(supabase, user.id),
+    (async () => {
+      if (portfolioIdParam) {
+        const { data } = await supabase
+          .from("child_profiles")
+          .select("id, display_name")
+          .eq("id", portfolioIdParam)
+          .eq("parent_user_id", user.id)
+          .maybeSingle();
+        if (!data) {
+          return getUserTimeline(supabase, user.id);
+        }
+        return getUserTimeline(supabase, portfolioIdParam);
+      }
+      return getUserTimeline(supabase, user.id);
+    })(),
     getProfile(supabase, user.id),
   ]);
 
-  const name = profile?.display_name ?? "Student";
+  let name = profile?.display_name ?? "Student";
+  if (portfolioIdParam) {
+    const { data: portfolioMeta } = await supabase
+      .from("child_profiles")
+      .select("display_name")
+      .eq("id", portfolioIdParam)
+      .eq("parent_user_id", user.id)
+      .maybeSingle();
+    if (portfolioMeta?.display_name) name = portfolioMeta.display_name;
+  }
 
   if (format === "json") {
     return exportJson(timeline, name);
