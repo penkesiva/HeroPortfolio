@@ -1,70 +1,32 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { HomeLottie } from "@/components/home/HomeLottie";
+import { LandingPageContent } from "@/components/home/LandingPageContent";
 import { SiteBrandLink } from "@/components/SiteBrandLink";
+import {
+  LANDING_PAGE_META_DESCRIPTION,
+  LANDING_PAGE_META_TITLE,
+  LANDING_PAGE_OG_DESCRIPTION,
+} from "@/lib/constants";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
-  title: "HeroPortfolio: Track your achievements, year by year",
-  description:
-    "HeroPortfolio helps students capture competitions, projects, leadership, and growth in a beautiful year-by-year timeline. Free to start.",
+  title: LANDING_PAGE_META_TITLE,
+  description: LANDING_PAGE_META_DESCRIPTION,
   openGraph: {
-    title: "HeroPortfolio: Track your achievements, year by year",
-    description:
-      "A simple place for students to log achievements, milestones, and stories. Organized by school year and shareable with anyone.",
+    title: LANDING_PAGE_META_TITLE,
+    description: LANDING_PAGE_OG_DESCRIPTION,
     url: "https://heroportfolio.com",
     siteName: "HeroPortfolio",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "HeroPortfolio: Track your achievements, year by year",
-    description:
-      "A simple place for students to log achievements, milestones, and stories. Organized by school year.",
+    title: LANDING_PAGE_META_TITLE,
+    description: LANDING_PAGE_OG_DESCRIPTION,
   },
 };
-
-const features = [
-  {
-    icon: (
-      <svg viewBox="0 0 16 16" fill="currentColor" className="size-4" aria-hidden>
-        <path d="M8 1.5 9.6 5.8l4.6.4-3.4 3 1 4.4L8 11.2l-3.8 2.4 1-4.4-3.4-3 4.6-.4z" />
-      </svg>
-    ),
-    label: "Log every win",
-    desc: "Competitions, projects, sports and more.",
-  },
-  {
-    icon: (
-      <svg viewBox="0 0 16 16" fill="currentColor" className="size-4" aria-hidden>
-        <path fillRule="evenodd" d="M2 4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V4Zm6 7a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" clipRule="evenodd" />
-      </svg>
-    ),
-    label: "Photos and links",
-    desc: "Images, articles, and source URLs per event.",
-  },
-  {
-    icon: (
-      <svg viewBox="0 0 16 16" fill="currentColor" className="size-4" aria-hidden>
-        <path d="M12.5 4a.5.5 0 0 0-1 0v6.793L10.354 9.646a.5.5 0 1 0-.708.708l2 2a.5.5 0 0 0 .708 0l2-2a.5.5 0 0 0-.708-.708L12.5 10.793V4ZM4 3.5a.5.5 0 0 1 .5.5v6.793l1.146-1.147a.5.5 0 1 1 .708.708l-2 2a.5.5 0 0 1-.708 0l-2-2a.5.5 0 1 1 .708-.708L3.5 10.793V4a.5.5 0 0 1 .5-.5Z" />
-        <path d="M1 1h14v1H1z" />
-      </svg>
-    ),
-    label: "Year by year",
-    desc: "Middle school through graduation, in order.",
-  },
-  {
-    icon: (
-      <svg viewBox="0 0 16 16" fill="currentColor" className="size-4" aria-hidden>
-        <path d="M11 2.5a2.5 2.5 0 1 1 .603 1.628l-6.718 3.12a2.499 2.499 0 0 1 0 1.504l6.718 3.12a2.5 2.5 0 1 1-.488.876l-6.718-3.12a2.5 2.5 0 1 1 0-3.256l6.718-3.12A2.5 2.5 0 0 1 11 2.5z" />
-      </svg>
-    ),
-    label: "Share with anyone",
-    desc: "A public link for colleges, coaches, or employers.",
-  },
-];
 
 export default async function HomePage() {
   if (isSupabaseConfigured()) {
@@ -77,7 +39,6 @@ export default async function HomePage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-dusk-950 text-parchment">
-      {/* ─── Header ─────────────────────────────────────────────────────────── */}
       <header className="sticky top-0 z-40 border-b border-dusk-700/80 bg-dusk-950/85 px-4 py-3 backdrop-blur-md sm:px-6">
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3">
           <SiteBrandLink href="/" ariaLabel="HeroPortfolio home" />
@@ -105,74 +66,25 @@ export default async function HomePage() {
         </div>
       </header>
 
-      {/* ─── Hero ───────────────────────────────────────────────────────────── */}
-      <main className="mx-auto grid w-full max-w-6xl flex-1 grid-cols-1 items-center gap-6 px-4 py-8 sm:gap-10 sm:px-6 sm:py-12 lg:grid-cols-2 lg:gap-16 lg:px-8 lg:py-16">
-        {/* Left — copy: show first on mobile */}
-        <div className="order-1 flex flex-col lg:order-1">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-umber-400">
-            For students
-          </p>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-parchment sm:mt-4 sm:text-5xl sm:leading-tight lg:text-[2.9rem] lg:leading-tight">
-            Your achievements,{" "}
-            <span className="text-parchment-muted">year by year.</span>
-          </h1>
-          <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-parchment-muted sm:mt-5 sm:text-[17px]">
-            HeroPortfolio is a free timeline for students. Capture competitions,
-            projects, leadership, and growth. Organized by school year and
-            shareable with anyone.
-          </p>
-
-          {/* CTAs */}
-          <div className="mt-6 flex flex-wrap items-center gap-3 sm:mt-8">
-            <Link
-              href="/signup"
-              className="inline-flex items-center justify-center whitespace-nowrap rounded-full border border-umber-500/50 bg-umber-500/20 px-6 py-2.5 text-sm font-semibold text-umber-100 transition hover:bg-umber-500/30 sm:py-3"
-            >
-              Start for free
-            </Link>
-            <Link
-              href="/login"
-              className="inline-flex items-center justify-center whitespace-nowrap rounded-full border border-dusk-600 bg-dusk-850/80 px-6 py-2.5 text-sm font-medium text-parchment-muted transition hover:border-dusk-500 hover:text-parchment sm:py-3"
-            >
-              Log in
-            </Link>
-          </div>
-
-          {/* Feature pills */}
-          <div className="mt-8 grid grid-cols-2 gap-2 sm:mt-10 sm:gap-3">
-            {features.map((f) => (
-              <div
-                key={f.label}
-                className="flex items-start gap-2.5 rounded-xl border border-dusk-700/60 bg-dusk-900/40 px-3 py-2.5 sm:gap-3 sm:px-4 sm:py-3"
-              >
-                <span className="mt-0.5 shrink-0 text-umber-400">{f.icon}</span>
-                <div>
-                  <p className="text-xs font-semibold text-parchment">{f.label}</p>
-                  <p className="mt-0.5 text-xs leading-relaxed text-parchment-muted/70">{f.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Right — Lottie trophy: show second on mobile, smaller */}
-        <div className="order-2 flex items-center justify-center lg:order-2 lg:justify-end">
-          <div className="relative flex h-[220px] w-[220px] items-center justify-center sm:h-[320px] sm:w-[320px] lg:h-[420px] lg:w-[420px]">
-            <HomeLottie />
-          </div>
-        </div>
+      <main className="flex-1">
+        <LandingPageContent />
       </main>
 
-      {/* ─── Footer ─────────────────────────────────────────────────────────── */}
       <footer className="border-t border-dusk-700/70 bg-dusk-900/30 py-6 text-center text-xs text-parchment-muted/50">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-4 gap-y-1 px-4">
           <span>© {new Date().getFullYear()} OneCreator LLC. All rights reserved.</span>
           <span className="text-dusk-700">·</span>
-          <Link href="/pricing" className="transition hover:text-parchment-muted">Plans</Link>
+          <Link href="/pricing" className="transition hover:text-parchment-muted">
+            Plans
+          </Link>
           <span className="text-dusk-700">·</span>
-          <Link href="/login" className="transition hover:text-parchment-muted">Log in</Link>
+          <Link href="/login" className="transition hover:text-parchment-muted">
+            Log in
+          </Link>
           <span className="text-dusk-700">·</span>
-          <Link href="/signup" className="transition hover:text-parchment-muted">Sign up</Link>
+          <Link href="/signup" className="transition hover:text-parchment-muted">
+            Sign up
+          </Link>
         </div>
       </footer>
     </div>

@@ -93,6 +93,36 @@ export const PORTFOLIO_COPY_SHARE_LINK_LABEL = "Copy share link";
 export const PORTFOLIO_COPIED_SHARE_LINK_LABEL = "Link copied";
 export const PORTFOLIO_COPY_SHARE_LINK_FAILED_LABEL = "Try again";
 
+// ── Landing page copy ─────────────────────────────────────────────────────────
+export const LANDING_PAGE_META_TITLE =
+  "HeroPortfolio: Your achievements, finally in one place";
+export const LANDING_PAGE_META_DESCRIPTION =
+  "The all-in-one achievement tracker for students and parents. Capture every milestone from spelling bees to college apps — organized year by year, shareable with one link. Free to start.";
+export const LANDING_PAGE_OG_DESCRIPTION =
+  "Log achievements year by year — for students and parents. One timeline, one shareable link. Free to start.";
+export const LANDING_HERO_HEADLINE = "Your achievements, finally in one place.";
+export const LANDING_HERO_SUBHEAD =
+  "The all-in-one achievement tracker for students and the parents who champion them. From first-grade spelling bees to college internships — capture, organize, and share every milestone, year by year.";
+export const LANDING_PRIMARY_CTA = "Start building your portfolio — it's free";
+export const LANDING_PRIMARY_CTA_SHORT = "Start building — free";
+export const LANDING_LOGIN_CTA = "Log in";
+export const LANDING_PARENT_LINK = "Parents, manage your child's portfolio";
+export const LANDING_PARENT_SIGNUP_CTA = "Sign up as a parent — free";
+export const LANDING_SIGNUP_NEXT_ONBOARDING = "/onboarding/who";
+export const LANDING_HOW_IT_WORKS_SHARE_BODY =
+  "Send your portfolio with one link. Export a PDF Achievement Book on Pro when you need a printable version.";
+export const LANDING_TRUST_STRIP = [
+  "Free to start",
+  "No credit card",
+  "Share with one link",
+] as const;
+export const LANDING_FINAL_HEADLINE = "Ready to build the story only you can tell?";
+export const LANDING_FINAL_BODY =
+  "From first grade to first job — every achievement deserves a home. Start your portfolio today.";
+export const LANDING_FINAL_CTA = "Create your free portfolio";
+export const LANDING_FINAL_MICROCOPY =
+  "No credit card. No catch. Just your wins, all in one place.";
+
 // ── Contact / mailto ──────────────────────────────────────────────────────────
 export const SUPPORT_EMAIL = appConfig.contact.supportEmail;
 export const FAMILY_PLAN_MAILTO = `mailto:${SUPPORT_EMAIL}?subject=Family%20Plan%20Interest&body=Hi%2C%20I%27d%20like%20to%20set%20up%20a%20Family%20plan%20for%20my%20household.`;
